@@ -14,9 +14,7 @@ import {
   Phone,
   MapPin,
   Star,
-  Copy,
   Check,
-  ExternalLink,
   ChevronRight,
   Loader2,
   Save,
@@ -26,12 +24,12 @@ import {
   Clock,
   DollarSign,
   Info,
-  Shield,
   Camera,
   Upload,
   Trash2,
   Plus,
   Briefcase,
+  X,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -167,15 +165,13 @@ function PreviewCard({ settings, user, businessData }) {
           </div>
         )}
 
-        {/* Booking button */}
-        {settings.showBookingButton && (
-          <button
-            className="w-full py-2 text-xs font-semibold text-white rounded-[5px] transition-opacity hover:opacity-90"
-            style={{ backgroundColor: accent.bg }}
-          >
-            {settings.bookingButtonText || 'Book Now'}
-          </button>
-        )}
+        {/* Booking button - always visible */}
+        <button
+          className="w-full py-2 text-xs font-semibold text-white rounded-[5px] transition-opacity hover:opacity-90"
+          style={{ backgroundColor: accent.bg }}
+        >
+          Book Now
+        </button>
 
         {/* Contact */}
         {settings.showContact && (
@@ -212,9 +208,6 @@ const DEFAULT_SETTINGS = {
   showBio:           true,
   showServices:      true,
   showPrices:        true,
-  showBookingButton: true,
-  bookingButtonText: 'Book Now',
-  showGallery:       true,
   showContact:       true,
   showLocation:      true,
   showRating:        true,
@@ -236,19 +229,12 @@ export default function PublicPageManager() {
   const [businessData, setBusinessData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   const avatarInputRef = useRef(null);
-  const coverInputRef = useRef(null);
   const galleryInputRef = useRef(null);
-
-  // Build the public page URL (slug will come from business profile in future)
-  const publicUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/${locale}/pro/${user?.username || user?.id || 'your-page'}`
-    : '';
 
   // Fetch business data & saved settings
   useEffect(() => {
@@ -283,13 +269,6 @@ export default function PublicPageManager() {
     finally { setSaving(false); }
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(publicUrl).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
   const uploadImage = async (file, type) => {
     const fd = new FormData();
     fd.append('file', file);
@@ -310,22 +289,6 @@ export default function PublicPageManager() {
     finally { setUploadingAvatar(false); e.target.value = ''; }
   };
 
-  const handleCoverUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploadingCover(true);
-    try {
-      const url = await uploadImage(file, 'cover');
-      setSettings(s => ({
-        ...s,
-        activeCoverUrl: url,
-        coverGallery: s.coverGallery.some(u => u === url) ? s.coverGallery : [url, ...s.coverGallery],
-      }));
-      setSaved(false);
-    } catch {}
-    finally { setUploadingCover(false); e.target.value = ''; }
-  };
-
   const handleGalleryCoverUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
@@ -343,13 +306,16 @@ export default function PublicPageManager() {
   };
 
   const removeGalleryCover = (url) => {
-    setSettings(s => ({
-      ...s,
-      coverGallery: s.coverGallery.filter(u => u !== url),
-      activeCoverUrl: s.activeCoverUrl === url
-        ? s.coverGallery.find(u => u !== url) || null
-        : s.activeCoverUrl,
-    }));
+    setSettings(s => {
+      const newGallery = s.coverGallery.filter(u => u !== url);
+      return {
+        ...s,
+        coverGallery: newGallery,
+        activeCoverUrl: s.activeCoverUrl === url
+          ? newGallery[0] || null
+          : s.activeCoverUrl,
+      };
+    });
     setSaved(false);
   };
 
@@ -376,9 +342,9 @@ export default function PublicPageManager() {
         <div>
           <h1 className="text-2xl font-bold text-[#364153] flex items-center gap-2">
             <Globe className="w-6 h-6" />
-            Public Page
+            Business Card
           </h1>
-          <p className="text-sm text-gray-400 mt-1">Control what clients see on your public profile</p>
+          <p className="text-sm text-gray-400 mt-1">Customize how your business appears in search and homepage</p>
         </div>
         <button
           onClick={handleSave}
@@ -395,69 +361,10 @@ export default function PublicPageManager() {
         </button>
       </div>
 
-      {/* ── Public URL bar ── */}
-      <div className="flex items-center gap-2 mb-6 p-3 bg-gray-50 border border-gray-200 rounded-[5px]">
-        <Globe className="w-4 h-4 text-gray-400 flex-shrink-0" />
-        <span className="text-sm text-gray-500 truncate flex-1">{publicUrl}</span>
-        <button
-          onClick={handleCopyLink}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-[5px] hover:bg-gray-50 transition-colors flex-shrink-0"
-        >
-          {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
-        <a
-          href={publicUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#364153] bg-white border border-gray-200 rounded-[5px] hover:bg-gray-50 transition-colors flex-shrink-0"
-        >
-          <ExternalLink className="w-3.5 h-3.5" />
-          Preview
-        </a>
-      </div>
-
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* ── Left: Settings ── */}
         <div className="lg:col-span-2 space-y-6">
-
-          {/* Page Visibility */}
-          <div className="bg-white border border-gray-200 rounded-[5px] p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-[5px] flex items-center justify-center ${settings.pageEnabled ? 'bg-green-50' : 'bg-gray-100'}`}>
-                  {settings.pageEnabled
-                    ? <Eye className="w-5 h-5 text-green-600" />
-                    : <EyeOff className="w-5 h-5 text-gray-400" />
-                  }
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">Public Page</p>
-                  <p className="text-xs text-gray-400">
-                    {settings.pageEnabled ? 'Visible to everyone — clients can find and book you' : 'Hidden — only you can see this page'}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => set('pageEnabled', !settings.pageEnabled)}
-                className={`transition-colors ${settings.pageEnabled ? 'text-[#364153]' : 'text-gray-300'}`}
-              >
-                {settings.pageEnabled
-                  ? <ToggleRight className="w-9 h-9" />
-                  : <ToggleLeft className="w-9 h-9" />
-                }
-              </button>
-            </div>
-
-            {settings.pageEnabled && (
-              <div className="mt-3 flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-100 rounded-[5px]">
-                <Shield className="w-3.5 h-3.5 text-green-600 flex-shrink-0" />
-                <p className="text-xs text-green-700">Your page is live and accepting bookings</p>
-              </div>
-            )}
-          </div>
 
           {/* Business Identity */}
           <div className="bg-white border border-gray-200 rounded-[5px] overflow-hidden">
@@ -471,7 +378,7 @@ export default function PublicPageManager() {
               <div className="flex items-center justify-between py-2">
                 <div>
                   <p className="text-sm font-medium text-gray-800">Show Profile Photo</p>
-                  <p className="text-xs text-gray-400 mt-0.5">Display your avatar photo on the public page</p>
+                  <p className="text-xs text-gray-400 mt-0.5">Display your avatar photo on the card</p>
                 </div>
                 <button
                   type="button"
@@ -511,13 +418,23 @@ export default function PublicPageManager() {
               <div>
                 <p className="text-xs font-medium text-gray-600 mb-2">Business Profile Photo</p>
                 <div className="flex items-center gap-4">
-                  <div className="relative flex-shrink-0">
+                  <div className="relative flex-shrink-0 group">
                     {(settings.avatarUrl) ? (
-                      <img
-                        src={settings.avatarUrl}
-                        alt="avatar"
-                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                      />
+                      <>
+                        <img
+                          src={settings.avatarUrl}
+                          alt="avatar"
+                          className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => { set('avatarUrl', null); }}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full items-center justify-center hidden group-hover:flex shadow-sm"
+                          title="Remove photo"
+                        >
+                          <Trash2 className="w-3 h-3 text-white" />
+                        </button>
+                      </>
                     ) : (
                       <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
                         <Briefcase className="w-6 h-6 text-gray-400" />
@@ -537,43 +454,12 @@ export default function PublicPageManager() {
                       className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium border border-gray-200 rounded-[5px] hover:bg-gray-50 transition-colors disabled:opacity-50"
                     >
                       <Upload className="w-3.5 h-3.5" />
-                      {uploadingAvatar ? 'Uploading...' : 'Change Photo'}
+                      {uploadingAvatar ? 'Uploading...' : (settings.avatarUrl ? 'Change Photo' : 'Upload Photo')}
                     </button>
                     <p className="text-xs text-gray-400">JPG, PNG or WebP · max 5 MB</p>
                   </div>
                   <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                 </div>
-              </div>
-
-              <div className="border-t border-gray-100" />
-
-              {/* Cover photo */}
-              <div>
-                <p className="text-xs font-medium text-gray-600 mb-2">Cover Photo</p>
-                <div
-                  className="relative w-full h-24 rounded-[5px] overflow-hidden border-2 border-dashed border-gray-200 bg-gray-50 cursor-pointer hover:border-gray-300 transition-colors group"
-                  onClick={() => coverInputRef.current?.click()}
-                >
-                  {settings.activeCoverUrl ? (
-                    <img
-                      src={settings.activeCoverUrl}
-                      alt="cover"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-1">
-                      <Image className="w-6 h-6 text-gray-300" />
-                      <p className="text-xs text-gray-400">Click to upload cover</p>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    {uploadingCover
-                      ? <Loader2 className="w-6 h-6 text-white animate-spin" />
-                      : <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                    }
-                  </div>
-                </div>
-                <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
               </div>
 
               <div className="border-t border-gray-100" />
@@ -635,13 +521,13 @@ export default function PublicPageManager() {
           <div className="bg-white border border-gray-200 rounded-[5px] overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <h2 className="text-sm font-semibold text-gray-700">Content Sections</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Choose what appears on your public page</p>
+              <p className="text-xs text-gray-400 mt-0.5">Choose what appears on your business card</p>
             </div>
             <div className="p-4 space-y-2">
               <SectionToggle
                 icon={Image}
                 label="Cover Photo"
-                description="Hero banner at the top of your page"
+                description="Header image displayed on your card"
                 value={settings.showCoverPhoto}
                 onChange={v => set('showCoverPhoto', v)}
                 accent="blue"
@@ -669,14 +555,6 @@ export default function PublicPageManager() {
                 value={settings.showPrices}
                 onChange={v => set('showPrices', v)}
                 accent="green"
-              />
-              <SectionToggle
-                icon={Image}
-                label="Photo Gallery"
-                description="Show your portfolio images"
-                value={settings.showGallery}
-                onChange={v => set('showGallery', v)}
-                accent="teal"
               />
               <SectionToggle
                 icon={Star}
@@ -713,36 +591,6 @@ export default function PublicPageManager() {
             </div>
           </div>
 
-          {/* Booking Button */}
-          <div className="bg-white border border-gray-200 rounded-[5px] overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-700">Booking Button</h2>
-            </div>
-            <div className="p-4 space-y-3">
-              <SectionToggle
-                icon={CalendarCheck}
-                label="Show Booking Button"
-                description="Let clients book directly from your page"
-                value={settings.showBookingButton}
-                onChange={v => set('showBookingButton', v)}
-                accent="green"
-              />
-              {settings.showBookingButton && (
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">Button Label</label>
-                  <input
-                    type="text"
-                    value={settings.bookingButtonText}
-                    onChange={e => set('bookingButtonText', e.target.value)}
-                    maxLength={30}
-                    placeholder="e.g. Book Now, Reserve, Schedule"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-[#364153]/20 focus:border-[#364153]"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
           {/* Accent Color */}
           <div className="bg-white border border-gray-200 rounded-[5px] overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
@@ -750,7 +598,7 @@ export default function PublicPageManager() {
               <h2 className="text-sm font-semibold text-gray-700">Accent Color</h2>
             </div>
             <div className="p-4">
-              <p className="text-xs text-gray-400 mb-3">Applied to buttons and highlights on your public page</p>
+              <p className="text-xs text-gray-400 mb-3">Applied to highlights and accents on your card</p>
               <div className="flex flex-wrap gap-2.5">
                 {ACCENT_COLORS.map(c => (
                   <button
@@ -778,13 +626,13 @@ export default function PublicPageManager() {
           <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-[5px]">
             <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-blue-700 leading-relaxed">
-              Changes are previewed live on the right. Click <strong>Save Changes</strong> to publish them to your public page.
+              Changes are previewed live. Click <strong>Save Changes</strong> to apply them to your business card.
             </p>
           </div>
         </div>
 
-        {/* ── Right: Live Preview ── */}
-        <div className="space-y-4 flex flex-col items-center lg:items-stretch">
+        {/* ── Right: Live Preview (hidden on small screens) ── */}
+        <div className="hidden lg:flex space-y-4 flex-col items-center lg:items-stretch">
           <div className="sticky top-24 w-full flex flex-col items-center lg:items-stretch">
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5 self-start">
               <Eye className="w-3.5 h-3.5" />
@@ -794,8 +642,8 @@ export default function PublicPageManager() {
             {!settings.pageEnabled ? (
               <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-[5px] text-center w-full max-w-xs lg:max-w-none">
                 <EyeOff className="w-8 h-8 text-gray-300 mb-2" />
-                <p className="text-sm font-medium text-gray-400">Page is hidden</p>
-                <p className="text-xs text-gray-300 mt-1">Enable the public page to see the preview</p>
+                <p className="text-sm font-medium text-gray-400">Card is hidden</p>
+                <p className="text-xs text-gray-300 mt-1">Enable visibility to see the preview</p>
               </div>
             ) : (
               <PreviewCard
@@ -805,21 +653,71 @@ export default function PublicPageManager() {
               />
             )}
 
-            {/* Quick stats summary */}
-            <div className="mt-4 grid grid-cols-2 gap-2 w-full max-w-xs lg:max-w-none">
-              {[
-                { label: 'Sections on',    value: Object.entries(settings).filter(([k, v]) => k.startsWith('show') && v === true).length },
-                { label: 'Sections off',   value: Object.entries(settings).filter(([k, v]) => k.startsWith('show') && v === false).length },
-              ].map(stat => (
-                <div key={stat.label} className="bg-white border border-gray-200 rounded-[5px] p-3 text-center">
-                  <p className="text-lg font-bold text-[#364153]">{stat.value}</p>
-                  <p className="text-xs text-gray-400">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+
           </div>
         </div>
       </div>
+
+      {/* ── FAB for Live Preview (visible only on small screens) ── */}
+      <button
+        onClick={() => setShowMobilePreview(true)}
+        className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-[#364153] text-white rounded-full shadow-lg hover:bg-[#364153]/90 transition-all flex items-center justify-center z-40 hover:scale-105 active:scale-95"
+        aria-label="Live Preview"
+      >
+        <Eye className="w-6 h-6" />
+      </button>
+
+      {/* ── Mobile Preview Modal ── */}
+      {showMobilePreview && (
+        <div className="lg:hidden fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowMobilePreview(false)}
+          />
+          
+          {/* Modal Content */}
+          <div className="relative z-10 w-full max-w-sm mx-4 max-h-[90vh] overflow-y-auto">
+            {/* Close button */}
+            <button
+              onClick={() => setShowMobilePreview(false)}
+              className="absolute -top-12 right-0 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label="Close preview"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Preview Header */}
+            <div className="bg-white rounded-t-[5px] px-4 py-3 border-b border-gray-200">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide flex items-center gap-1.5">
+                <Eye className="w-3.5 h-3.5" />
+                Live Preview
+              </p>
+            </div>
+
+            {/* Preview Content */}
+            <div className="bg-gray-50 p-4 rounded-b-[5px]">
+              {!settings.pageEnabled ? (
+                <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-[5px] text-center bg-white">
+                  <EyeOff className="w-8 h-8 text-gray-300 mb-2" />
+                  <p className="text-sm font-medium text-gray-400">Card is hidden</p>
+                  <p className="text-xs text-gray-300 mt-1">Enable visibility to see the preview</p>
+                </div>
+              ) : (
+                <div className="flex justify-center">
+                  <PreviewCard
+                    settings={settings}
+                    user={user}
+                    businessData={businessData}
+                  />
+                </div>
+              )}
+
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

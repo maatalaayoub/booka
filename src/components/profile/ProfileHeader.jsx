@@ -197,8 +197,8 @@ export default function ProfileHeader({
         {!localCoverImage && (
           <div className="absolute inset-0 flex items-center justify-center">
             <img
-              src="/images/dark_logo.png"
-              alt="Coiffly"
+              src="/images/dark-logo.png"
+              alt="Booq"
               className="h-16 sm:h-20 md:h-24 w-auto opacity-20"
               style={{ filter: 'grayscale(1)' }}
             />

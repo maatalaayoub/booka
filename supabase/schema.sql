@@ -742,14 +742,14 @@ CREATE TRIGGER update_business_services_updated_at
 ALTER TABLE business_services DROP COLUMN IF EXISTS category;
 
 -- ─── BUSINESS PUBLIC PAGE SETTINGS ──────────────────────────────────────────
--- Stores per-business public-page configuration as a single JSONB document.
+-- Stores per-business card configuration as a single JSONB document.
 -- One row per business_info record (enforced by the UNIQUE constraint).
 -- All mutations go through the service-role API route, so RLS uses the
 -- authenticated user's relationship to business_info for security.
 
-DROP TABLE IF EXISTS business_public_page_settings CASCADE;
+DROP TABLE IF EXISTS business_card_settings CASCADE;
 
-CREATE TABLE business_public_page_settings (
+CREATE TABLE business_card_settings (
   id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   business_info_id  UUID        NOT NULL
                                   REFERENCES business_info(id)
@@ -759,30 +759,30 @@ CREATE TABLE business_public_page_settings (
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
-  CONSTRAINT uq_bpps_business_info UNIQUE (business_info_id),
+  CONSTRAINT uq_bcs_business_info UNIQUE (business_info_id),
   -- Ensure settings is a JSON object, not an array or scalar
-  CONSTRAINT chk_bpps_settings_is_object CHECK (jsonb_typeof(settings) = 'object')
+  CONSTRAINT chk_bcs_settings_is_object CHECK (jsonb_typeof(settings) = 'object')
 );
 
 -- Fast look-up by business
-CREATE INDEX idx_bpps_business_info_id
-  ON business_public_page_settings (business_info_id);
+CREATE INDEX idx_bcs_business_info_id
+  ON business_card_settings (business_info_id);
 
 -- Auto-update updated_at on every write
-CREATE TRIGGER trg_bpps_updated_at
-  BEFORE UPDATE ON business_public_page_settings
+CREATE TRIGGER trg_bcs_updated_at
+  BEFORE UPDATE ON business_card_settings
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
 -- ── Row Level Security ─────────────────────────────────────────────────────
-ALTER TABLE business_public_page_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE business_card_settings ENABLE ROW LEVEL SECURITY;
 
 -- Service-role key (used by API routes) bypasses RLS entirely.
 -- Authenticated users may only touch the row that belongs to their own
 -- business_info record (looked up through the users table).
 
-CREATE POLICY "owner can select own public page settings"
-  ON business_public_page_settings
+CREATE POLICY "owner can select own card settings"
+  ON business_card_settings
   FOR SELECT
   TO authenticated
   USING (
@@ -794,8 +794,8 @@ CREATE POLICY "owner can select own public page settings"
     )
   );
 
-CREATE POLICY "owner can insert own public page settings"
-  ON business_public_page_settings
+CREATE POLICY "owner can insert own card settings"
+  ON business_card_settings
   FOR INSERT
   TO authenticated
   WITH CHECK (
@@ -807,8 +807,8 @@ CREATE POLICY "owner can insert own public page settings"
     )
   );
 
-CREATE POLICY "owner can update own public page settings"
-  ON business_public_page_settings
+CREATE POLICY "owner can update own card settings"
+  ON business_card_settings
   FOR UPDATE
   TO authenticated
   USING (
@@ -828,8 +828,8 @@ CREATE POLICY "owner can update own public page settings"
     )
   );
 
-CREATE POLICY "owner can delete own public page settings"
-  ON business_public_page_settings
+CREATE POLICY "owner can delete own card settings"
+  ON business_card_settings
   FOR DELETE
   TO authenticated
   USING (
@@ -840,4 +840,3 @@ CREATE POLICY "owner can delete own public page settings"
       WHERE  u.clerk_id = auth.uid()::text
     )
   );
-

@@ -219,8 +219,8 @@ export default function Hero() {
               </button>
             )}
             <Image 
-              src="/images/white_logo.png" 
-              alt="Coiffy" 
+              src="/images/white-logo.png" 
+              alt="Booq" 
               width={200} 
               height={50}
               className="h-11 w-auto"

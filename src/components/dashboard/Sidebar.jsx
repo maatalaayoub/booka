@@ -65,7 +65,7 @@ export default function Sidebar() {
     },
     { 
       icon: Globe, 
-      label: t('dashboard.sidebar.publicPage') || 'Public Page', 
+      label: t('dashboard.sidebar.publicPage') || 'Business Card', 
       href: `/${locale}/business/dashboard/public-page` 
     },
     { 

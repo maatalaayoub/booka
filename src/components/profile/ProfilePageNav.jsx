@@ -24,8 +24,8 @@ export default function ProfilePageNav({ locale, onMenuClick, isRTL, t }) {
 
             <Link href={`/${locale}`}>
               <Image
-                src="/images/white_logo.png"
-                alt="Coiffly"
+                src="/images/white-logo.png"
+                alt="Booq"
                 width={100}
                 height={30}
                 className="h-8 w-auto"

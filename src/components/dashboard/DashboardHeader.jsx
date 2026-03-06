@@ -36,7 +36,7 @@ export default function DashboardHeader() {
               href={`/${locale}`}
               className="flex items-center"
             >
-              <img src="/images/dark_logo.png" alt="Coiffly" width={140} height={42} className="h-10 w-auto" />
+              <img src="/images/dark-logo.png" alt="Booq" width={140} height={42} className="h-10 w-auto" />
             </Link>
           </div>
 

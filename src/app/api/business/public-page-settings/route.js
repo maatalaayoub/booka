@@ -32,7 +32,7 @@ export async function GET() {
     if (!ctx) return NextResponse.json({ settings: null });
 
     const { data, error } = await supabase
-      .from('business_public_page_settings')
+      .from('business_card_settings')
       .select('settings')
       .eq('business_info_id', ctx.businessInfoId)
       .single();
@@ -47,7 +47,7 @@ export async function GET() {
 
     return NextResponse.json({ settings: data?.settings || null });
   } catch (err) {
-    console.error('[public-page-settings GET]', err);
+    console.error('[card-settings GET]', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
@@ -66,7 +66,7 @@ export async function POST(request) {
     const { settings } = body;
 
     const { error } = await supabase
-      .from('business_public_page_settings')
+      .from('business_card_settings')
       .upsert(
         { business_info_id: ctx.businessInfoId, settings, updated_at: new Date().toISOString() },
         { onConflict: 'business_info_id' }
@@ -82,7 +82,7 @@ export async function POST(request) {
 
     return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('[public-page-settings POST]', err);
+    console.error('[card-settings POST]', err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
