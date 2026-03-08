@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Users, Search, Loader2, Ban, CheckCircle2, Trash2,
   AlertTriangle, ShieldAlert, User, Building2, Shield,
-  X, RefreshCw,
+  X, RefreshCw, Info,
 } from 'lucide-react';
 
 const STATUS_BADGE = {
@@ -33,6 +33,7 @@ export default function AdminUsersPage() {
   const [actionLoading, setActionLoading] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null); // { userId, action, userName }
   const [refreshing, setRefreshing] = useState(false);
+  const [viewUserInfo, setViewUserInfo] = useState(null); // user object to show in modal
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -179,7 +180,7 @@ export default function AdminUsersPage() {
                   <th className="px-4 py-3 font-medium text-gray-600">{t('admin.users.colEmail')}</th>
                   <th className="px-4 py-3 font-medium text-gray-600">{t('admin.users.colRole')}</th>
                   <th className="px-4 py-3 font-medium text-gray-600">{t('admin.users.colStatus')}</th>
-                  <th className="px-4 py-3 font-medium text-gray-600">{t('admin.users.colJoined')}</th>
+                  <th className="px-4 py-3 font-medium text-gray-600">{t('admin.users.colInfo')}</th>
                   <th className="px-4 py-3 font-medium text-gray-600">{t('admin.users.colActions')}</th>
                 </tr>
               </thead>
@@ -224,8 +225,14 @@ export default function AdminUsersPage() {
                           {t(statusConf.label)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">
-                        {new Date(u.created_at).toLocaleDateString()}
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => setViewUserInfo(u)}
+                          className="p-1.5 text-blue-500 hover:bg-blue-50 rounded transition-colors"
+                          title={t('admin.users.viewInfo')}
+                        >
+                          <Info className="w-4 h-4" />
+                        </button>
                       </td>
                       <td className="px-4 py-3">
                         {u.role === 'admin' ? (
@@ -325,6 +332,99 @@ export default function AdminUsersPage() {
                 }`}
               >
                 {confirmAction.action === 'delete' ? t('admin.users.delete') : t('admin.users.suspend')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Info Modal */}
+      {viewUserInfo && (
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[5px] border border-gray-200 shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-900">{t('admin.users.userInfo')}</h3>
+              <button
+                onClick={() => setViewUserInfo(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* User Header */}
+              <div className="flex items-center gap-3">
+                {viewUserInfo.user_profile?.profile_image_url ? (
+                  <img src={viewUserInfo.user_profile.profile_image_url} alt="" className="w-12 h-12 rounded-full object-cover" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
+                    <User className="w-6 h-6 text-gray-400" />
+                  </div>
+                )}
+                <div>
+                  <p className="font-medium text-gray-900">{getName(viewUserInfo)}</p>
+                  {viewUserInfo.username && <p className="text-sm text-gray-500">@{viewUserInfo.username}</p>}
+                </div>
+              </div>
+
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 mb-1">{t('admin.users.colEmail')}</p>
+                  <p className="text-gray-900 font-medium truncate">{viewUserInfo.email || '—'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 mb-1">{t('admin.users.colRole')}</p>
+                  <p className="text-gray-900 font-medium capitalize">{viewUserInfo.role}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 mb-1">{t('admin.users.colStatus')}</p>
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[viewUserInfo.account_status]?.color || STATUS_BADGE.active.color}`}>
+                    {t(STATUS_BADGE[viewUserInfo.account_status]?.label || STATUS_BADGE.active.label)}
+                  </span>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500 mb-1">{t('admin.users.joined')}</p>
+                  <p className="text-gray-900 font-medium">{new Date(viewUserInfo.created_at).toLocaleDateString()}</p>
+                </div>
+                {viewUserInfo.user_profile?.first_name && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 mb-1">{t('admin.users.firstName')}</p>
+                    <p className="text-gray-900 font-medium">{viewUserInfo.user_profile.first_name}</p>
+                  </div>
+                )}
+                {viewUserInfo.user_profile?.last_name && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 mb-1">{t('admin.users.lastName')}</p>
+                    <p className="text-gray-900 font-medium">{viewUserInfo.user_profile.last_name}</p>
+                  </div>
+                )}
+                {viewUserInfo.user_profile?.city && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 mb-1">{t('admin.users.city')}</p>
+                    <p className="text-gray-900 font-medium">{viewUserInfo.user_profile.city}</p>
+                  </div>
+                )}
+                {viewUserInfo.user_profile?.gender && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-500 mb-1">{t('admin.users.gender')}</p>
+                    <p className="text-gray-900 font-medium capitalize">{viewUserInfo.user_profile.gender}</p>
+                  </div>
+                )}
+                {viewUserInfo.user_profile?.birthday && (
+                  <div className="bg-gray-50 rounded-lg p-3 col-span-2">
+                    <p className="text-xs text-gray-500 mb-1">{t('admin.users.birthday')}</p>
+                    <p className="text-gray-900 font-medium">{new Date(viewUserInfo.user_profile.birthday).toLocaleDateString()}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-gray-100 flex justify-end">
+              <button
+                onClick={() => setViewUserInfo(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-[5px] hover:bg-gray-50"
+              >
+                {t('admin.users.close')}
               </button>
             </div>
           </div>
