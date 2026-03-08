@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Building2, Loader2, Search, MapPin, User, Store, Truck, Briefcase,
-  ChevronRight,
+  ChevronRight, RefreshCw,
 } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 
@@ -29,6 +29,7 @@ export default function AdminBusinessesPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchBusinesses = useCallback(async () => {
     setLoading(true);
@@ -81,14 +82,30 @@ export default function AdminBusinessesPage() {
     return type.charAt(0).toUpperCase() + type.slice(1).replace(/_/g, ' ');
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchBusinesses();
+    setRefreshing(false);
+  };
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <Building2 className="w-7 h-7 text-[#364153]" />
-          {t('admin.businesses.title')}
-        </h1>
-        <p className="text-gray-500 mt-1">{t('admin.businesses.subtitle')}</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <Building2 className="w-7 h-7 text-[#364153]" />
+            {t('admin.businesses.title')}
+          </h1>
+          <p className="text-gray-500 mt-1">{t('admin.businesses.subtitle')}</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing || loading}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          title={t('admin.refresh')}
+        >
+          <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       {/* Filters */}

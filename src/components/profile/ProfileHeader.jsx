@@ -201,7 +201,7 @@ export default function ProfileHeader({
 
   const displayName = isBusinessProfile && businessName 
     ? businessName 
-    : (`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || 'User');
+    : (`${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.username || 'User');
 
   return (
     <div className="relative">
@@ -407,6 +407,11 @@ export default function ProfileHeader({
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                   {displayName}
                 </h1>
+                {user?.username && (
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    @{user.username}
+                  </p>
+                )}
                 {location && (
                   <p className={`flex items-center gap-1 mt-1 text-sm text-gray-500 ${isRTL ? 'justify-end flex-row-reverse' : 'justify-start'}`}>
                     <MapPin className="w-3.5 h-3.5" />

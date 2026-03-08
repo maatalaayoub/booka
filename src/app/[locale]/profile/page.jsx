@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRole } from '@/hooks/useRole';
 import { ProfileHeader, ProfileSidebar, EditProfileDialog, ProfilePageNav } from '@/components/profile';
@@ -10,15 +10,20 @@ import { ProfileHeader, ProfileSidebar, EditProfileDialog, ProfilePageNav } from
 export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = params.locale || 'en';
+  const viewingUser = searchParams.get('user'); // Username or ID of user to view
   const { user, isLoaded: isUserLoaded, isSignedIn } = useUser();
   const { isBarber, isLoaded: isRoleLoaded } = useRole();
   const { t, isRTL } = useLanguage();
 
   const isLoaded = isUserLoaded && isRoleLoaded;
+  const isViewingOther = !!viewingUser;
   
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [viewedUserData, setViewedUserData] = useState(null);
+  const [viewedUserLoading, setViewedUserLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     coverImage: null,
     coverPosition: 50,
@@ -27,8 +32,36 @@ export default function UserProfilePage() {
     socialLinks: {}
   });
 
-  // Redirect if not signed in, or redirect business users to their profile
+  // Fetch viewed user's profile if viewing another user
   useEffect(() => {
+    if (!viewingUser) return;
+    
+    setViewedUserLoading(true);
+    fetch(`/api/user-profile/${viewingUser}`)
+      .then(r => {
+        if (!r.ok) throw new Error('Not found');
+        return r.json();
+      })
+      .then(data => {
+        setViewedUserData(data);
+        setProfileData(prev => ({
+          ...prev,
+          coverImage: data.coverImageUrl || null,
+          coverPosition: data.coverImagePosition ?? 50,
+          location: data.city || '',
+        }));
+      })
+      .catch(() => {
+        setViewedUserData(null);
+      })
+      .finally(() => {
+        setViewedUserLoading(false);
+      });
+  }, [viewingUser]);
+
+  // Redirect if not signed in (only when viewing own profile), or redirect business users to their profile
+  useEffect(() => {
+    if (isViewingOther) return; // Don't redirect when viewing other users
     if (isLoaded) {
       if (!isSignedIn) {
         router.push(`/${locale}/auth/user/sign-in`);
@@ -36,11 +69,11 @@ export default function UserProfilePage() {
         router.push(`/${locale}/business/profile`);
       }
     }
-  }, [isLoaded, isSignedIn, isBarber, router, locale]);
+  }, [isLoaded, isSignedIn, isBarber, router, locale, isViewingOther]);
 
-  // Fetch profile data (cover image, etc.)
+  // Fetch own profile data (cover image, etc.)
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || isBarber) return;
+    if (isViewingOther || !isLoaded || !isSignedIn || isBarber) return;
     fetch('/api/user-profile')
       .then(r => r.json())
       .then(data => {
@@ -52,7 +85,7 @@ export default function UserProfilePage() {
         }));
       })
       .catch(() => {});
-  }, [isLoaded, isSignedIn, isBarber]);
+  }, [isLoaded, isSignedIn, isBarber, isViewingOther]);
 
   // Refresh profile data after editing
   const refreshProfile = () => {
@@ -79,7 +112,7 @@ export default function UserProfilePage() {
   }, []);
 
   // Show loading state
-  if (!isLoaded) {
+  if (!isLoaded || (isViewingOther && viewedUserLoading)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
         {/* Actual nav */}
@@ -108,13 +141,54 @@ export default function UserProfilePage() {
     );
   }
 
-  if (!isSignedIn || isBarber) {
+  // If viewing other user but data not found
+  if (isViewingOther && !viewedUserData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
+        <ProfilePageNav
+          locale={locale}
+          onMenuClick={() => setIsSidebarOpen(true)}
+          isRTL={isRTL}
+          t={t}
+        />
+        <ProfileSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <div className="flex flex-col items-center justify-center pt-32 px-4">
+          <div className="text-center">
+            <h1 className="text-xl font-semibold text-gray-900 mb-2">
+              {t('profile.userNotFound') || 'User not found'}
+            </h1>
+            <p className="text-gray-500 text-sm mb-6">
+              {t('profile.userNotFoundDesc') || 'This user may have been deleted or does not exist.'}
+            </p>
+            <button
+              onClick={() => router.back()}
+              className="px-4 py-2 bg-[#244C70] text-white rounded-lg hover:bg-[#1a3a56] transition-colors"
+            >
+              {t('profile.goBack') || 'Go back'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // When viewing own profile - check auth
+  if (!isViewingOther && (!isSignedIn || isBarber)) {
     return null;
   }
 
   const handleEditProfile = () => {
     setIsEditProfileOpen(true);
   };
+
+  // Create a mock user object for viewed users
+  const displayUser = isViewingOther ? {
+    firstName: viewedUserData.firstName || '',
+    lastName: viewedUserData.lastName || '',
+    username: viewedUserData.username,
+    imageUrl: viewedUserData.profileImageUrl,
+    hasImage: !!viewedUserData.profileImageUrl,
+  } : user;
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 ${isRTL ? 'rtl' : 'ltr'}`}>
@@ -131,27 +205,30 @@ export default function UserProfilePage() {
 
       {/* Profile Header with Cover & Avatar */}
       <ProfileHeader
-        user={user}
+        user={displayUser}
         coverImage={profileData.coverImage}
         bio={profileData.bio}
         location={profileData.location}
         socialLinks={profileData.socialLinks}
-        isOwnProfile={true}
+        isOwnProfile={!isViewingOther}
         isBusinessProfile={false}
-        onEditProfile={handleEditProfile}
-        onCoverChange={(url) => setProfileData(prev => ({ ...prev, coverImage: url }))}
+        profileImageUrl={isViewingOther ? viewedUserData?.profileImageUrl : null}
+        onEditProfile={isViewingOther ? undefined : handleEditProfile}
+        onCoverChange={isViewingOther ? undefined : (url) => setProfileData(prev => ({ ...prev, coverImage: url }))}
         coverPosition={profileData.coverPosition ?? 50}
-        onCoverPositionChange={(pos) => setProfileData(prev => ({ ...prev, coverPosition: pos }))}
+        onCoverPositionChange={isViewingOther ? undefined : (pos) => setProfileData(prev => ({ ...prev, coverPosition: pos }))}
       />
 
-      {/* Edit Profile Dialog */}
-      <EditProfileDialog 
-        isOpen={isEditProfileOpen} 
-        onClose={() => {
-          setIsEditProfileOpen(false);
-          refreshProfile();
-        }} 
-      />
+      {/* Edit Profile Dialog - only for own profile */}
+      {!isViewingOther && (
+        <EditProfileDialog 
+          isOpen={isEditProfileOpen} 
+          onClose={() => {
+            setIsEditProfileOpen(false);
+            refreshProfile();
+          }} 
+        />
+      )}
     </div>
   );
 }

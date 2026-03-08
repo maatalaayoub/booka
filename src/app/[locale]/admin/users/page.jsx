@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Users, Search, Loader2, Ban, CheckCircle2, Trash2,
   AlertTriangle, ShieldAlert, User, Building2, Shield,
-  X,
+  X, RefreshCw,
 } from 'lucide-react';
 
 const STATUS_BADGE = {
@@ -22,6 +24,7 @@ const ROLE_ICON = {
 
 export default function AdminUsersPage() {
   const { t } = useLanguage();
+  const { locale } = useParams();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -29,6 +32,7 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null); // { userId, action, userName }
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -92,14 +96,30 @@ export default function AdminUsersPage() {
     return u.username || u.email || '—';
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchUsers();
+    setRefreshing(false);
+  };
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <Users className="w-7 h-7 text-[#364153]" />
-          {t('admin.users.title')}
-        </h1>
-        <p className="text-gray-500 mt-1">{t('admin.users.subtitle')}</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <Users className="w-7 h-7 text-[#364153]" />
+            {t('admin.users.title')}
+          </h1>
+          <p className="text-gray-500 mt-1">{t('admin.users.subtitle')}</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing || loading}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          title={t('admin.refresh')}
+        >
+          <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       {/* Filters */}
@@ -168,11 +188,17 @@ export default function AdminUsersPage() {
                   const RoleIcon = ROLE_ICON[u.role] || User;
                   const statusConf = STATUS_BADGE[u.account_status] || STATUS_BADGE.active;
                   const isProcessing = actionLoading === u.id;
+                  const profileUrl = u.role === 'business' 
+                    ? `/${locale}/business/profile?user=${u.username || u.id}`
+                    : `/${locale}/profile?user=${u.username || u.id}`;
 
                   return (
                     <tr key={u.id} className="hover:bg-gray-50/50">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
+                        <Link 
+                          href={profileUrl}
+                          className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+                        >
                           {u.user_profile?.profile_image_url ? (
                             <img src={u.user_profile.profile_image_url} alt="" className="w-8 h-8 rounded-full object-cover" />
                           ) : (
@@ -181,10 +207,10 @@ export default function AdminUsersPage() {
                             </div>
                           )}
                           <div>
-                            <p className="font-medium text-gray-900">{getName(u)}</p>
+                            <p className="font-medium text-gray-900 hover:text-[#244C70] transition-colors">{getName(u)}</p>
                             {u.username && <p className="text-xs text-gray-400">@{u.username}</p>}
                           </div>
-                        </div>
+                        </Link>
                       </td>
                       <td className="px-4 py-3 text-gray-600">{u.email || '—'}</td>
                       <td className="px-4 py-3">

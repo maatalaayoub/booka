@@ -1,29 +1,32 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Users, Building2, ShieldCheck, Calendar, Ban, Loader2 } from 'lucide-react';
+import { Users, Building2, ShieldCheck, Calendar, Ban, Loader2, RefreshCw } from 'lucide-react';
 
 export default function AdminDashboardPage() {
   const { t } = useLanguage();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const res = await fetch('/api/admin/stats');
-        if (res.ok) {
-          setStats(await res.json());
-        }
-      } catch {
-        // leave null
-      } finally {
-        setLoading(false);
+  const fetchStats = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+    try {
+      const res = await fetch('/api/admin/stats');
+      if (res.ok) {
+        setStats(await res.json());
       }
+    } catch {
+      // leave null
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-    fetchStats();
   }, []);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   const cards = stats ? [
     { label: t('admin.stats.totalUsers'), value: stats.totalUsers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -35,9 +38,19 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
-        <p className="text-gray-500 mt-1">{t('admin.dashboard.subtitle')}</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('admin.dashboard.title')}</h1>
+          <p className="text-gray-500 mt-1">{t('admin.dashboard.subtitle')}</p>
+        </div>
+        <button
+          onClick={() => fetchStats(true)}
+          disabled={refreshing || loading}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          title={t('admin.refresh')}
+        >
+          <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       {loading ? (

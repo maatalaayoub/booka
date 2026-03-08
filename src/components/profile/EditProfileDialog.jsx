@@ -373,7 +373,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="p-5 sm:p-6 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <form onSubmit={handleSubmit} className="p-5 pb-24 sm:p-6 sm:pb-6 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {isFetching ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-[#D4AF37]" />

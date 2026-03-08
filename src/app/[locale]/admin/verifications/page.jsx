@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   ShieldCheck, Loader2, CheckCircle2, XCircle, Clock,
-  FileText, User, Eye, X, Search,
+  FileText, User, Eye, X, Search, RefreshCw,
 } from 'lucide-react';
 
 const STATUS_BADGE = {
@@ -22,6 +22,7 @@ export default function AdminVerificationsPage() {
   const [viewDoc, setViewDoc] = useState(null); // { url, title }
   const [rejectModal, setRejectModal] = useState(null); // { verificationId, field }
   const [rejectReason, setRejectReason] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchVerifications = useCallback(async () => {
     setLoading(true);
@@ -120,14 +121,30 @@ export default function AdminVerificationsPage() {
     );
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchVerifications();
+    setRefreshing(false);
+  };
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <ShieldCheck className="w-7 h-7 text-[#364153]" />
-          {t('admin.verifications.title')}
-        </h1>
-        <p className="text-gray-500 mt-1">{t('admin.verifications.subtitle')}</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <ShieldCheck className="w-7 h-7 text-[#364153]" />
+            {t('admin.verifications.title')}
+          </h1>
+          <p className="text-gray-500 mt-1">{t('admin.verifications.subtitle')}</p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing || loading}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+          title={t('admin.refresh')}
+        >
+          <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
       {/* Filters */}
