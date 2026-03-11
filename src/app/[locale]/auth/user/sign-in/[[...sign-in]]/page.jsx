@@ -42,7 +42,11 @@ export default function UserSignInPage() {
       
       // Check if user has a role in database
       fetch('/api/get-role')
-        .then(res => res.json())
+        .then(res => {
+          const ct = res.headers.get('content-type') || '';
+          if (!ct.includes('application/json')) return { role: null };
+          return res.json();
+        })
         .then(async (data) => {
           console.log('[UserSignIn] Role check result:', data);
           if (data.role) {

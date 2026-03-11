@@ -885,6 +885,10 @@ CREATE TABLE IF NOT EXISTS verification_requests (
   identity_document_url TEXT,
   business_document_url TEXT,
 
+  -- Document types (what kind of document was attached)
+  identity_document_type TEXT,
+  business_document_type TEXT,
+
   -- Per-document status
   identity_status TEXT NOT NULL DEFAULT 'pending'
     CHECK (identity_status IN ('pending', 'verified', 'rejected')),

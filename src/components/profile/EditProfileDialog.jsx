@@ -210,6 +210,8 @@ export default function EditProfileDialog({ isOpen, onClose }) {
     setUsernameStatus('checking');
     try {
       const res = await fetch(`/api/check-username?username=${encodeURIComponent(trimmed)}`);
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) { setUsernameStatus(null); return; }
       const data = await res.json();
       if (data.self) setUsernameStatus('self');
       else if (data.available) setUsernameStatus('available');

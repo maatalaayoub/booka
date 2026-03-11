@@ -54,6 +54,29 @@ const STATUS_COLORS = {
   cancelled: { bg: '#EF4444', border: '#DC2626' },
 };
 
+// Parse a date string into { date, time } parts
+function parseDateAndTime(dateStr) {
+  if (!dateStr) {
+    const now = new Date();
+    return { date: now.toISOString().split('T')[0], time: '09:00' };
+  }
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) {
+    return { date: dateStr.split('T')[0], time: '09:00' };
+  }
+  const hours = d.getHours().toString().padStart(2, '0');
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+  const time = (hours === '00' && minutes === '00') ? '09:00' : `${hours}:${minutes}`;
+  return { date: d.toISOString().split('T')[0], time };
+}
+
+// Compute end time from start + duration
+function computeEndTime(startTime, durationMinutes) {
+  const [h, m] = startTime.split(':').map(Number);
+  const total = h * 60 + m + durationMinutes;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+}
+
 // Convert a DB appointment row to a FullCalendar event object
 function toCalendarEvent(apt) {
   const colors = STATUS_COLORS[apt.status] || STATUS_COLORS.confirmed;
@@ -133,6 +156,9 @@ export default function AppointmentsPage() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
 
+  // Schedule data for calendar-level validation
+  const [schedule, setSchedule] = useState({ businessHours: [], exceptions: [] });
+
   const showToast = useCallback((message, type = 'error') => {
     if (toastTimer.current) clearTimeout(toastTimer.current);
     setToast({ message, type });
@@ -186,7 +212,65 @@ export default function AppointmentsPage() {
       }
     }
     fetchAppointments();
+
+    // Fetch schedule for calendar-level validation
+    fetch('/api/business/schedule')
+      .then(async r => {
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) return { businessHours: [], exceptions: [] };
+        return r.json();
+      })
+      .then(data => setSchedule({ businessHours: data.businessHours || [], exceptions: data.exceptions || [] }))
+      .catch(() => setSchedule({ businessHours: [], exceptions: [] }));
   }, []);
+
+  // ── Check if a date/time conflicts with the business schedule ──
+  const checkScheduleConflict = useCallback((dateStr, startTime, endTime) => {
+    if (!dateStr || !startTime) return '';
+    const { businessHours, exceptions } = schedule;
+    const dateObj = new Date(`${dateStr}T${startTime}:00`);
+    const dayOfWeek = dateObj.getDay();
+
+    // 1. Check working hours
+    if (businessHours.length > 0) {
+      const daySchedule = businessHours.find(h => h.dayOfWeek === dayOfWeek);
+      if (!daySchedule || !daySchedule.isOpen) {
+        return t('newAppointment.closedDay') || 'This day is not a working day';
+      }
+      if (endTime && (startTime < daySchedule.openTime || endTime > daySchedule.closeTime)) {
+        return (t('newAppointment.outsideHours') || 'Appointment must be within working hours') + ` (${daySchedule.openTime}–${daySchedule.closeTime})`;
+      }
+    }
+
+    // 2. Check exceptions
+    const date = dateStr.split('T')[0];
+    for (const ex of exceptions) {
+      if (ex.recurring && ex.recurring_day === dayOfWeek) {
+        if (ex.is_full_day) return `${t('newAppointment.blockedDay') || 'This day is blocked'}: ${ex.title}`;
+        if (ex.start_time && ex.end_time && endTime) {
+          const exStart = ex.start_time.substring(0, 5);
+          const exEnd = ex.end_time.substring(0, 5);
+          if (startTime < exEnd && endTime > exStart) {
+            return `${t('newAppointment.conflictsWith') || 'Conflicts with'}: ${ex.title} (${exStart}–${exEnd})`;
+          }
+        }
+        continue;
+      }
+      const exDate = ex.date;
+      const exEndDate = ex.end_date || exDate;
+      if (date >= exDate && date <= exEndDate) {
+        if (ex.is_full_day) return `${t('newAppointment.blockedDay') || 'This day is blocked'}: ${ex.title}`;
+        if (ex.start_time && ex.end_time && endTime) {
+          const exStart = ex.start_time.substring(0, 5);
+          const exEnd = ex.end_time.substring(0, 5);
+          if (startTime < exEnd && endTime > exStart) {
+            return `${t('newAppointment.conflictsWith') || 'Conflicts with'}: ${ex.title} (${exStart}–${exEnd})`;
+          }
+        }
+      }
+    }
+    return '';
+  }, [schedule, t]);
 
   // ── Stats ──
   const stats = useMemo(() => {
@@ -251,10 +335,19 @@ export default function AppointmentsPage() {
       }
     }
 
+    // Check schedule conflict before opening modal
+    const { date, time } = parseDateAndTime(info.dateStr);
+    const endTime = computeEndTime(time, 30);
+    const conflict = checkScheduleConflict(date, time, endTime);
+    if (conflict) {
+      showToast(conflict, 'warning');
+      return;
+    }
+
     setNewDefaultDate(info.dateStr);
     setNewDefaultEndDate(null);
     setIsNewOpen(true);
-  }, [showToast]);
+  }, [showToast, checkScheduleConflict]);
 
   // ── Drag select (long press on touch) => open new with range ──
   const handleSelect = useCallback((info) => {
@@ -280,13 +373,25 @@ export default function AppointmentsPage() {
       }
     }
 
+    // Check schedule conflict before opening modal
+    const { date, time } = parseDateAndTime(info.startStr);
+    const parsedEnd = parseDateAndTime(info.endStr);
+    const endTime = parsedEnd.time;
+    const conflict = checkScheduleConflict(date, time, endTime);
+    if (conflict) {
+      showToast(conflict, 'warning');
+      const api = calendarRef.current?.getApi();
+      if (api) api.unselect();
+      return;
+    }
+
     setNewDefaultDate(info.startStr);
     setNewDefaultEndDate(info.endStr);
     setIsNewOpen(true);
     // Unselect the calendar highlight
     const api = calendarRef.current?.getApi();
     if (api) api.unselect();
-  }, [showToast]);
+  }, [showToast, checkScheduleConflict]);
 
   // ── Drag & drop => reschedule (persist to DB) ──
   const handleEventDrop = useCallback(async (info) => {
@@ -726,11 +831,15 @@ export default function AppointmentsPage() {
             className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] px-5 py-3 rounded-[5px] shadow-lg text-sm font-medium flex items-center gap-2 ${
               toast.type === 'error'
                 ? 'bg-red-600 text-white'
+                : toast.type === 'warning'
+                ? 'bg-amber-500 text-white'
                 : 'bg-emerald-600 text-white'
             }`}
           >
             {toast.type === 'error' ? (
               <XCircle className="w-4 h-4 flex-shrink-0" />
+            ) : toast.type === 'warning' ? (
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
             ) : (
               <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             )}

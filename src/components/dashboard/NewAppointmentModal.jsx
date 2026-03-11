@@ -79,6 +79,8 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
   const [services, setServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
 
+
+
   // Close dropdown on outside click
   useEffect(() => {
     function handleClickOutside(e) {
@@ -92,7 +94,7 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
     }
   }, [serviceDropdownOpen]);
 
-  // Fetch services when modal opens
+  // Fetch services and schedule when modal opens
   useEffect(() => {
     if (!isOpen) return;
     setServicesLoading(true);
@@ -105,6 +107,7 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
       .then(data => setServices((data.services || []).filter(s => s.is_active)))
       .catch(() => setServices([]))
       .finally(() => setServicesLoading(false));
+
   }, [isOpen]);
 
   // Reset form and populate date/time whenever the modal opens or defaultDate changes
@@ -154,6 +157,7 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
         const duration = svc ? svc.duration_minutes : 30;
         updated.endTime = computeEndTime(value, duration);
       }
+
       return updated;
     });
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }));

@@ -99,7 +99,7 @@ export async function PUT(request) {
     }
 
     const body = await request.json();
-    const { baseLocation, city, serviceRadius, citiesCovered, travelFee } = body;
+    const { baseLocation, city, serviceRadius, citiesCovered, travelFee, latitude, longitude } = body;
 
     // Validate serviceRadius
     if (serviceRadius != null && (typeof serviceRadius !== 'number' || serviceRadius < 0 || serviceRadius > 500)) {
@@ -131,6 +131,8 @@ export async function PUT(request) {
       travel_radius_km: serviceRadius != null ? serviceRadius : null,
       cities_covered: citiesCovered || [],
       travel_fee: travelFee != null ? travelFee : 0,
+      latitude: latitude != null ? latitude : null,
+      longitude: longitude != null ? longitude : null,
     };
 
     const { error: updateError } = await supabase

@@ -28,6 +28,8 @@ export default function BusinessDashboard() {
   const [onboardingStatus, setOnboardingStatus] = useState(null);
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
   const [setupError, setSetupError] = useState(null);
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
   
   // Ref to track if we've handled the setup (prevents redirect after URL clean)
   const setupHandledRef = useRef(false);
@@ -74,6 +76,27 @@ export default function BusinessDashboard() {
     }
   };
 
+  // Fetch dashboard stats
+  const fetchStats = async () => {
+    try {
+      setStatsLoading(true);
+      const response = await fetch('/api/business/dashboard-stats');
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('[fetchStats] API returned non-JSON response');
+        return;
+      }
+      if (response.ok) {
+        const data = await response.json();
+        setStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     async function setupRole() {
       const setupParam = searchParams.get('setup');
@@ -94,6 +117,7 @@ export default function BusinessDashboard() {
         setupHandledRef.current = true;
         setSetupComplete(true);
         checkOnboardingStatus();
+        fetchStats();
         return;
       }
 
@@ -148,6 +172,7 @@ export default function BusinessDashboard() {
     await refetch();
     setOnboardingStatus({ ...onboardingStatus, onboardingCompleted: true });
     notifyLayout(true);
+    fetchStats();
   };
 
   // Show error if setup failed
@@ -272,7 +297,9 @@ export default function BusinessDashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-500">{t?.('dashboard.stats.todayAppointments') || "Today's Bookings"}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">-</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {statsLoading ? <span className="inline-block w-8 h-7 bg-gray-200 rounded animate-pulse" /> : (stats?.todayBookings ?? 0)}
+              </p>
             </div>
             <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,7 +313,9 @@ export default function BusinessDashboard() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-gray-500">{t?.('dashboard.stats.weeklyRevenue') || "This Week's Revenue"}</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">-</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {statsLoading ? <span className="inline-block w-16 h-7 bg-gray-200 rounded animate-pulse" /> : `${stats?.weeklyRevenue ?? 0} MAD`}
+              </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -302,7 +331,14 @@ export default function BusinessDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-gray-500">{t?.('dashboard.stats.serviceArea') || 'Service Area'}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">-</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {statsLoading ? <span className="inline-block w-8 h-7 bg-gray-200 rounded animate-pulse" /> : (
+                      <>
+                        {stats?.serviceArea ?? 0}
+                        <span className="text-sm font-normal text-gray-500 ml-1">{t?.('dashboard.stats.cities') || 'cities'}</span>
+                      </>
+                    )}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -316,7 +352,9 @@ export default function BusinessDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-gray-500">{t?.('dashboard.stats.travelEarnings') || 'Travel Earnings'}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">-</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {statsLoading ? <span className="inline-block w-16 h-7 bg-gray-200 rounded animate-pulse" /> : `${stats?.travelEarnings ?? 0} MAD`}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,7 +370,9 @@ export default function BusinessDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-gray-500">{t?.('dashboard.stats.totalClients') || 'Total Clients'}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">-</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {statsLoading ? <span className="inline-block w-8 h-7 bg-gray-200 rounded animate-pulse" /> : (stats?.totalClients ?? 0)}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,7 +387,9 @@ export default function BusinessDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-gray-500">{t?.('dashboard.stats.avgRating') || 'Rating'}</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">-</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {statsLoading ? <span className="inline-block w-8 h-7 bg-gray-200 rounded animate-pulse" /> : (stats?.rating ? `${stats.rating} ★` : 'N/A')}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -365,9 +407,61 @@ export default function BusinessDashboard() {
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">{t?.('dashboard.upcomingAppointments') || 'Upcoming Bookings'}</h2>
         </div>
-        <div className="p-8 text-center text-gray-500">
-          <p>{t?.('dashboard.noUpcomingAppointments') || 'No upcoming bookings'}</p>
-        </div>
+        {statsLoading ? (
+          <div className="p-6 space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 animate-pulse">
+                <div className="w-10 h-10 bg-gray-100 rounded-full" />
+                <div className="flex-1">
+                  <div className="h-4 w-36 bg-gray-200 rounded mb-2" />
+                  <div className="h-3 w-24 bg-gray-100 rounded" />
+                </div>
+                <div className="h-4 w-16 bg-gray-100 rounded" />
+              </div>
+            ))}
+          </div>
+        ) : stats?.upcomingBookings?.length > 0 ? (
+          <div className="divide-y divide-gray-100">
+            {stats.upcomingBookings.map((booking) => {
+              const startDate = new Date(booking.start_time);
+              const timeStr = startDate.toLocaleTimeString(locale === 'ar' ? 'ar-MA' : locale === 'fr' ? 'fr-FR' : 'en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+              const dateStr = startDate.toLocaleDateString(locale === 'ar' ? 'ar-MA' : locale === 'fr' ? 'fr-FR' : 'en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+              });
+              return (
+                <div key={booking.id} className="flex items-center gap-4 px-6 py-4">
+                  <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-semibold text-sm">
+                    {(booking.client_name || '?')[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{booking.client_name}</p>
+                    <p className="text-xs text-gray-500">{booking.service}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="text-sm font-medium text-gray-900">{timeStr}</p>
+                    <p className="text-xs text-gray-500">{dateStr}</p>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full shrink-0 ${
+                    booking.status === 'confirmed' ? 'bg-green-100 text-green-700' :
+                    booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {booking.status}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-500">
+            <p>{t?.('dashboard.noUpcomingAppointments') || 'No upcoming bookings'}</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -19,6 +19,12 @@ export function useVerificationStatus() {
 
     try {
       const response = await fetch('/api/business/verification');
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('[useVerificationStatus] API returned non-JSON response');
+        setIsVerified(false);
+        return;
+      }
       const data = await response.json();
       
       if (response.ok && data.verification) {

@@ -219,6 +219,17 @@ export default function BusinessOnboarding({ userName, onComplete }) {
           body: JSON.stringify({ role: 'business' }),
         });
         
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          console.error('[BusinessOnboarding] API returned non-JSON response');
+          if (retryCount < maxRetries) {
+            retryCount++;
+            setTimeout(createUserImmediately, retryDelay);
+            return;
+          }
+          setSubmitError('Server returned unexpected response');
+          return;
+        }
         const data = await response.json();
         console.log('[BusinessOnboarding] User creation response:', JSON.stringify(data, null, 2));
         

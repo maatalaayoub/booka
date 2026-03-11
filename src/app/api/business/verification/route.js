@@ -77,6 +77,8 @@ export async function POST(request) {
     const formData = await request.formData();
     const identityFile = formData.get('identityFile');
     const businessFile = formData.get('businessFile');
+    const identityDocumentType = formData.get('identityDocumentType') || null;
+    const businessDocumentType = formData.get('businessDocumentType') || null;
 
     if (!identityFile && !businessFile) {
       return NextResponse.json({ error: 'At least one file is required' }, { status: 400 });
@@ -150,6 +152,7 @@ export async function POST(request) {
       
       if (uploadResults.identity_document_url) {
         updateData.identity_document_url = uploadResults.identity_document_url;
+        updateData.identity_document_type = identityDocumentType;
         updateData.identity_status = 'pending';
         updateData.identity_reviewed_by = null;
         updateData.identity_reviewed_at = null;
@@ -158,6 +161,7 @@ export async function POST(request) {
       
       if (uploadResults.business_document_url) {
         updateData.business_document_url = uploadResults.business_document_url;
+        updateData.business_document_type = businessDocumentType;
         updateData.business_status = 'pending';
         updateData.business_reviewed_by = null;
         updateData.business_reviewed_at = null;
@@ -180,6 +184,8 @@ export async function POST(request) {
         business_info_id: businessInfo.id,
         identity_document_url: uploadResults.identity_document_url || null,
         business_document_url: uploadResults.business_document_url || null,
+        identity_document_type: identityDocumentType,
+        business_document_type: businessDocumentType,
         identity_status: uploadResults.identity_document_url ? 'pending' : 'pending',
         business_status: uploadResults.business_document_url ? 'pending' : 'pending',
       };

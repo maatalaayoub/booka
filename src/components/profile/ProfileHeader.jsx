@@ -152,6 +152,8 @@ export default function ProfileHeader({
       formData.append('file', file);
       formData.append('type', 'cover');
       const res = await fetch('/api/upload-image', { method: 'POST', body: formData });
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) throw new Error('Non-JSON response');
       const data = await res.json();
       if (data.url) {
         setLocalCoverImage(data.url);
@@ -179,6 +181,8 @@ export default function ProfileHeader({
       formData.append('file', file);
       formData.append('type', 'avatar');
       const res = await fetch('/api/upload-image', { method: 'POST', body: formData });
+      const ct2 = res.headers.get('content-type') || '';
+      if (!ct2.includes('application/json')) throw new Error('Non-JSON response');
       const data = await res.json();
       if (data.url) {
         setLocalProfileImage(data.url);

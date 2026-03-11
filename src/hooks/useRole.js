@@ -36,6 +36,13 @@ export function useRole({ requiredRole = null, redirectTo = '/' } = {}) {
     try {
       const authHeaders = await getAuthHeaders();
       const response = await fetch('/api/get-role', { headers: authHeaders });
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('[useRole] API returned non-JSON response');
+        setRole(null);
+        setOnboardingCompleted(false);
+        return;
+      }
       const data = await response.json();
       
       if (response.ok) {

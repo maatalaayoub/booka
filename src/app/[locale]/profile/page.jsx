@@ -75,7 +75,11 @@ export default function UserProfilePage() {
   useEffect(() => {
     if (isViewingOther || !isLoaded || !isSignedIn || isBusiness) return;
     fetch('/api/user-profile')
-      .then(r => r.json())
+      .then(r => {
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) return {};
+        return r.json();
+      })
       .then(data => {
         setProfileData(prev => ({
           ...prev,
@@ -90,7 +94,11 @@ export default function UserProfilePage() {
   // Refresh profile data after editing
   const refreshProfile = () => {
     fetch('/api/user-profile')
-      .then(r => r.json())
+      .then(r => {
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) return {};
+        return r.json();
+      })
       .then(data => {
         setProfileData(prev => ({
           ...prev,

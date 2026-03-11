@@ -97,6 +97,18 @@ export default function AdminVerificationsPage() {
     );
   };
 
+  const DOC_TYPE_LABELS = {
+    national_id: 'dashboard.verification.nationalId',
+    passport: 'dashboard.verification.passport',
+    driver_license: 'dashboard.verification.driverLicense',
+    business_license: 'dashboard.verification.businessLicense',
+    registration_cert: 'dashboard.verification.registrationCert',
+    tax_document: 'dashboard.verification.taxDocument',
+    professional_cert: 'dashboard.verification.professionalCert',
+    professional_diploma: 'dashboard.verification.professionalDiploma',
+    training_cert: 'dashboard.verification.trainingCert',
+  };
+
   const renderDocActions = (v, field) => {
     const status = v[`${field}_status`];
     const docUrl = v[`${field}_document_url`];
@@ -250,6 +262,11 @@ export default function AdminVerificationsPage() {
                       {t('admin.verifications.viewDocument')}
                     </button>
                   )}
+                  {v.identity_document_type && (
+                    <p className="text-xs text-gray-500 mb-2">
+                      <span className="font-medium">{t('admin.verifications.docType')}:</span> {t(DOC_TYPE_LABELS[v.identity_document_type] || '') || v.identity_document_type}
+                    </p>
+                  )}
                   {v.identity_rejection_reason && (
                     <p className="text-xs text-red-500 mb-2">{t('admin.verifications.reason')}: {v.identity_rejection_reason}</p>
                   )}
@@ -278,6 +295,11 @@ export default function AdminVerificationsPage() {
                       <Eye className="w-3 h-3" />
                       {t('admin.verifications.viewDocument')}
                     </button>
+                  )}
+                  {v.business_document_type && (
+                    <p className="text-xs text-gray-500 mb-2">
+                      <span className="font-medium">{t('admin.verifications.docType')}:</span> {t(DOC_TYPE_LABELS[v.business_document_type] || '') || v.business_document_type}
+                    </p>
                   )}
                   {v.business_rejection_reason && (
                     <p className="text-xs text-red-500 mb-2">{t('admin.verifications.reason')}: {v.business_rejection_reason}</p>

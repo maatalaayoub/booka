@@ -42,6 +42,93 @@ async function getBusinessInfoId(supabase, clerkId) {
   return businessInfo?.id || null;
 }
 
+// Helper: validate appointment time against working hours and schedule exceptions
+async function validateAgainstSchedule(supabase, businessInfoId, startTimeISO, endTimeISO) {
+  const startDate = new Date(startTimeISO);
+  const endDate = new Date(endTimeISO);
+  const dayOfWeek = startDate.getDay(); // 0=Sunday
+  const dateStr = startDate.toISOString().split('T')[0]; // YYYY-MM-DD
+  const startHHMM = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`;
+  const endHHMM = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+
+  // Get business category to determine the correct table
+  const { data: businessInfo } = await supabase
+    .from('business_info')
+    .select('business_category')
+    .eq('id', businessInfoId)
+    .single();
+
+  if (!businessInfo) return { code: 'NO_BUSINESS', message: 'Business info not found' };
+
+  const tableMap = { salon_owner: 'shop_salon_info', mobile_service: 'mobile_service_info' };
+  const tableName = tableMap[businessInfo.business_category];
+
+  let businessHours = [];
+  if (tableName) {
+    const { data: catData } = await supabase
+      .from(tableName)
+      .select('business_hours')
+      .eq('business_info_id', businessInfoId)
+      .single();
+    businessHours = catData?.business_hours || [];
+  }
+
+  // 1. Check working hours for the day
+  if (businessHours.length > 0) {
+    const daySchedule = businessHours.find(h => h.dayOfWeek === dayOfWeek);
+    if (!daySchedule || !daySchedule.isOpen) {
+      return { code: 'CLOSED_DAY', message: 'This day is not a working day' };
+    }
+    // Check if appointment is within working hours
+    if (startHHMM < daySchedule.openTime || endHHMM > daySchedule.closeTime) {
+      return { code: 'OUTSIDE_HOURS', message: `Appointment must be between ${daySchedule.openTime} and ${daySchedule.closeTime}` };
+    }
+  }
+
+  // 2. Check schedule exceptions for that date
+  const { data: exceptions } = await supabase
+    .from('schedule_exceptions')
+    .select('*')
+    .eq('business_info_id', businessInfoId);
+
+  if (exceptions && exceptions.length > 0) {
+    for (const ex of exceptions) {
+      // Check recurring exceptions (e.g. every Monday break)
+      if (ex.recurring && ex.recurring_day === dayOfWeek) {
+        if (ex.is_full_day) {
+          return { code: 'EXCEPTION_FULLDAY', message: `This day is blocked: ${ex.title}` };
+        }
+        if (ex.start_time && ex.end_time) {
+          const exStart = ex.start_time.substring(0, 5);
+          const exEnd = ex.end_time.substring(0, 5);
+          if (startHHMM < exEnd && endHHMM > exStart) {
+            return { code: 'EXCEPTION_TIME', message: `Time conflicts with: ${ex.title} (${exStart}–${exEnd})` };
+          }
+        }
+        continue;
+      }
+
+      // Check date-based exceptions
+      const exDate = ex.date; // YYYY-MM-DD
+      const exEndDate = ex.end_date || exDate;
+      if (dateStr >= exDate && dateStr <= exEndDate) {
+        if (ex.is_full_day) {
+          return { code: 'EXCEPTION_FULLDAY', message: `This day is blocked: ${ex.title}` };
+        }
+        if (ex.start_time && ex.end_time) {
+          const exStart = ex.start_time.substring(0, 5);
+          const exEnd = ex.end_time.substring(0, 5);
+          if (startHHMM < exEnd && endHHMM > exStart) {
+            return { code: 'EXCEPTION_TIME', message: `Time conflicts with: ${ex.title} (${exStart}–${exEnd})` };
+          }
+        }
+      }
+    }
+  }
+
+  return null; // No conflicts
+}
+
 // ─── GET: Fetch all appointments for the business ───────────
 export async function GET(request) {
   try {
@@ -94,6 +181,12 @@ export async function POST(request) {
 
     if (!client_name || !service || !start_time || !end_time) {
       return NextResponse.json({ error: 'Missing required fields: client_name, service, start_time, end_time' }, { status: 400 });
+    }
+
+    // ── Validate against working hours and schedule exceptions ──
+    const scheduleError = await validateAgainstSchedule(supabase, businessInfoId, start_time, end_time);
+    if (scheduleError) {
+      return NextResponse.json({ error: scheduleError.message, code: scheduleError.code }, { status: 400 });
     }
 
     const { data: appointment, error } = await supabase

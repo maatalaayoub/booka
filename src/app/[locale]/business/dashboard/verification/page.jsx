@@ -48,6 +48,8 @@ export default function VerificationPage() {
   const [businessFile, setBusinessFile] = useState(null);
   const [identityDocUrl, setIdentityDocUrl] = useState(null);
   const [businessDocUrl, setBusinessDocUrl] = useState(null);
+  const [identityDocType, setIdentityDocType] = useState('');
+  const [businessDocType, setBusinessDocType] = useState('');
   const [identityRejectionReason, setIdentityRejectionReason] = useState(null);
   const [businessRejectionReason, setBusinessRejectionReason] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -55,6 +57,26 @@ export default function VerificationPage() {
   const [submitError, setSubmitError] = useState(null);
   const identityInputRef = useRef(null);
   const businessInputRef = useRef(null);
+
+  const IDENTITY_DOC_TYPES = [
+    { value: 'national_id', labelKey: 'dashboard.verification.nationalId' },
+    { value: 'passport', labelKey: 'dashboard.verification.passport' },
+    { value: 'driver_license', labelKey: 'dashboard.verification.driverLicense' },
+  ];
+
+  const BUSINESS_DOC_TYPES_SHOP = [
+    { value: 'business_license', labelKey: 'dashboard.verification.businessLicense' },
+    { value: 'registration_cert', labelKey: 'dashboard.verification.registrationCert' },
+    { value: 'tax_document', labelKey: 'dashboard.verification.taxDocument' },
+  ];
+
+  const BUSINESS_DOC_TYPES_MOBILE = [
+    { value: 'professional_cert', labelKey: 'dashboard.verification.professionalCert' },
+    { value: 'professional_diploma', labelKey: 'dashboard.verification.professionalDiploma' },
+    { value: 'training_cert', labelKey: 'dashboard.verification.trainingCert' },
+  ];
+
+  const businessDocTypes = businessCategory === 'mobile_service' ? BUSINESS_DOC_TYPES_MOBILE : BUSINESS_DOC_TYPES_SHOP;
 
   // Prerequisites state
   const [loading, setLoading] = useState(true);
@@ -79,7 +101,8 @@ export default function VerificationPage() {
         setHasServices(services.length > 0);
 
         const s = settingsRes.settings || {};
-        setHasBusinessName(!!s.businessName?.trim());
+        const businessName = s.businessName?.trim() || settingsRes.fallbackBusinessName?.trim() || '';
+        setHasBusinessName(!!businessName);
         setHasProfileImage(!!s.avatarUrl);
         setHasCoverImage((s.coverGallery || []).length > 0);
 
@@ -94,6 +117,8 @@ export default function VerificationPage() {
         setBusinessStatus(v.business_status || 'not_submitted');
         setIdentityDocUrl(v.identity_document_url || null);
         setBusinessDocUrl(v.business_document_url || null);
+        setIdentityDocType(v.identity_document_type || '');
+        setBusinessDocType(v.business_document_type || '');
         setIdentityRejectionReason(v.identity_rejection_reason || null);
         setBusinessRejectionReason(v.business_rejection_reason || null);
       } catch {
@@ -150,9 +175,11 @@ export default function VerificationPage() {
       const formData = new FormData();
       if (identityFile) {
         formData.append('identityFile', identityFile);
+        formData.append('identityDocumentType', identityDocType);
       }
       if (businessFile) {
         formData.append('businessFile', businessFile);
+        formData.append('businessDocumentType', businessDocType);
       }
 
       const res = await fetch('/api/business/verification', {
@@ -177,6 +204,8 @@ export default function VerificationPage() {
       setBusinessRejectionReason(null);
       setIdentityFile(null);
       setBusinessFile(null);
+      setIdentityDocType(v.identity_document_type || identityDocType);
+      setBusinessDocType(v.business_document_type || businessDocType);
       setSubmitted(true);
     } catch (err) {
       console.error('[verification] Submit error:', err);
@@ -193,10 +222,10 @@ export default function VerificationPage() {
   const canPickIdentity = allPrerequisitesMet && (identityStatus === 'not_submitted' || identityStatus === 'rejected');
   const canPickBusiness = allPrerequisitesMet && (businessStatus === 'not_submitted' || businessStatus === 'rejected');
   
-  // Can submit if prerequisites met and we have necessary files for documents that need submission
+  // Can submit if prerequisites met and we have necessary files + doc types for documents that need submission
   const needsIdentityFile = identityStatus === 'not_submitted' || identityStatus === 'rejected';
   const needsBusinessFile = businessStatus === 'not_submitted' || businessStatus === 'rejected';
-  const hasRequiredFiles = (!needsIdentityFile || identityFile) && (!needsBusinessFile || businessFile);
+  const hasRequiredFiles = (!needsIdentityFile || (identityFile && identityDocType)) && (!needsBusinessFile || (businessFile && businessDocType));
   const canSubmit = allPrerequisitesMet && hasRequiredFiles && (needsIdentityFile || needsBusinessFile);
 
   return (
@@ -301,12 +330,18 @@ export default function VerificationPage() {
             <p className="text-sm text-gray-500">{t('dashboard.verification.identityDesc')}</p>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-700">{t('dashboard.verification.acceptedDocs')}</p>
-              <ul className="text-xs text-gray-400 space-y-1.5">
-                <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.nationalId')}</li>
-                <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.passport')}</li>
-                <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.driverLicense')}</li>
-              </ul>
+              <label className="block text-xs font-medium text-gray-700">{t('dashboard.verification.documentType')}</label>
+              <select
+                value={identityDocType}
+                onChange={e => setIdentityDocType(e.target.value)}
+                disabled={!canPickIdentity}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-[5px] bg-white focus:outline-none focus:ring-1 focus:ring-[#364153]/30 disabled:bg-gray-50 disabled:text-gray-500"
+              >
+                <option value="">{t('dashboard.verification.selectDocType')}</option>
+                {IDENTITY_DOC_TYPES.map(dt => (
+                  <option key={dt.value} value={dt.value}>{t(dt.labelKey)}</option>
+                ))}
+              </select>
             </div>
 
             {identityFile && (
@@ -391,20 +426,18 @@ export default function VerificationPage() {
             </p>
 
             <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-700">{t('dashboard.verification.acceptedDocs')}</p>
-              {businessCategory === 'mobile_service' ? (
-                <ul className="text-xs text-gray-400 space-y-1.5">
-                  <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.professionalCert')}</li>
-                  <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.professionalDiploma')}</li>
-                  <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.trainingCert')}</li>
-                </ul>
-              ) : (
-                <ul className="text-xs text-gray-400 space-y-1.5">
-                  <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.businessLicense')}</li>
-                  <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.registrationCert')}</li>
-                  <li className="flex items-center gap-2"><FileText className="w-3.5 h-3.5 text-gray-300" />{t('dashboard.verification.taxDocument')}</li>
-                </ul>
-              )}
+              <label className="block text-xs font-medium text-gray-700">{t('dashboard.verification.documentType')}</label>
+              <select
+                value={businessDocType}
+                onChange={e => setBusinessDocType(e.target.value)}
+                disabled={!canPickBusiness}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-[5px] bg-white focus:outline-none focus:ring-1 focus:ring-[#364153]/30 disabled:bg-gray-50 disabled:text-gray-500"
+              >
+                <option value="">{t('dashboard.verification.selectDocType')}</option>
+                {businessDocTypes.map(dt => (
+                  <option key={dt.value} value={dt.value}>{t(dt.labelKey)}</option>
+                ))}
+              </select>
             </div>
 
             {businessFile && (

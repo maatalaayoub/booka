@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
+import dynamic from 'next/dynamic';
 import {
   MapPin,
   Navigation,
@@ -13,8 +14,18 @@ import {
   AlertCircle,
   X,
   Plus,
+  Map,
 } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+
+const ServiceAreaMap = dynamic(() => import('@/components/ServiceAreaMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[350px] bg-gray-100 rounded-[5px] flex items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+    </div>
+  ),
+});
 
 const RADIUS_OPTIONS = [5, 10, 15, 20, 30, 50, 75, 100];
 
@@ -62,9 +73,11 @@ export default function ServiceAreaPage() {
   const [form, setForm] = useState({
     baseLocation: '',
     city: '',
-    serviceRadius: null,
+    serviceRadius: 5,
     citiesCovered: [],
     travelFee: 0,
+    latitude: null,
+    longitude: null,
   });
 
   useEffect(() => {
@@ -77,9 +90,11 @@ export default function ServiceAreaPage() {
           setForm({
             baseLocation: data.baseLocation || '',
             city: data.city || '',
-            serviceRadius: data.serviceRadius || null,
+            serviceRadius: data.serviceRadius || 5,
             citiesCovered: data.citiesCovered || [],
             travelFee: data.travelFee || 0,
+            latitude: data.latitude || null,
+            longitude: data.longitude || null,
           });
         }
       })
@@ -89,6 +104,11 @@ export default function ServiceAreaPage() {
 
   const set = useCallback((key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
+    setSaveStatus(null);
+  }, []);
+
+  const handleLocationSelect = useCallback((lat, lng) => {
+    setForm((f) => ({ ...f, latitude: lat, longitude: lng }));
     setSaveStatus(null);
   }, []);
 
@@ -124,6 +144,8 @@ export default function ServiceAreaPage() {
           serviceRadius: form.serviceRadius,
           citiesCovered: form.citiesCovered,
           travelFee: form.travelFee,
+          latitude: form.latitude,
+          longitude: form.longitude,
         }),
       });
 
@@ -215,6 +237,32 @@ export default function ServiceAreaPage() {
                   className="w-full px-3.5 py-2.5 border border-gray-200 rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-[#364153]/20 focus:border-[#364153] transition-all"
                 />
               </div>
+
+              {/* Map */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <Map className="w-3.5 h-3.5 text-gray-400" />
+                  {t('serviceArea.pinLocation') || 'Pin Your Location'}
+                </label>
+                <p className="text-xs text-gray-400">
+                  {t('serviceArea.mapHint') || 'Click on the map to set your starting point. The circle shows your service radius.'}
+                </p>
+                <ServiceAreaMap
+                  latitude={form.latitude}
+                  longitude={form.longitude}
+                  radiusKm={form.serviceRadius || 5}
+                  onLocationSelect={handleLocationSelect}
+                  className="h-[350px]"
+                />
+                {form.latitude && form.longitude && (
+                  <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-[5px]">
+                    <MapPin className="w-3.5 h-3.5 text-green-500" />
+                    <span>
+                      {t('serviceArea.coordinates') || 'Coordinates'}: {form.latitude.toFixed(6)}, {form.longitude.toFixed(6)}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -231,7 +279,7 @@ export default function ServiceAreaPage() {
               {RADIUS_OPTIONS.map((km) => (
                 <button
                   key={km}
-                  onClick={() => set('serviceRadius', form.serviceRadius === km ? null : km)}
+                  onClick={() => set('serviceRadius', km)}
                   className={`py-2.5 px-3 rounded-[5px] text-sm font-medium transition-all border ${
                     form.serviceRadius === km
                       ? 'bg-[#364153] text-white border-[#364153]'
@@ -242,13 +290,11 @@ export default function ServiceAreaPage() {
                 </button>
               ))}
             </div>
-            {form.serviceRadius && (
-              <p className="text-xs text-gray-500 mt-3">
-                {t('serviceArea.radiusSelected') || 'You will serve clients within'}{' '}
-                <span className="font-semibold text-[#364153]">{form.serviceRadius} km</span>{' '}
-                {t('serviceArea.radiusFromBase') || 'from your base location'}
-              </p>
-            )}
+            <p className="text-xs text-gray-500 mt-3">
+              {t('serviceArea.radiusSelected') || 'You will serve clients within'}{' '}
+              <span className="font-semibold text-[#364153]">{form.serviceRadius || 5} km</span>{' '}
+              {t('serviceArea.radiusFromBase') || 'from your base location'}
+            </p>
           </div>
         </div>
 
