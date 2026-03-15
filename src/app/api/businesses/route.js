@@ -1,0 +1,84 @@
+import { NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
+
+/**
+ * GET /api/businesses
+ * Fetch active businesses grouped by professional_type for the home page.
+ * Only returns businesses with onboarding completed and public page enabled.
+ * Supports optional ?category= filter (professional_type).
+ */
+export async function GET(request) {
+  try {
+    const supabase = createServerSupabaseClient();
+    const { searchParams } = new URL(request.url);
+    const category = searchParams.get('category');
+
+    // Fetch businesses that completed onboarding (salon_owner or mobile_service only)
+    let query = supabase
+      .from('business_info')
+      .select(`
+        id, business_category, professional_type,
+        shop_salon_info ( business_name, address, city, phone, latitude, longitude ),
+        mobile_service_info ( business_name, address, city, phone, latitude, longitude ),
+        business_card_settings ( settings ),
+        business_services ( id, name, price, currency, is_active )
+      `)
+      .eq('onboarding_completed', true)
+      .in('business_category', ['salon_owner', 'mobile_service']);
+
+    if (category) {
+      query = query.eq('professional_type', category);
+    }
+
+    const { data: businesses, error } = await query;
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Filter to only businesses with public page enabled
+    const activeBiz = (businesses || []).filter(b => {
+      const settings = b.business_card_settings?.settings;
+      return settings && settings.pageEnabled === true;
+    });
+
+    // Build response grouped by professional_type
+    const grouped = {};
+    for (const biz of activeBiz) {
+      const type = biz.professional_type;
+      if (!grouped[type]) grouped[type] = [];
+
+      const details = biz.shop_salon_info || biz.mobile_service_info;
+      const settings = biz.business_card_settings?.settings || {};
+      const services = (biz.business_services || []).filter(s => s.is_active);
+
+      grouped[type].push({
+        id: biz.id,
+        businessCategory: biz.business_category,
+        professionalType: type,
+        businessName: settings.businessName || details?.business_name || '',
+        city: details?.city || '',
+        avatarUrl: settings.avatarUrl || null,
+        coverGallery: settings.coverGallery || [],
+        accentColor: settings.accentColor || 'slate',
+        showProfile: settings.showProfile !== false,
+        showLocation: settings.showLocation !== false,
+        showRating: settings.showRating !== false,
+        showResponseTime: settings.showResponseTime || false,
+        showServices: settings.showServices !== false,
+        showPrices: settings.showPrices !== false,
+        showCoverPhoto: settings.showCoverPhoto !== false,
+        totalServices: services.length,
+        services: services.slice(0, 3).map(s => ({
+          name: s.name,
+          price: s.price,
+          currency: s.currency,
+        })),
+      });
+    }
+
+    return NextResponse.json({ businesses: grouped });
+  } catch (err) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

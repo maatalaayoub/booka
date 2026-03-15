@@ -1044,6 +1044,22 @@ const translations = {
     navProfile: 'Profile',
     navMenu: 'Menu',
 
+    // Home Page - Business Cards
+    'home.businessesTitle': 'Discover Professionals Near You',
+    'home.businessesSubtitle': 'Browse top-rated barbers, hairdressers, and beauty professionals',
+    'home.noBusinesses': 'No businesses available at the moment',
+    'home.moreServices': 'more services',
+    'home.category.barber': 'Barbers',
+    'home.category.hairdresser': 'Hairdressers',
+    'home.category.makeup': 'Makeup Artists',
+    'home.category.nails': 'Nail Technicians',
+    'home.category.massage': 'Massage Therapists',
+    'home.type.barber': 'Barber',
+    'home.type.hairdresser': 'Hairdresser',
+    'home.type.makeup': 'Makeup Artist',
+    'home.type.nails': 'Nail Technician',
+    'home.type.massage': 'Massage Therapist',
+
     // Sidebar Menu
     home: 'Home',
     quickActions: 'Quick Actions',
@@ -2096,6 +2112,22 @@ const translations = {
     navProfile: 'Profil',
     navMenu: 'Menu',
 
+    // Home Page - Business Cards
+    'home.businessesTitle': 'Découvrez les professionnels près de chez vous',
+    'home.businessesSubtitle': 'Parcourez les meilleurs barbiers, coiffeurs et professionnels de la beauté',
+    'home.noBusinesses': 'Aucun commerce disponible pour le moment',
+    'home.moreServices': 'autres services',
+    'home.category.barber': 'Barbiers',
+    'home.category.hairdresser': 'Coiffeurs',
+    'home.category.makeup': 'Maquilleurs',
+    'home.category.nails': 'Techniciens ongles',
+    'home.category.massage': 'Masseurs',
+    'home.type.barber': 'Barbier',
+    'home.type.hairdresser': 'Coiffeur',
+    'home.type.makeup': 'Maquilleur',
+    'home.type.nails': 'Technicien ongles',
+    'home.type.massage': 'Masseur',
+
     // Sidebar Menu
     home: 'Accueil',
     quickActions: 'Actions rapides',
@@ -3130,6 +3162,22 @@ const translations = {
     navPosts: 'منشورات',
     navProfile: 'الملف الشخصي',
     navMenu: 'القائمة',
+
+    // Home Page - Business Cards
+    'home.businessesTitle': 'اكتشف المحترفين بالقرب منك',
+    'home.businessesSubtitle': 'تصفح أفضل الحلاقين ومصففي الشعر ومحترفي التجميل',
+    'home.noBusinesses': 'لا توجد أعمال متاحة حاليًا',
+    'home.moreServices': 'خدمات أخرى',
+    'home.category.barber': 'حلاقون',
+    'home.category.hairdresser': 'مصففو شعر',
+    'home.category.makeup': 'فناني مكياج',
+    'home.category.nails': 'تقنيي أظافر',
+    'home.category.massage': 'معالجو تدليك',
+    'home.type.barber': 'حلاق',
+    'home.type.hairdresser': 'مصفف شعر',
+    'home.type.makeup': 'فنان مكياج',
+    'home.type.nails': 'تقني أظافر',
+    'home.type.massage': 'معالج تدليك',
 
     // Sidebar Menu
     home: 'الرئيسية',
