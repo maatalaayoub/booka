@@ -314,6 +314,7 @@ export default function PublicPageManager() {
   const galleryInputRef = useRef(null);
   const hasFetchedRef = useRef(false);
   const savedSettingsRef = useRef(null);
+  const [savedVersion, setSavedVersion] = useState(0);
 
   // Fetch business data & saved settings (only once)
   useEffect(() => {
@@ -340,22 +341,40 @@ export default function PublicPageManager() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, [isLoaded, user]);
 
-  // Count how many settings differ from saved state
+  // Count how many logical changes differ from saved state
   const changeCount = useMemo(() => {
     if (!savedSettingsRef.current) return 0;
     const base = savedSettingsRef.current;
+    // Group related fields so preset selections count as 1 change
+    const groups = [
+      ['pageEnabled'],
+      ['showProfile'],
+      ['businessName'],
+      ['showBookingButton', 'showGetDirections', 'showCallButton', 'showMessageButton'],
+      ['showCoverPhoto'],
+      ['showServices'],
+      ['showPrices'],
+      ['showLocation'],
+      ['showRating'],
+      ['showResponseTime'],
+      ['accentColor'],
+      ['coverGallery'],
+      ['avatarUrl'],
+    ];
     let count = 0;
-    for (const key of Object.keys({ ...base, ...settings })) {
-      const a = base[key];
-      const b = settings[key];
-      if (Array.isArray(a) && Array.isArray(b)) {
-        if (JSON.stringify(a) !== JSON.stringify(b)) count++;
-      } else if (a !== b) {
-        count++;
-      }
+    for (const group of groups) {
+      const changed = group.some(key => {
+        const a = base[key];
+        const b = settings[key];
+        if (Array.isArray(a) && Array.isArray(b)) {
+          return JSON.stringify(a) !== JSON.stringify(b);
+        }
+        return a !== b;
+      });
+      if (changed) count++;
     }
     return count;
-  }, [settings]);
+  }, [settings, savedVersion]);
 
   const hasUnsavedChanges = changeCount > 0;
 
@@ -424,6 +443,7 @@ export default function PublicPageManager() {
         throw new Error(data.error || 'Failed to save');
       }
       savedSettingsRef.current = { ...settings };
+      setSavedVersion(v => v + 1);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {

@@ -156,14 +156,14 @@ export default function Hero() {
               </div>
 
               {/* Center: Search bar (all devices) */}
-              <div className="flex flex-1 sd:justify-center">
-                <div className="flex flex-1 sd:flex-initial sd:w-full sd:max-w-xl items-center gap-2 relative">
+              <div className="flex flex-1 min-w-0 sd:justify-center">
+                <div className="flex flex-1 sd:flex-initial sd:w-full sd:max-w-xl items-center gap-2 min-w-0 relative">
                 <div className="flex flex-1 items-center rounded-[10px] bg-white px-3 py-2.5 min-w-0 overflow-hidden">
                   <Search className="h-4 w-4 text-gray-400 shrink-0" />
                   <input
                     type="text"
                     placeholder={t('searchPlaceholder')}
-                    className="flex-1 bg-transparent text-[#364153] placeholder-gray-400 outline-none text-xs font-medium min-w-[100px] mx-1.5"
+                    className="flex-1 bg-transparent text-[#364153] placeholder-gray-400 outline-none text-xs font-medium min-w-0 mx-1.5"
                   />
                   <div className="h-5 w-px bg-gray-200 shrink-0" />
                   <button

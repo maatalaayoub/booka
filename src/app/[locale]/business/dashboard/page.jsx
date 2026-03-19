@@ -6,6 +6,9 @@ import { useRole } from '@/hooks/useRole';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusinessCategory } from '@/contexts/BusinessCategoryContext';
 import BusinessOnboarding from '@/components/BusinessOnboarding';
+import AppointmentDetailModal from '@/components/dashboard/AppointmentDetailModal';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AlertTriangle, XCircle, CalendarDays, Clock } from 'lucide-react';
 
 export default function BusinessDashboard() {
   const { 
@@ -30,6 +33,8 @@ export default function BusinessDashboard() {
   const [setupError, setSetupError] = useState(null);
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [conflictDialog, setConflictDialog] = useState(null); // { approvedId, conflicts: [...] }
   
   // Ref to track if we've handled the setup (prevents redirect after URL clean)
   const setupHandledRef = useRef(false);
@@ -96,6 +101,134 @@ export default function BusinessDashboard() {
       setStatsLoading(false);
     }
   };
+
+  // Transform a booking from stats into the format AppointmentDetailModal expects
+  const toModalFormat = (booking) => ({
+    id: booking.id,
+    title: booking.client_name || 'Client',
+    start: booking.start_time,
+    end: booking.end_time,
+    extendedProps: {
+      status: booking.status,
+      client: booking.client_name,
+      service: booking.service,
+      phone: booking.client_phone,
+      notes: booking.notes,
+      price: booking.price,
+      clientAddress: booking.client_address,
+    },
+  });
+
+  // Update appointment status via API
+  const updateAppointmentStatus = async (id, status) => {
+    try {
+      const res = await fetch('/api/business/appointments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (res.ok) fetchStats();
+    } catch (err) {
+      console.error('Failed to update appointment:', err);
+    }
+  };
+
+  // Find conflicting appointments (same time slot, excluding the one being approved)
+  const findConflicts = (booking) => {
+    if (!stats?.upcomingBookings) return [];
+    return stats.upcomingBookings.filter(b =>
+      b.id !== booking.id &&
+      b.status === 'pending' &&
+      new Date(b.start_time) < new Date(booking.end_time) &&
+      new Date(b.end_time) > new Date(booking.start_time)
+    );
+  };
+
+  const handleConfirm = (id) => {
+    const booking = stats?.upcomingBookings?.find(b => b.id === id);
+    if (!booking) return;
+    const conflicts = findConflicts(booking);
+    if (conflicts.length > 0) {
+      setConflictDialog({ approvedId: id, conflicts });
+    } else {
+      updateAppointmentStatus(id, 'confirmed');
+    }
+  };
+
+  // Delete appointment from database
+  const deleteAppointment = async (id) => {
+    try {
+      const res = await fetch(`/api/business/appointments?id=${id}`, { method: 'DELETE' });
+      if (res.ok) fetchStats();
+    } catch (err) {
+      console.error('Failed to delete appointment:', err);
+    }
+  };
+
+  const handleConflictResolve = async (action) => {
+    if (!conflictDialog) return;
+    // First confirm the approved one
+    await updateAppointmentStatus(conflictDialog.approvedId, 'confirmed');
+    if (action === 'cancel') {
+      for (const c of conflictDialog.conflicts) {
+        await deleteAppointment(c.id);
+      }
+      setConflictDialog(null);
+      fetchStats();
+    } else if (action === 'reschedule') {
+      startReschedule(0);
+    }
+  };
+
+  const startReschedule = async (index) => {
+    if (!conflictDialog || index >= conflictDialog.conflicts.length) {
+      setConflictDialog(null);
+      fetchStats();
+      return;
+    }
+    const conflict = conflictDialog.conflicts[index];
+    setConflictDialog(prev => ({ ...prev, rescheduleIndex: index, slotsLoading: true, slots: null }));
+    try {
+      const startDt = new Date(conflict.start_time);
+      const endDt = new Date(conflict.end_time);
+      const duration = Math.round((endDt - startDt) / 60000);
+      const date = startDt.toISOString().split('T')[0];
+      const res = await fetch(`/api/book/available-slots?businessId=${encodeURIComponent(conflict.business_info_id)}&date=${date}&duration=${duration}`);
+      const data = await res.json();
+      const availableSlots = (data.slots || []).filter(s => s.available);
+      setConflictDialog(prev => ({ ...prev, slots: availableSlots, slotsLoading: false }));
+    } catch (err) {
+      console.error('Failed to fetch slots:', err);
+      setConflictDialog(prev => ({ ...prev, slots: [], slotsLoading: false }));
+    }
+  };
+
+  const handleSlotPick = async (slot) => {
+    if (!conflictDialog || conflictDialog.rescheduleIndex == null) return;
+    const conflict = conflictDialog.conflicts[conflictDialog.rescheduleIndex];
+    const date = new Date(conflict.start_time).toISOString().split('T')[0];
+    const newStart = `${date}T${slot.start}:00`;
+    const newEnd = `${date}T${slot.end}:00`;
+    try {
+      await fetch('/api/business/appointments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: conflict.id, start_time: newStart, end_time: newEnd, status: 'confirmed' }),
+      });
+      const nextIndex = conflictDialog.rescheduleIndex + 1;
+      if (nextIndex < conflictDialog.conflicts.length) {
+        startReschedule(nextIndex);
+      } else {
+        setConflictDialog(null);
+        fetchStats();
+      }
+    } catch (err) {
+      console.error('Failed to reschedule appointment:', err);
+    }
+  };
+
+  const handleCancel = (id) => deleteAppointment(id);
+  const handleComplete = (id) => updateAppointmentStatus(id, 'completed');
 
   useEffect(() => {
     async function setupRole() {
@@ -565,7 +698,7 @@ export default function BusinessDashboard() {
                 day: 'numeric',
               });
               return (
-                <div key={booking.id} className="flex items-center gap-4 px-6 py-4">
+                <div key={booking.id} className="flex items-center gap-4 px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setSelectedBooking(booking)}>
                   <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-semibold text-sm">
                     {(booking.client_name || '?')[0].toUpperCase()}
                   </div>
@@ -594,6 +727,141 @@ export default function BusinessDashboard() {
           </div>
         )}
       </div>
+
+      {/* Appointment Detail Modal */}
+      <AppointmentDetailModal
+        appointment={selectedBooking ? toModalFormat(selectedBooking) : null}
+        isOpen={!!selectedBooking}
+        onClose={() => setSelectedBooking(null)}
+        onConfirm={(id) => { setSelectedBooking(null); handleConfirm(id); }}
+        onComplete={(id) => { setSelectedBooking(null); handleComplete(id); }}
+        onCancel={(id) => { setSelectedBooking(null); handleCancel(id); }}
+      />
+
+      {/* Conflict Resolution Dialog */}
+      <AnimatePresence>
+        {conflictDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10001] flex items-center justify-center p-4"
+            onClick={() => setConflictDialog(null)}
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ type: 'spring', duration: 0.3 }}
+              className="relative bg-white rounded-[5px] shadow-2xl w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex flex-col items-center text-center">
+                {conflictDialog.rescheduleIndex == null ? (
+                  <>
+                    <div className="flex items-center justify-center w-14 h-14 rounded-full bg-amber-100 mb-4">
+                      <AlertTriangle className="w-7 h-7 text-amber-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      {t?.('dashboard.conflictTitle') || 'Time Conflict Detected'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {t?.('dashboard.conflictDesc') || 'The following appointment(s) overlap with the one you just approved:'}
+                    </p>
+
+                    <div className="w-full space-y-2 mb-5">
+                      {conflictDialog.conflicts.map(c => {
+                        const start = new Date(c.start_time);
+                        return (
+                          <div key={c.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-[5px] text-left">
+                            <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-semibold text-xs shrink-0">
+                              {(c.client_name || '?')[0].toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{c.client_name}</p>
+                              <p className="text-xs text-gray-500">{c.service}</p>
+                            </div>
+                            <div className="text-xs text-gray-500 shrink-0">
+                              {start.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <p className="text-sm text-gray-600 mb-5">
+                      {t?.('dashboard.conflictQuestion') || 'Would you like to cancel or reschedule?'}
+                    </p>
+
+                    <div className="flex gap-3 w-full">
+                      <button
+                        onClick={() => handleConflictResolve('cancel')}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-[5px] font-medium text-sm transition-colors"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        {t?.('dashboard.conflictCancel') || 'Cancel Them'}
+                      </button>
+                      <button
+                        onClick={() => handleConflictResolve('reschedule')}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-[#D4AF37] hover:bg-[#c9a432] text-white rounded-[5px] font-medium text-sm transition-colors"
+                      >
+                        <CalendarDays className="w-4 h-4" />
+                        {t?.('dashboard.conflictReschedule') || 'Reschedule'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-center w-14 h-14 rounded-full bg-blue-100 mb-4">
+                      <CalendarDays className="w-7 h-7 text-blue-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                      {t?.('dashboard.rescheduleTitle') || 'Reschedule Appointment'}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {t?.('dashboard.rescheduleDesc') || 'Pick a new time slot for'}{' '}
+                      <span className="font-medium text-gray-700">{conflictDialog.conflicts[conflictDialog.rescheduleIndex]?.client_name}</span>
+                    </p>
+
+                    {conflictDialog.slotsLoading ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-6 h-6 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : conflictDialog.slots?.length > 0 ? (
+                      <div className="w-full max-h-60 overflow-y-auto space-y-1.5 mb-4">
+                        {conflictDialog.slots.map((slot, i) => (
+                          <button
+                            key={i}
+                            onClick={() => handleSlotPick(slot)}
+                            className="w-full flex items-center gap-3 p-3 bg-gray-50 hover:bg-[#D4AF37]/10 hover:border-[#D4AF37] border border-transparent rounded-[5px] text-left transition-colors"
+                          >
+                            <Clock className="w-4 h-4 text-gray-400" />
+                            <span className="text-sm font-medium text-gray-700">{slot.start}</span>
+                            <span className="text-xs text-gray-400">→</span>
+                            <span className="text-sm font-medium text-gray-700">{slot.end}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 py-4 mb-4">
+                        {t?.('dashboard.noSlotsAvailable') || 'No available slots for this day.'}
+                      </p>
+                    )}
+
+                    <button
+                      onClick={() => setConflictDialog(prev => ({ ...prev, rescheduleIndex: null, slots: null }))}
+                      className="w-full px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-[5px] font-medium text-sm transition-colors"
+                    >
+                      {t?.('dashboard.back') || 'Back'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

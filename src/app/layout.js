@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import ClientProvider from "@/components/ClientProvider";
@@ -8,10 +8,6 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata = {
   title: "BarberBook - Book Your Barber or Salon in Seconds",
@@ -62,7 +58,7 @@ export default function RootLayout({ children }) {
     >
       <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+          className={`${geistSans.variable} antialiased`}
         >
           <ClientProvider>
             {children}

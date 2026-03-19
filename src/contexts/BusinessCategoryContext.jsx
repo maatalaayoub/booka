@@ -21,9 +21,11 @@ export function BusinessCategoryProvider({ children }) {
         const res = await fetch('/api/business/onboarding');
         if (res.ok) {
           const text = await res.text();
-          const data = text ? JSON.parse(text) : {};
-          setBusinessCategory(data.businessCategory || null);
-          setServiceMode(data.businessInfo?.service_mode || null);
+          if (text && (text.startsWith('{') || text.startsWith('['))) {
+            const data = JSON.parse(text);
+            setBusinessCategory(data.businessCategory || null);
+            setServiceMode(data.businessInfo?.service_mode || null);
+          }
         }
       } catch (err) {
         console.error('Error fetching business category:', err);

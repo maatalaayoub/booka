@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { MapPin, Star, Clock, Briefcase, ChevronLeft, ChevronRight, Scissors, Sparkles, Hand, Palette, Phone, MessageCircle, Navigation } from 'lucide-react';
-import Link from 'next/link';
 
 const ACCENT_COLORS = {
   slate:  { bg: '#364153', light: '#e8ecf0' },
@@ -23,10 +23,12 @@ const CATEGORY_ICONS = {
 };
 
 // ─── SINGLE BUSINESS CARD ────────────────────────────────────
-function BusinessCard({ business, t }) {
+function BusinessCard({ business, t, locale }) {
+  const router = useRouter();
   const gallery = business.coverGallery || [];
   const [slideIndex, setSlideIndex] = useState(0);
   const accent = ACCENT_COLORS[business.accentColor] || ACCENT_COLORS.slate;
+  const cardHref = `/${locale}/b/${business.id}`;
 
   useEffect(() => {
     if (gallery.length <= 1) return;
@@ -37,7 +39,7 @@ function BusinessCard({ business, t }) {
   }, [gallery.length]);
 
   return (
-    <div className="bg-white rounded-[5px] border border-gray-300 w-[260px] flex-shrink-0 snap-start overflow-hidden flex flex-col">
+    <div onClick={() => router.push(cardHref)} className="bg-white rounded-[5px] border border-gray-300 w-[260px] flex-shrink-0 snap-start overflow-hidden flex flex-col hover:shadow-md transition-shadow cursor-pointer">
       {/* Cover */}
       <div className="relative">
         <div className="h-28 overflow-hidden relative" style={{ backgroundColor: accent.light }}>
@@ -130,6 +132,7 @@ function BusinessCard({ business, t }) {
 
         {/* Action buttons row */}
         {(() => {
+          const stopProp = (e) => e.stopPropagation();
           const hasBooking = business.showBookingButton !== false;
           const hasDirections = business.showGetDirections;
           const hasCall = business.showCallButton && business.phone;
@@ -156,6 +159,7 @@ function BusinessCard({ business, t }) {
                   href={directionsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={stopProp}
                   className={`flex-1 py-2 text-xs font-semibold rounded-[5px] transition-opacity hover:opacity-90 flex items-center justify-center gap-1 ${
                     hasBooking ? 'border border-gray-400 text-gray-600' : 'text-white'
                   }`}
@@ -169,6 +173,7 @@ function BusinessCard({ business, t }) {
               {hasCall && (
                 <a
                   href={`tel:${business.phone}`}
+                  onClick={stopProp}
                   className={`flex items-center justify-center rounded-[5px] transition-colors ${
                     contactOnly
                       ? 'flex-1 gap-1 py-2 text-xs font-semibold text-white hover:opacity-90'
@@ -189,6 +194,7 @@ function BusinessCard({ business, t }) {
                   href={`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={stopProp}
                   className={`flex items-center justify-center rounded-[5px] transition-colors ${
                     contactOnly
                       ? 'flex-1 gap-1 py-2 text-xs font-semibold text-white hover:opacity-90'
@@ -281,7 +287,7 @@ function CategoryRow({ type, businesses, t, locale }) {
         >
           <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }`}</style>
           {businesses.map(biz => (
-            <BusinessCard key={biz.id} business={biz} t={t} />
+            <BusinessCard key={biz.id} business={biz} t={t} locale={locale} />
           ))}
         </div>
       </div>

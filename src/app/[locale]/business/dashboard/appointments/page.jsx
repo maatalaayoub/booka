@@ -602,28 +602,15 @@ export default function AppointmentsPage() {
     }
   }, []);
 
-  // ── Cancel (persist to DB) ──
+  // ── Cancel (delete from DB) ──
   const handleCancelAppointment = useCallback(async (eventId) => {
-    setEvents((prev) =>
-      prev.map((e) =>
-        e.id === eventId
-          ? {
-              ...e,
-              backgroundColor: STATUS_COLORS.cancelled.bg,
-              borderColor: STATUS_COLORS.cancelled.border,
-              extendedProps: { ...e.extendedProps, status: 'cancelled' },
-            }
-          : e
-      )
-    );
+    setEvents((prev) => prev.filter((e) => e.id !== eventId));
     try {
-      await fetch('/api/business/appointments', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: eventId, status: 'cancelled' }),
+      await fetch(`/api/business/appointments?id=${eventId}`, {
+        method: 'DELETE',
       });
     } catch (err) {
-      console.error('[Appointments] Cancel update failed:', err);
+      console.error('[Appointments] Delete failed:', err);
     }
   }, []);
 
