@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Home, Heart, Calendar, Newspaper, Menu } from 'lucide-react';
+import { Home, Heart, Calendar, MapPinned, Menu } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -10,7 +10,7 @@ const navItems = [
   { id: 'menu', icon: Menu, labelKey: 'navMenu', href: null, action: 'openSidebar' },
   { id: 'favorite', icon: Heart, labelKey: 'navFavorite', href: '/favorites' },
   { id: 'booking', icon: Calendar, labelKey: 'navBooking', href: '/bookings' },
-  { id: 'posts', icon: Newspaper, labelKey: 'navPosts', href: '/posts' },
+  { id: 'map', icon: MapPinned, labelKey: 'navMap', href: '/map' },
   { id: 'home', icon: Home, labelKey: 'navHome', href: '' },
 ];
 
@@ -18,7 +18,7 @@ const defaultLabels = {
   navHome: 'Home',
   navFavorite: 'Favorite',
   navBooking: 'Book',
-  navPosts: 'Posts',
+  navMap: 'Map',
   navMenu: 'Menu',
 };
 
@@ -30,6 +30,7 @@ const excludedPaths = [
   '/b/',
   '/profile',
   '/business/profile',
+  '/search',
 ];
 
 export default function BottomNavigation() {
@@ -45,7 +46,7 @@ export default function BottomNavigation() {
     if (pathname === `/${locale}` || pathname === `/${locale}/`) return 'home';
     if (pathname?.includes('/favorites')) return 'favorite';
     if (pathname?.includes('/bookings')) return 'booking';
-    if (pathname?.includes('/posts')) return 'posts';
+    if (pathname?.includes('/map')) return 'map';
     if (pathname?.includes('/profile')) return null;
     return 'home';
   };

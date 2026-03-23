@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, ArrowRight } from 'lucide-react';
+import { Menu, ArrowLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -9,19 +9,19 @@ export default function ProfilePageNav({ locale, onMenuClick, isRTL, t }) {
     <header className="relative z-10 bg-gradient-to-r from-slate-900 to-slate-800 border-b border-slate-700 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <nav
-          dir="ltr"
+          dir={isRTL ? "rtl" : "ltr"}
           className="flex items-center justify-between py-3"
         >
-          {/* Left - Menu & Logo */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={onMenuClick}
-              className="hidden md:flex items-center justify-center h-9 w-9 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
-              aria-label="Menu"
-            >
-              <Menu className="w-[18px] h-[18px]" />
-            </button>
+          {/* Back Button */}
+          <Link
+            href={`/${locale}`}
+            className="flex items-center justify-center w-9 h-9 rounded-full text-white hover:bg-white/10 transition-colors"
+          >
+            {isRTL ? <ArrowRight className="w-5 h-5" /> : <ArrowLeft className="w-5 h-5" />}
+          </Link>
 
+          {/* Menu & Logo */}
+          <div className="flex items-center gap-3">
             <Link href={`/${locale}`}>
               <Image
                 src="/images/white-logo.png"
@@ -32,15 +32,15 @@ export default function ProfilePageNav({ locale, onMenuClick, isRTL, t }) {
                 priority
               />
             </Link>
-          </div>
 
-          {/* Right - Back to Home */}
-          <Link
-            href={`/${locale}`}
-            className="flex items-center justify-center w-9 h-9 rounded-full text-white hover:bg-white/10 transition-colors"
-          >
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+            <button
+              onClick={onMenuClick}
+              className="hidden md:flex items-center justify-center h-9 w-9 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors"
+              aria-label="Menu"
+            >
+              <Menu className="w-[18px] h-[18px]" />
+            </button>
+          </div>
         </nav>
       </div>
     </header>

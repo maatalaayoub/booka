@@ -3,15 +3,34 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
 
-// Fix default marker icon issue with webpack/Next.js
-const DefaultIcon = L.icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+// Fix default marker icon
+const DefaultIcon = L.divIcon({
+  className: 'custom-marker',
+  html: `<div style="
+    background-color: #244C70;
+    width: 36px;
+    height: 36px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    border: 3px solid #FFFFFF;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s;
+  ">
+    <div style="
+      width: 14px;
+      height: 14px;
+      background-color: #FFFFFF;
+      border-radius: 50%;
+      transform: rotate(45deg);
+    "></div>
+  </div>`,
+  iconSize: [36, 36],
+  iconAnchor: [18, 36],
+  popupAnchor: [0, -36],
 });
 
 export default function LocationPicker({ latitude, longitude, onLocationSelect, className = '' }) {
@@ -36,10 +55,16 @@ export default function LocationPicker({ latitude, longitude, onLocationSelect, 
       center: [latitude || defaultLat, longitude || defaultLng],
       zoom: 13,
       scrollWheelZoom: true,
+      zoomControl: false, // We will add it manually for better positioning if needed
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    // Add zoom control to bottom right
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(map);
+
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://carto.com/">Carto</a>',
     }).addTo(map);
 
     // Handle clicks

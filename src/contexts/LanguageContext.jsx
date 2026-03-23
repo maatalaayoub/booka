@@ -1089,7 +1089,7 @@ const translations = {
     navHome: 'Home',
     navFavorite: 'Favorite',
     navBooking: 'Book',
-    navPosts: 'Posts',
+    navMap: 'Map',
     navProfile: 'Profile',
     navMenu: 'Menu',
 
@@ -2298,7 +2298,7 @@ const translations = {
     navHome: 'Accueil',
     navFavorite: 'Favoris',
     navBooking: 'Réserver',
-    navPosts: 'Posts',
+    navMap: 'Carte',
     navProfile: 'Profil',
     navMenu: 'Menu',
 
@@ -3490,7 +3490,7 @@ const translations = {
     navHome: 'الرئيسية',
     navFavorite: 'المفضلة',
     navBooking: 'أحجز',
-    navPosts: 'منشورات',
+    navMap: 'الخريطة',
     navProfile: 'الملف الشخصي',
     navMenu: 'القائمة',
 
