@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Heart, ArrowLeft, MapPin, Star, Clock, Scissors, Sparkles, Hand, Palette, Phone, MessageCircle, Navigation, Briefcase, Loader2 } from 'lucide-react';
@@ -93,6 +94,20 @@ export default function FavoritesPage() {
             </div>
             <h2 className="text-lg font-bold text-gray-800 mb-1">{t('favorites.signInTitle') || 'Sign in to see favorites'}</h2>
             <p className="text-[14px] text-gray-400 max-w-xs">{t('favorites.signInDesc') || 'Sign in to save and view your favorite businesses.'}</p>
+            <div className="flex gap-3 mt-6">
+              <Link
+                href={`/${locale}/auth/user/sign-in`}
+                className="rounded-full border border-gray-200 bg-white px-6 py-2.5 text-sm font-semibold text-[#0F172A] transition-all hover:border-[#D4AF37]"
+              >
+                {t('login')}
+              </Link>
+              <Link
+                href={`/${locale}/auth/user/sign-up`}
+                className="rounded-full bg-[#0F172A] px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#1E293B]"
+              >
+                {t('signUp')}
+              </Link>
+            </div>
           </div>
         ) : visibleBusinesses.length === 0 ? (
           /* Empty state */
