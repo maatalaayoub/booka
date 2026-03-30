@@ -700,17 +700,30 @@ export default function BusinessPage() {
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
 
+  const favKey = user?.id ? `favoriteBusinesses_${user.id}` : null;
+
   useEffect(() => {
-    if (!businessId) return;
-    const favs = JSON.parse(localStorage.getItem('favoriteBusinesses') || '[]');
+    if (!businessId || !favKey) return;
+    const favs = JSON.parse(localStorage.getItem(favKey) || '[]');
     setIsFavorited(favs.includes(businessId));
-  }, [businessId]);
+  }, [businessId, favKey]);
+
+  const requireAuth = (action) => {
+    if (!isSignedIn) {
+      router.push(`/${locale}/auth/user/sign-in`);
+      return;
+    }
+    action();
+  };
 
   const toggleFavorite = () => {
-    const favs = JSON.parse(localStorage.getItem('favoriteBusinesses') || '[]');
-    const updated = isFavorited ? favs.filter(id => id !== businessId) : [...favs, businessId];
-    localStorage.setItem('favoriteBusinesses', JSON.stringify(updated));
-    setIsFavorited(!isFavorited);
+    requireAuth(() => {
+      if (!favKey) return;
+      const favs = JSON.parse(localStorage.getItem(favKey) || '[]');
+      const updated = isFavorited ? favs.filter(id => id !== businessId) : [...favs, businessId];
+      localStorage.setItem(favKey, JSON.stringify(updated));
+      setIsFavorited(!isFavorited);
+    });
   };
 
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.durationMinutes, 0);
@@ -728,6 +741,36 @@ export default function BusinessPage() {
       .finally(() => setLoading(false));
   }, [businessId]);
 
+  const pendingSlotRef = useRef(null);
+
+  // Restore pending booking after login redirect
+  useEffect(() => {
+    if (!business || !isSignedIn) return;
+    try {
+      const raw = sessionStorage.getItem('pendingBooking');
+      if (!raw) return;
+      const pending = JSON.parse(raw);
+      if (pending.businessId !== businessId) return;
+      sessionStorage.removeItem('pendingBooking');
+
+      // Restore selected services
+      const allServices = (business.services || []).filter(s => s.isActive !== false);
+      const restored = allServices.filter(s => pending.serviceIds.includes(s.id));
+      if (restored.length > 0) {
+        setSelectedServices(restored);
+        if (pending.date) {
+          const d = new Date(pending.date);
+          d.setHours(0, 0, 0, 0);
+          setSelectedDate(d);
+        }
+        if (pending.slotStart) {
+          pendingSlotRef.current = pending.slotStart;
+        }
+        setShowBookingPanel(true);
+      }
+    } catch {}
+  }, [business, isSignedIn, businessId]);
+
   useEffect(() => {
     if (!selectedDate || selectedServices.length === 0 || !business) return;
     setSlotsLoading(true);
@@ -738,6 +781,12 @@ export default function BusinessPage() {
         setSlots(data.slots || []);
         setUserBookings(data.userBookings || []);
         setCrossBusinessBookings(data.crossBusinessBookings || []);
+        // Restore pending slot if available
+        if (pendingSlotRef.current) {
+          const match = (data.slots || []).find(s => s.start === pendingSlotRef.current);
+          if (match) setSelectedSlot(match);
+          pendingSlotRef.current = null;
+        }
       })
       .catch(() => { setSlots([]); setUserBookings([]); setCrossBusinessBookings([]); })
       .finally(() => setSlotsLoading(false));
@@ -774,7 +823,18 @@ export default function BusinessPage() {
   };
 
   const handleBookNow = () => {
-    if (!isSignedIn) { router.push(`/${locale}/auth/user/sign-in`); return; }
+    if (!isSignedIn) {
+      // Save booking state so it can be restored after login
+      const pendingBooking = {
+        businessId,
+        serviceIds: selectedServices.map(s => s.id),
+        date: selectedDate ? selectedDate.toISOString() : null,
+        slotStart: selectedSlot?.start || null,
+      };
+      sessionStorage.setItem('pendingBooking', JSON.stringify(pendingBooking));
+      router.push(`/${locale}/auth/user/sign-in?redirect_url=${encodeURIComponent(`/${locale}/b/${businessId}`)}`);
+      return;
+    }
     setShowBookingModal(true);
   };
 
@@ -1005,25 +1065,25 @@ export default function BusinessPage() {
           {/* Action buttons */}
           <div className="flex items-center gap-2 flex-wrap">
             {business.phone && (
-              <a href={`tel:${business.phone}`}
+              <button onClick={() => requireAuth(() => window.open(`tel:${business.phone}`, '_self'))}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 transition-colors text-[12px] font-medium">
                 <Phone className="w-3.5 h-3.5" />
                 {t('businessCard.call')}
-              </a>
+              </button>
             )}
             {business.phone && (
-              <a href={`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
+              <button onClick={() => requireAuth(() => window.open(`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}`, '_blank'))}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700 hover:bg-green-100 transition-colors text-[12px] font-medium">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.243-1.214l-.252-.149-2.868.852.852-2.868-.168-.268A8 8 0 1112 20z"/></svg>
                 {t('businessCard.message')}
-              </a>
+              </button>
             )}
             {directionsUrl && (
-              <a href={directionsUrl} target="_blank" rel="noopener noreferrer"
+              <button onClick={() => requireAuth(() => window.open(directionsUrl, '_blank'))}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors text-[12px] font-medium">
                 <Navigation className="w-3.5 h-3.5" />
                 {t('businessCard.getDirections')}
-              </a>
+              </button>
             )}
           </div>
         </div>
@@ -1200,11 +1260,11 @@ export default function BusinessPage() {
                     <div>
                       <p className="text-[15px] text-gray-900 font-medium">{[business.address, business.city].filter(Boolean).join(', ')}</p>
                       {directionsUrl && (
-                        <a href={directionsUrl} target="_blank" rel="noopener noreferrer"
+                        <button onClick={() => requireAuth(() => window.open(directionsUrl, '_blank'))}
                           className="inline-flex items-center gap-1.5 mt-2 text-[13px] font-semibold hover:underline" style={{ color: accent.bg }}>
                           <Navigation className="w-3.5 h-3.5" />
                           {t('businessCard.getDirections')}
-                        </a>
+                        </button>
                       )}
                     </div>
                   </div>
@@ -1215,7 +1275,7 @@ export default function BusinessPage() {
                 <div>
                   <h2 className="text-lg font-bold text-gray-900 mb-4">{t('bp.contactInfo')}</h2>
                   <div className="space-y-3">
-                      <a href={`tel:${business.phone}`} className="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl hover:bg-blue-100 transition-colors group">
+                      <button onClick={() => requireAuth(() => window.open(`tel:${business.phone}`, '_self'))} className="flex items-center gap-3 p-4 bg-blue-50 rounded-2xl hover:bg-blue-100 transition-colors group w-full text-left">
                         <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:shadow-md transition-shadow">
                           <Phone className="w-5 h-5 text-blue-600" />
                         </div>
@@ -1223,9 +1283,9 @@ export default function BusinessPage() {
                           <p className="text-[15px] font-medium text-gray-900">{t('businessCard.call')}</p>
                           <p className="text-[13px] text-gray-400">{business.phone}</p>
                         </div>
-                      </a>
-                      <a href={`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 bg-green-50 rounded-2xl hover:bg-green-100 transition-colors group">
+                      </button>
+                      <button onClick={() => requireAuth(() => window.open(`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}`, '_blank'))}
+                        className="flex items-center gap-3 p-4 bg-green-50 rounded-2xl hover:bg-green-100 transition-colors group w-full text-left">
                         <div className="w-11 h-11 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 group-hover:shadow-md transition-shadow">
                           <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.243-1.214l-.252-.149-2.868.852.852-2.868-.168-.268A8 8 0 1112 20z"/></svg>
                         </div>
@@ -1233,7 +1293,7 @@ export default function BusinessPage() {
                           <p className="text-[15px] font-medium text-gray-900">{t('businessCard.message')}</p>
                           <p className="text-[13px] text-green-600">WhatsApp</p>
                         </div>
-                      </a>
+                      </button>
                   </div>
                 </div>
               )}
@@ -1377,16 +1437,16 @@ export default function BusinessPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-medium text-gray-900">{[business.address, business.city].filter(Boolean).join(', ')}</p>
                       {directionsUrl && (
-                        <a href={directionsUrl} target="_blank" rel="noopener noreferrer"
+                        <button onClick={() => requireAuth(() => window.open(directionsUrl, '_blank'))}
                           className="inline-flex items-center gap-1 mt-1.5 text-[13px] font-semibold hover:underline" style={{ color: accent.bg }}>
                           <Navigation className="w-3 h-3" />
                           {t('businessCard.getDirections')}
-                        </a>
+                        </button>
                       )}
                     </div>
                   </div>
                   {business.phone && (
-                    <a href={`tel:${business.phone}`} className="flex items-center gap-3 p-3.5 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors group">
+                    <button onClick={() => requireAuth(() => window.open(`tel:${business.phone}`, '_self'))} className="flex items-center gap-3 p-3.5 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors group w-full text-left">
                       <div className="w-9 h-9 rounded-lg bg-white shadow-sm group-hover:shadow-md flex items-center justify-center shrink-0 transition-shadow">
                         <Phone className="w-4 h-4 text-blue-600" />
                       </div>
@@ -1394,11 +1454,11 @@ export default function BusinessPage() {
                         <p className="text-[14px] font-medium text-gray-900">{t('businessCard.call')}</p>
                         <p className="text-[12px] text-gray-400">{business.phone}</p>
                       </div>
-                    </a>
+                    </button>
                   )}
                   {business.phone && (
-                    <a href={`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-3 p-3.5 bg-green-50 rounded-xl hover:bg-green-100 transition-colors group">
+                    <button onClick={() => requireAuth(() => window.open(`https://wa.me/${business.phone.replace(/[^0-9]/g, '')}`, '_blank'))}
+                      className="flex items-center gap-3 p-3.5 bg-green-50 rounded-xl hover:bg-green-100 transition-colors group w-full text-left">
                       <div className="w-9 h-9 rounded-lg bg-white shadow-sm group-hover:shadow-md flex items-center justify-center shrink-0 transition-shadow">
                         <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.832-1.438A9.955 9.955 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a8 8 0 01-4.243-1.214l-.252-.149-2.868.852.852-2.868-.168-.268A8 8 0 1112 20z"/></svg>
                       </div>
@@ -1406,7 +1466,7 @@ export default function BusinessPage() {
                         <p className="text-[14px] font-medium text-gray-900">{t('businessCard.message')}</p>
                         <p className="text-[12px] text-green-600">WhatsApp</p>
                       </div>
-                    </a>
+                    </button>
                   )}
                 </div>
               </div>

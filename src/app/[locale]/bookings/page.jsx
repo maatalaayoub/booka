@@ -468,7 +468,7 @@ export default function BookingsPage() {
 
       {/* ═══ Detail / Cancel / Reschedule Modal ═══ */}
       {showDetailModal && selectedBooking && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4" onClick={closeDetail}>
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-4" onClick={closeDetail}>
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
           <div
             className="relative w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
@@ -501,7 +501,7 @@ export default function BookingsPage() {
             </div>
 
             {/* Content */}
-            <div className="px-5 pb-20 sm:pb-5 overflow-y-auto flex-1">
+            <div className="px-5 pb-5 overflow-y-auto flex-1">
               {showCancelConfirm ? (
                 /* Cancel confirmation */
                 <div className="space-y-4">
@@ -813,14 +813,16 @@ export default function BookingsPage() {
                         className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
                       >
                         <Pencil className="w-4 h-4" />
-                        {t('bookings.editBooking')}
+                        <span className="sm:hidden">{t('bookings.editBookingShort')}</span>
+                        <span className="hidden sm:inline">{t('bookings.editBooking')}</span>
                       </button>
                       <button
                         onClick={() => setShowCancelConfirm(true)}
                         className="flex-1 py-2.5 rounded-xl border border-red-200 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
                       >
                         <XCircle className="w-4 h-4" />
-                        {t('bookings.cancelBtn')}
+                        <span className="sm:hidden">{t('bookings.cancelBtnShort')}</span>
+                        <span className="hidden sm:inline">{t('bookings.cancelBtn')}</span>
                       </button>
                     </div>
                   )}
@@ -830,7 +832,7 @@ export default function BookingsPage() {
 
             {/* Sticky confirm button */}
             {editMode && !showCancelConfirm && (
-              <div className="px-5 pb-20 sm:pb-5 pt-2 border-t border-gray-100">
+              <div className="px-5 pb-5 pt-2 border-t border-gray-100">
                 <button
                   onClick={handleEditConfirm}
                   disabled={(!selectedSlot && !servicesChanged()) || editLoading || (showAllServices && selectedServices.length === 0)}

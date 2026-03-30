@@ -2,7 +2,7 @@
 
 import { SignIn, useUser, useClerk } from '@clerk/nextjs';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,6 +24,8 @@ export default function UserSignInPage() {
   const { isSignedIn, isLoaded } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect_url');
   const [isMounted, setIsMounted] = useState(false);
   const [isCheckingRole, setIsCheckingRole] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -50,9 +52,9 @@ export default function UserSignInPage() {
         .then(async (data) => {
           console.log('[UserSignIn] Role check result:', data);
           if (data.role) {
-            // User exists with a role, go to home
+            // User exists with a role, redirect (replace so auth page is removed from history)
             console.log('[UserSignIn] User exists with role:', data.role);
-            router.push(`/${locale}`);
+            router.replace(redirectUrl || `/${locale}`);
           } else {
             // User doesn't exist in database - sign them out and show error
             console.log('[UserSignIn] User not in database, signing out...');
@@ -195,7 +197,7 @@ export default function UserSignInPage() {
               localization={clerkLocalizations[locale]}
               routing="path"
               path={`/${locale}/auth/user/sign-in`}
-              signUpUrl={`/${locale}/auth/user/sign-up`}
+              signUpUrl={`/${locale}/auth/user/sign-up${redirectUrl ? `?redirect_url=${encodeURIComponent(redirectUrl)}` : ''}`}
             />
               </ClientOnly>
             </div>

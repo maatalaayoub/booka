@@ -66,8 +66,8 @@ export default function RoleSetupHandler() {
       // If user already has a role
       if (hasRole) {
         console.log('[RoleSetupHandler] User already has role:', role);
-        // Clean URL
-        window.history.replaceState({}, '', `/${locale}`);
+        // Clean URL - remove setup param but stay on current page
+        window.history.replaceState({}, '', pathname);
         
         // Stay on home page for all users
         setSetupComplete(true);
@@ -87,8 +87,8 @@ export default function RoleSetupHandler() {
             // Normal users have onboarding_completed=true set directly in set-role API
             // No need to call complete-onboarding here
             
-            // Clean URL first
-            window.history.replaceState({}, '', `/${locale}`);
+            // Clean URL first - remove setup param but stay on current page
+            window.history.replaceState({}, '', pathname);
             // All users stay on home page after signup
             setSetupComplete(true);
           } else {

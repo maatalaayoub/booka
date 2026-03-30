@@ -2,7 +2,7 @@
 
 import { SignUp } from '@clerk/nextjs';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { frFR, arSA } from '@clerk/localizations';
@@ -19,6 +19,8 @@ const clerkLocalizations = {
 export default function UserSignUpPage() {
   const params = useParams();
   const locale = params.locale || 'en';
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect_url');
   const { t, isRTL } = useLanguage();
 
   return (
@@ -124,8 +126,8 @@ export default function UserSignUpPage() {
               localization={clerkLocalizations[locale]}
               routing="path"
               path={`/${locale}/auth/user/sign-up`}
-              signInUrl={`/${locale}/auth/user/sign-in`}
-              forceRedirectUrl={`/${locale}?setup=user`}
+              signInUrl={`/${locale}/auth/user/sign-in${redirectUrl ? `?redirect_url=${encodeURIComponent(redirectUrl)}` : ''}`}
+              forceRedirectUrl={redirectUrl ? `${redirectUrl}?setup=user` : `/${locale}?setup=user`}
             />
               </ClientOnly>
             </div>

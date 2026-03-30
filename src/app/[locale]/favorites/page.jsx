@@ -20,7 +20,7 @@ const ACCENT_COLORS = {
 export default function FavoritesPage() {
   const router = useRouter();
   const { t, locale, isRTL } = useLanguage();
-  const { isSignedIn, isLoaded } = useUser();
+  const { user, isSignedIn, isLoaded } = useUser();
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removedIds, setRemovedIds] = useState(new Set());
@@ -40,7 +40,8 @@ export default function FavoritesPage() {
       return;
     }
 
-    const favs = JSON.parse(localStorage.getItem('favoriteBusinesses') || '[]');
+    const favKey = `favoriteBusinesses_${user.id}`;
+    const favs = JSON.parse(localStorage.getItem(favKey) || '[]');
     if (favs.length === 0) {
       setLoading(false);
       return;
@@ -58,9 +59,11 @@ export default function FavoritesPage() {
   }, [isLoaded, isSignedIn]);
 
   const handleRemoveFavorite = (id) => {
-    const favs = JSON.parse(localStorage.getItem('favoriteBusinesses') || '[]');
+    if (!user?.id) return;
+    const favKey = `favoriteBusinesses_${user.id}`;
+    const favs = JSON.parse(localStorage.getItem(favKey) || '[]');
     const updated = favs.filter(fId => fId !== id);
-    localStorage.setItem('favoriteBusinesses', JSON.stringify(updated));
+    localStorage.setItem(favKey, JSON.stringify(updated));
     setRemovedIds(prev => new Set([...prev, id]));
     setConfirmRemoveId(null);
   };
