@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Loader2, Check, User, Calendar, ChevronDown, Settings, AtSign, AlertCircle, MapPin, Search } from 'lucide-react';
+import { X, Loader2, Check, User, Calendar, ChevronDown, Settings, AtSign, AlertCircle, MapPin, Search, Phone } from 'lucide-react';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -57,6 +57,8 @@ const translations = {
     usernameInvalid: '3–20 characters: letters, numbers, or underscores only',
     usernameChecking: 'Checking availability...',
     usernameSelf: 'This is your current username',
+    phone: 'Phone Number',
+    phoneHint: 'e.g. +212 6XX XXXXXX',
     city: 'City',
     selectCity: 'Select a city',
     searchCity: 'Search city...',
@@ -85,6 +87,8 @@ const translations = {
     usernameInvalid: '3–20 حرفًا: حروف وأرقام وشرطات سفلية فقط',
     usernameChecking: 'جاري التحقق من التوفر...',
     usernameSelf: 'هذا هو اسم مستخدمك الحالي',
+    phone: 'رقم الهاتف',
+    phoneHint: 'مثال: +212 6XX XXXXXX',
     city: 'المدينة',
     selectCity: 'اختر المدينة',
     searchCity: 'ابحث عن مدينة...',
@@ -113,6 +117,8 @@ const translations = {
     usernameInvalid: '3–20 caractères : lettres, chiffres ou underscores uniquement',
     usernameChecking: 'Vérification de la disponibilité...',
     usernameSelf: "C'est votre nom d'utilisateur actuel",
+    phone: 'Numéro de téléphone',
+    phoneHint: 'ex. +212 6XX XXXXXX',
     city: 'Ville',
     selectCity: 'Sélectionner une ville',
     searchCity: 'Rechercher une ville...',
@@ -123,7 +129,7 @@ const translations = {
 export default function EditProfileDialog({ isOpen, onClose }) {
   const { user } = useUser();
   const { openUserProfile } = useClerk();
-  const { isRTL, language } = useLanguage();
+  const { isRTL, locale: language } = useLanguage();
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [error, setError] = useState('');
@@ -149,6 +155,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
     firstName: '',
     lastName: '',
     username: '',
+    phone: '',
     birthday: '',
     gender: '',
     city: '',
@@ -171,6 +178,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
             firstName: data.firstName || user.firstName || '',
             lastName: data.lastName || user.lastName || '',
             username: data.username || '',
+            phone: data.phone || '',
             birthday: data.birthday || '',
             gender: data.gender || '',
             city: data.city || '',
@@ -180,6 +188,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
             firstName: user.firstName || '',
             lastName: user.lastName || '',
             username: '',
+            phone: '',
             birthday: '',
             gender: '',
             city: '',
@@ -191,6 +200,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
           firstName: user.firstName || '',
           lastName: user.lastName || '',
           username: '',
+          phone: '',
           birthday: '',
           gender: '',
           city: '',
@@ -253,6 +263,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
           firstName: formData.firstName,
           lastName: formData.lastName,
           username: formData.username || undefined,
+          phone: formData.phone || null,
           birthday: formData.birthday || null,
           gender: formData.gender || null,
           city: formData.city || null,
@@ -375,7 +386,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="p-5 pb-24 sm:p-6 sm:pb-6 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <form id="edit-profile-form" onSubmit={handleSubmit} className="p-5 pb-6 sm:p-6 sm:pb-6 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {isFetching ? (
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="h-8 w-8 animate-spin text-[#D4AF37]" />
@@ -439,6 +450,25 @@ export default function EditProfileDialog({ isOpen, onClose }) {
                       />
                     </div>
                     {renderUsernameFeedback()}
+                  </div>
+
+                  {/* Phone Number */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5 sm:mb-2">
+                      {labels.phone}
+                    </label>
+                    <div className="relative">
+                      <Phone className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none ${isRTL ? 'right-3.5' : 'left-3.5'}`} />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder={labels.phoneHint}
+                        maxLength={30}
+                        className={`w-full py-2.5 sm:py-3 border border-gray-200 rounded-[5px] text-gray-900 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none transition-colors text-base placeholder:text-gray-400 ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+                      />
+                    </div>
                   </div>
 
                   {/* Birthday */}
@@ -579,9 +609,10 @@ export default function EditProfileDialog({ isOpen, onClose }) {
                   </div>
                 </div>
                 )}
+              </form>
 
-                {/* Buttons */}
-                <div className={`flex items-center justify-end gap-3 mt-6 sm:mt-8 pt-4 border-t border-gray-100 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              {/* Fixed bottom buttons */}
+              <div className={`shrink-0 flex items-center justify-end gap-3 px-5 sm:px-6 py-4 border-t border-gray-100 bg-white rounded-b-[3px] ${isRTL ? 'flex-row-reverse' : ''}`}>
                   <button
                     type="button"
                     onClick={onClose}
@@ -591,6 +622,7 @@ export default function EditProfileDialog({ isOpen, onClose }) {
                   </button>
                   <button
                     type="submit"
+                    form="edit-profile-form"
                     disabled={isLoading || isFetching || usernameStatus === 'taken' || usernameStatus === 'invalid' || usernameStatus === 'checking'}
                     className="px-3 sm:px-6 py-2.5 bg-green-500 sm:bg-white border border-green-500 sm:border-gray-300 text-white sm:text-gray-700 rounded-[90px] font-medium transition-all sm:hover:bg-green-500 sm:hover:text-white sm:hover:border-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
@@ -604,7 +636,6 @@ export default function EditProfileDialog({ isOpen, onClose }) {
                     )}
                   </button>
                 </div>
-              </form>
             </div>
           </motion.div>
         </>

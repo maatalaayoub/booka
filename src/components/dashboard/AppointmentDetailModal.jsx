@@ -33,6 +33,7 @@ export default function AppointmentDetailModal({
   onReschedule,
 }) {
   const [confirmAction, setConfirmAction] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
   const [rescheduleMode, setRescheduleMode] = useState(false);
   const [rescheduleDate, setRescheduleDate] = useState(null);
   const [dateOptions, setDateOptions] = useState([]);
@@ -56,6 +57,7 @@ export default function AppointmentDetailModal({
       setClosedMessage(null);
       setClosedDates({});
       setConfirmAction(null);
+      setActionLoading(false);
     }
   }, [isOpen]);
 
@@ -481,7 +483,7 @@ export default function AppointmentDetailModal({
             ) : appointment.extendedProps?.status !== 'completed' && appointment.extendedProps?.status !== 'cancelled' ? (
               <div className="px-5 pb-5 pt-2 space-y-2">
                 {/* Top row: Confirm / Reschedule */}
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {appointment.extendedProps?.status === 'pending' && onConfirm && (
                     <button
                       onClick={() => setConfirmAction({
@@ -490,9 +492,9 @@ export default function AppointmentDetailModal({
                         message: t('appointmentDetail.confirmMessage'),
                         btnClass: 'bg-[#D4AF37] hover:bg-[#b8960c] text-white',
                         icon: <CheckCircle2 className="w-5 h-5" />,
-                        action: () => { onConfirm(appointment.id); onClose(); },
+                        action: async () => { await onConfirm(appointment.id); },
                       })}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-[#D4AF37] hover:bg-[#b8960c] text-white rounded-xl font-semibold text-[14px] transition-colors shadow-sm"
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2.5 bg-[#D4AF37] hover:bg-[#b8960c] text-white rounded-xl font-semibold text-[13px] transition-colors shadow-sm"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       {t('appointmentDetail.confirm')}
@@ -501,7 +503,7 @@ export default function AppointmentDetailModal({
                   {(appointment.extendedProps?.status === 'confirmed' || appointment.extendedProps?.status === 'pending') && (appointment.extendedProps?.businessInfoId || appointment.extendedProps?.business_info_id) && (
                     <button
                       onClick={startReschedule}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold text-[14px] transition-colors shadow-sm"
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-semibold text-[13px] transition-colors shadow-sm"
                     >
                       <CalendarClock className="w-4 h-4" />
                       {t('appointmentDetail.reschedule')}
@@ -515,9 +517,9 @@ export default function AppointmentDetailModal({
                         message: t('appointmentDetail.markCompleteMessage'),
                         btnClass: 'bg-emerald-500 hover:bg-emerald-600 text-white',
                         icon: <CheckCircle2 className="w-5 h-5" />,
-                        action: () => { onComplete(appointment.id); onClose(); },
+                        action: async () => { await onComplete(appointment.id); },
                       })}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-[14px] transition-colors shadow-sm"
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-semibold text-[13px] transition-colors shadow-sm"
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       {t('appointmentDetail.markComplete')}
@@ -532,9 +534,9 @@ export default function AppointmentDetailModal({
                     message: t('appointmentDetail.cancelMessage'),
                     btnClass: 'bg-red-500 hover:bg-red-600 text-white',
                     icon: <XCircle className="w-5 h-5" />,
-                    action: () => { onCancel(appointment.id); onClose(); },
+                    action: async () => { await onCancel(appointment.id); },
                   })}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-xl font-medium text-[14px] transition-colors"
+                  className="w-full flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border border-red-200 text-red-600 hover:bg-red-50 rounded-xl font-medium text-[13px] transition-colors"
                 >
                   <XCircle className="w-4 h-4" />
                   {t('appointmentDetail.cancelBtn')}
@@ -560,7 +562,7 @@ export default function AppointmentDetailModal({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 z-[10000] flex items-center justify-center p-4"
-                onClick={() => setConfirmAction(null)}
+                onClick={() => { if (!actionLoading) setConfirmAction(null); }}
               >
                 <div className="absolute inset-0 bg-black/30" />
                 <motion.div
@@ -584,18 +586,32 @@ export default function AppointmentDetailModal({
                     <div className="flex gap-3 w-full">
                       <button
                         onClick={() => setConfirmAction(null)}
-                        className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-colors"
+                        disabled={actionLoading}
+                        className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium text-sm transition-colors disabled:opacity-50"
                       >
                         {t('appointmentDetail.goBack')}
                       </button>
                       <button
-                        onClick={() => {
-                          confirmAction.action();
-                          setConfirmAction(null);
+                        onClick={async () => {
+                          setActionLoading(true);
+                          try {
+                            await confirmAction.action();
+                          } catch (e) {
+                            console.error(e);
+                          } finally {
+                            setActionLoading(false);
+                            setConfirmAction(null);
+                            onClose();
+                          }
                         }}
-                        className={`flex-1 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm ${confirmAction.btnClass}`}
+                        disabled={actionLoading}
+                        className={`flex-1 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm flex items-center justify-center gap-2 disabled:opacity-70 ${confirmAction.btnClass}`}
                       >
-                        {confirmAction.type === 'cancel' ? t('appointmentDetail.cancelBtn') : confirmAction.type === 'confirm' ? t('appointmentDetail.confirm') : t('appointmentDetail.complete')}
+                        {actionLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          confirmAction.type === 'cancel' ? t('appointmentDetail.cancelBtn') : confirmAction.type === 'confirm' ? t('appointmentDetail.confirm') : t('appointmentDetail.complete')
+                        )}
                       </button>
                     </div>
                   </div>

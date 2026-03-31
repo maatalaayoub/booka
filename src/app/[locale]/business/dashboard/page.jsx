@@ -151,14 +151,14 @@ export default function BusinessDashboard() {
     );
   };
 
-  const handleConfirm = (id) => {
+  const handleConfirm = async (id) => {
     const booking = stats?.upcomingBookings?.find(b => b.id === id);
     if (!booking) return;
     const conflicts = findConflicts(booking);
     if (conflicts.length > 0) {
       setConflictDialog({ approvedId: id, conflicts });
     } else {
-      updateAppointmentStatus(id, 'confirmed');
+      await updateAppointmentStatus(id, 'confirmed');
     }
   };
 
@@ -950,9 +950,9 @@ export default function BusinessDashboard() {
         appointment={selectedBooking ? toModalFormat(selectedBooking) : null}
         isOpen={!!selectedBooking}
         onClose={() => setSelectedBooking(null)}
-        onConfirm={(id) => { setSelectedBooking(null); handleConfirm(id); }}
-        onComplete={(id) => { setSelectedBooking(null); handleComplete(id); }}
-        onCancel={(id) => { setSelectedBooking(null); handleCancel(id); }}
+        onConfirm={async (id) => { await handleConfirm(id); }}
+        onComplete={async (id) => { await handleComplete(id); }}
+        onCancel={async (id) => { await handleCancel(id); }}
         onReschedule={() => { setSelectedBooking(null); fetchStats(); }}
       />
 

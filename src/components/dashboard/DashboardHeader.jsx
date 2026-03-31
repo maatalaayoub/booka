@@ -56,7 +56,7 @@ export default function DashboardHeader() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-30">
+    <header className={`bg-white border-b border-gray-200 fixed top-0 z-30 right-0 left-0 ${isRTL ? 'lg:right-16' : 'lg:left-16'}`}>
       <div className="px-4 lg:px-8">
         <nav dir="ltr" className={`flex items-center justify-between py-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
           {/* Left Section - Mobile Menu & Logo */}

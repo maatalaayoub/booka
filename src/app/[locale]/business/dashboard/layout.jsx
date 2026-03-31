@@ -2,7 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRole } from '@/hooks/useRole';
 import { DashboardHeader, Sidebar } from '@/components/dashboard';
@@ -71,6 +71,7 @@ export default function DashboardLayout({ children }) {
   const { isBusiness, isLoaded: isRoleLoaded, hasRole } = useRole();
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const locale = params.locale || 'en';
   const userId = user?.id;
   const cachedStatus = useRef(null);
@@ -90,6 +91,11 @@ export default function DashboardLayout({ children }) {
       // If hasRole is false (no role yet), allow them to stay for onboarding
     }
   }, [isLoaded, isRoleLoaded, user, isBusiness, hasRole, router, locale]);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
 
   // Initialize cache once we have userId
   useEffect(() => {
@@ -175,7 +181,7 @@ export default function DashboardLayout({ children }) {
         <Sidebar />
         <div className={`flex flex-col min-h-screen overflow-x-hidden ${isRTL ? 'lg:mr-16' : 'lg:ml-16'}`}>
           <DashboardHeader />
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-6 pt-[calc(1.5rem+64px)]">
             {children}
           </main>
         </div>

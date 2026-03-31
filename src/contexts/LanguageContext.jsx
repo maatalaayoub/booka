@@ -660,9 +660,19 @@ const translations = {
     'common.week': 'Week',
     'common.day': 'Day',
     'common.list': 'List',
+    'common.no_events': 'No events to display',
     'common.all': 'All',
     'common.active': 'Active',
     'common.inactive': 'Inactive',
+    'profile.editCover': 'Edit Cover',
+    'profile.editProfile': 'Edit Profile',
+    'profile.accountSettings': 'Account Settings',
+    'profile.changePhoto': 'Change photo',
+    'profile.reposition': 'Reposition',
+    'profile.removeCover': 'Remove cover',
+    'profile.savePosition': 'Save Position',
+    'profile.dragToReposition': 'Drag up or down to reposition',
+    'profile.cancel': 'Cancel',
     'common.visible': 'visible',
     'common.total': 'Total',
     'common.to': 'to',
@@ -1329,6 +1339,121 @@ const translations = {
     'search.showResults': 'Show Results',
     'search.salon': 'Salon',
     'search.morocco': 'Morocco',
+
+    // Business Onboarding
+    'onboarding.welcome': 'Welcome, {name}!',
+    'onboarding.whatDescribes': 'What best describes your business?',
+    'onboarding.continue': 'Continue',
+    'onboarding.back': 'Back',
+    'onboarding.completeSetup': 'Complete Setup',
+    'onboarding.creating': 'Creating...',
+    'onboarding.stepOf': 'Step {current} of {total}',
+    'onboarding.loadingMap': 'Loading map...',
+
+    // Business Categories
+    'onboarding.cat.salonOwner': 'Salon Owner',
+    'onboarding.cat.salonOwnerDesc': 'You own or manage a physical location where clients visit',
+    'onboarding.cat.mobileService': 'Mobile Service Provider',
+    'onboarding.cat.mobileServiceDesc': 'You travel to client locations to provide services',
+    'onboarding.cat.jobSeeker': 'Job Seeker',
+    'onboarding.cat.jobSeekerDesc': 'You are looking for employment opportunities in the industry',
+
+    // Service Category Step
+    'onboarding.chooseServiceCategory': 'Choose your service category',
+    'onboarding.selectCategoryFit': 'Select the category that best fits your services',
+
+    // Professional Type / Specialty Step
+    'onboarding.whatsSpecialty': "What's your specialty?",
+    'onboarding.selectBestDescribes': 'Select the option that best describes your work',
+    'onboarding.noSpecialties': 'No specialties available for this category yet.',
+
+    // Business Details Step
+    'onboarding.businessDetails': 'Business Details',
+    'onboarding.tellSalon': 'Tell us about your salon',
+    'onboarding.tellMobile': 'Tell us about your mobile service',
+    'onboarding.businessName': 'Business Name',
+    'onboarding.placeholderSalon': 'e.g. Golden Scissors Salon',
+    'onboarding.placeholderMobile': 'e.g. Mobile Cuts by Ahmed',
+    'onboarding.city': 'City',
+    'onboarding.selectCity': 'Select a city',
+    'onboarding.searchCity': 'Search city...',
+    'onboarding.noCityFound': 'No city found',
+    'onboarding.phoneNumber': 'Phone Number',
+    'onboarding.phonePlaceholder': 'e.g. +212 6XX XXX XXX',
+    'onboarding.salonLocation': 'Salon Location',
+    'onboarding.baseLocation': 'Base Location',
+    'onboarding.clickMapToSet': '(click on the map to set)',
+    'onboarding.address': 'Address',
+    'onboarding.enterSalonAddress': 'Enter your salon address',
+    'onboarding.enterBaseAddress': 'Enter your base address',
+
+    // Years of Experience Step
+    'onboarding.howManyYears': 'How many years of experience?',
+    'onboarding.selectExperienceAs': 'Select your level of experience as a {type}',
+    'onboarding.professional': 'professional',
+    'onboarding.exp.lessThan1': 'Less than 1 year',
+    'onboarding.exp.lessThan1Desc': 'Just starting out in the industry',
+    'onboarding.exp.1to3': '1-3 years',
+    'onboarding.exp.1to3Desc': 'Building foundational skills and experience',
+    'onboarding.exp.3to5': '3-5 years',
+    'onboarding.exp.3to5Desc': 'Established professional with solid experience',
+    'onboarding.exp.5to10': '5-10 years',
+    'onboarding.exp.5to10Desc': 'Experienced professional with deep expertise',
+    'onboarding.exp.moreThan10': '10+ years',
+    'onboarding.exp.moreThan10Desc': 'Senior professional with extensive experience',
+
+    // Certificate Step
+    'onboarding.professionalCertification': 'Professional Certification',
+    'onboarding.haveCertificate': 'Do you have a certificate or diploma in {type}?',
+    'onboarding.yourProfession': 'your profession',
+    'onboarding.yesCertified': "Yes, I'm certified",
+    'onboarding.yesCertifiedDesc': 'I have formal education or certification',
+    'onboarding.noNotYet': 'No, not yet',
+    'onboarding.noNotYetDesc': 'I learned through experience and practice',
+
+    // Schedule Step
+    'onboarding.setSchedule': 'Set Your Schedule',
+    'onboarding.whenCanBook': 'When can clients book with you?',
+    'onboarding.closed': 'Closed',
+    'onboarding.opensAt': 'Opens at',
+    'onboarding.closesAt': 'Closes at',
+
+    // Days of Week
+    'onboarding.day.sunday': 'Sunday',
+    'onboarding.day.monday': 'Monday',
+    'onboarding.day.tuesday': 'Tuesday',
+    'onboarding.day.wednesday': 'Wednesday',
+    'onboarding.day.thursday': 'Thursday',
+    'onboarding.day.friday': 'Friday',
+    'onboarding.day.saturday': 'Saturday',
+
+    // Service Mode Step
+    'onboarding.howReceiveCustomers': 'How do you receive customers?',
+    'onboarding.chooseHowCustomers': 'Choose how customers can get your services',
+    'onboarding.mode.booking': 'Online Booking',
+    'onboarding.mode.bookingDesc': 'Customers book appointments online through your page',
+    'onboarding.mode.walkin': 'Walk-in Only',
+    'onboarding.mode.walkinDesc': 'Customers come directly without booking — first come, first served',
+    'onboarding.mode.both': 'Both',
+    'onboarding.mode.bothDesc': 'Accept both online bookings and walk-in customers',
+
+    // DB Service Categories (keyed by slug)
+    'dbCat.beauty_personal_care': 'Beauty & Personal Care',
+    'dbCat.beauty_personal_care.desc': 'Hair, makeup, nails, and personal grooming services',
+    'dbCat.health_medical': 'Health & Medical',
+    'dbCat.health_medical.desc': 'Health, wellness, and medical services',
+
+    // DB Specialties (keyed by slug)
+    'dbSpec.barber': 'Barber',
+    'dbSpec.barber.desc': 'Specializing in men\'s haircuts, beard trims, and grooming.',
+    'dbSpec.hairdresser': 'Hairdresser',
+    'dbSpec.hairdresser.desc': 'Expert in all types of hair styling and treatments.',
+    'dbSpec.makeup': 'Makeup',
+    'dbSpec.makeup.desc': 'Professional makeup artist for all occasions.',
+    'dbSpec.nails': 'Nails',
+    'dbSpec.nails.desc': 'Manicure, pedicure, and nail art services.',
+    'dbSpec.massage': 'Massage',
+    'dbSpec.massage.desc': 'Relaxation and therapeutic massage treatments.',
   },
   
   fr: {
@@ -1987,9 +2112,19 @@ const translations = {
     'common.week': 'Semaine',
     'common.day': 'Jour',
     'common.list': 'Liste',
+    'common.no_events': 'Aucun événement à afficher',
     'common.all': 'Tout',
     'common.active': 'Actif',
     'common.inactive': 'Inactif',
+    'profile.editCover': 'Modifier la couverture',
+    'profile.editProfile': 'Modifier le profil',
+    'profile.accountSettings': 'Paramètres du compte',
+    'profile.changePhoto': 'Changer la photo',
+    'profile.reposition': 'Repositionner',
+    'profile.removeCover': 'Supprimer la couverture',
+    'profile.savePosition': 'Enregistrer la position',
+    'profile.dragToReposition': 'Faites glisser vers le haut ou le bas pour repositionner',
+    'profile.cancel': 'Annuler',
     'common.visible': 'visible',
     'common.total': 'Total',
     'common.to': 'à',
@@ -2660,6 +2795,121 @@ const translations = {
     'search.showResults': 'Afficher les résultats',
     'search.salon': 'Salon',
     'search.morocco': 'Maroc',
+
+    // Business Onboarding
+    'onboarding.welcome': 'Bienvenue, {name} !',
+    'onboarding.whatDescribes': 'Quel est votre type d\'activité ?',
+    'onboarding.continue': 'Continuer',
+    'onboarding.back': 'Retour',
+    'onboarding.completeSetup': 'Terminer la configuration',
+    'onboarding.creating': 'Création...',
+    'onboarding.stepOf': 'Étape {current} sur {total}',
+    'onboarding.loadingMap': 'Chargement de la carte...',
+
+    // Business Categories
+    'onboarding.cat.salonOwner': 'Propriétaire de salon',
+    'onboarding.cat.salonOwnerDesc': 'Vous possédez ou gérez un espace physique où les clients se rendent',
+    'onboarding.cat.mobileService': 'Prestataire mobile',
+    'onboarding.cat.mobileServiceDesc': 'Vous vous déplacez chez les clients pour fournir vos services',
+    'onboarding.cat.jobSeeker': 'Chercheur d\'emploi',
+    'onboarding.cat.jobSeekerDesc': 'Vous recherchez des opportunités d\'emploi dans le secteur',
+
+    // Service Category Step
+    'onboarding.chooseServiceCategory': 'Choisissez votre catégorie de service',
+    'onboarding.selectCategoryFit': 'Sélectionnez la catégorie qui correspond le mieux à vos services',
+
+    // Professional Type / Specialty Step
+    'onboarding.whatsSpecialty': 'Quelle est votre spécialité ?',
+    'onboarding.selectBestDescribes': 'Sélectionnez l\'option qui décrit le mieux votre travail',
+    'onboarding.noSpecialties': 'Aucune spécialité disponible pour cette catégorie.',
+
+    // Business Details Step
+    'onboarding.businessDetails': 'Détails de l\'entreprise',
+    'onboarding.tellSalon': 'Parlez-nous de votre salon',
+    'onboarding.tellMobile': 'Parlez-nous de votre service mobile',
+    'onboarding.businessName': 'Nom de l\'entreprise',
+    'onboarding.placeholderSalon': 'ex. Salon Les Ciseaux d\'Or',
+    'onboarding.placeholderMobile': 'ex. Coiffure Mobile par Ahmed',
+    'onboarding.city': 'Ville',
+    'onboarding.selectCity': 'Sélectionnez une ville',
+    'onboarding.searchCity': 'Rechercher une ville...',
+    'onboarding.noCityFound': 'Aucune ville trouvée',
+    'onboarding.phoneNumber': 'Numéro de téléphone',
+    'onboarding.phonePlaceholder': 'ex. +212 6XX XXX XXX',
+    'onboarding.salonLocation': 'Emplacement du salon',
+    'onboarding.baseLocation': 'Emplacement de base',
+    'onboarding.clickMapToSet': '(cliquez sur la carte pour définir)',
+    'onboarding.address': 'Adresse',
+    'onboarding.enterSalonAddress': 'Entrez l\'adresse de votre salon',
+    'onboarding.enterBaseAddress': 'Entrez votre adresse de base',
+
+    // Years of Experience Step
+    'onboarding.howManyYears': 'Combien d\'années d\'expérience ?',
+    'onboarding.selectExperienceAs': 'Sélectionnez votre niveau d\'expérience en tant que {type}',
+    'onboarding.professional': 'professionnel',
+    'onboarding.exp.lessThan1': 'Moins d\'un an',
+    'onboarding.exp.lessThan1Desc': 'Débutant dans le secteur',
+    'onboarding.exp.1to3': '1 à 3 ans',
+    'onboarding.exp.1to3Desc': 'Construction des compétences fondamentales',
+    'onboarding.exp.3to5': '3 à 5 ans',
+    'onboarding.exp.3to5Desc': 'Professionnel établi avec une solide expérience',
+    'onboarding.exp.5to10': '5 à 10 ans',
+    'onboarding.exp.5to10Desc': 'Professionnel expérimenté avec une expertise approfondie',
+    'onboarding.exp.moreThan10': '10 ans et plus',
+    'onboarding.exp.moreThan10Desc': 'Professionnel senior avec une vaste expérience',
+
+    // Certificate Step
+    'onboarding.professionalCertification': 'Certification professionnelle',
+    'onboarding.haveCertificate': 'Avez-vous un certificat ou diplôme en {type} ?',
+    'onboarding.yourProfession': 'votre profession',
+    'onboarding.yesCertified': 'Oui, je suis certifié',
+    'onboarding.yesCertifiedDesc': 'J\'ai une formation ou une certification formelle',
+    'onboarding.noNotYet': 'Non, pas encore',
+    'onboarding.noNotYetDesc': 'J\'ai appris par l\'expérience et la pratique',
+
+    // Schedule Step
+    'onboarding.setSchedule': 'Définir votre horaire',
+    'onboarding.whenCanBook': 'Quand les clients peuvent-ils réserver ?',
+    'onboarding.closed': 'Fermé',
+    'onboarding.opensAt': 'Ouvre à',
+    'onboarding.closesAt': 'Ferme à',
+
+    // Days of Week
+    'onboarding.day.sunday': 'Dimanche',
+    'onboarding.day.monday': 'Lundi',
+    'onboarding.day.tuesday': 'Mardi',
+    'onboarding.day.wednesday': 'Mercredi',
+    'onboarding.day.thursday': 'Jeudi',
+    'onboarding.day.friday': 'Vendredi',
+    'onboarding.day.saturday': 'Samedi',
+
+    // Service Mode Step
+    'onboarding.howReceiveCustomers': 'Comment recevez-vous les clients ?',
+    'onboarding.chooseHowCustomers': 'Choisissez comment les clients accèdent à vos services',
+    'onboarding.mode.booking': 'Réservation en ligne',
+    'onboarding.mode.bookingDesc': 'Les clients réservent en ligne via votre page',
+    'onboarding.mode.walkin': 'Sans rendez-vous uniquement',
+    'onboarding.mode.walkinDesc': 'Les clients viennent directement — premier arrivé, premier servi',
+    'onboarding.mode.both': 'Les deux',
+    'onboarding.mode.bothDesc': 'Accepter les réservations en ligne et les clients sans rendez-vous',
+
+    // DB Service Categories (keyed by slug)
+    'dbCat.beauty_personal_care': 'Beauté & Soins Personnels',
+    'dbCat.beauty_personal_care.desc': 'Coiffure, maquillage, ongles et soins de beauté',
+    'dbCat.health_medical': 'Santé & Médical',
+    'dbCat.health_medical.desc': 'Services de santé, bien-être et soins médicaux',
+
+    // DB Specialties (keyed by slug)
+    'dbSpec.barber': 'Barbier',
+    'dbSpec.barber.desc': 'Spécialisé dans les coupes hommes, taille de barbe et soins.',
+    'dbSpec.hairdresser': 'Coiffeur',
+    'dbSpec.hairdresser.desc': 'Expert en coiffure et traitements capillaires.',
+    'dbSpec.makeup': 'Maquillage',
+    'dbSpec.makeup.desc': 'Maquilleur professionnel pour toutes occasions.',
+    'dbSpec.nails': 'Ongles',
+    'dbSpec.nails.desc': 'Manucure, pédicure et nail art.',
+    'dbSpec.massage': 'Massage',
+    'dbSpec.massage.desc': 'Massages de relaxation et thérapeutiques.',
   },
   
   ar: {
@@ -3318,9 +3568,19 @@ const translations = {
     'common.week': 'أسبوع',
     'common.day': 'يوم',
     'common.list': 'قائمة',
+    'common.no_events': 'لا توجد أحداث للعرض',
     'common.all': 'الكل',
     'common.active': 'نشط',
     'common.inactive': 'غير نشط',
+    'profile.editCover': 'تعديل الغلاف',
+    'profile.editProfile': 'تعديل الملف الشخصي',
+    'profile.accountSettings': 'إعدادات الحساب',
+    'profile.changePhoto': 'تغيير الصورة',
+    'profile.reposition': 'إعادة تحديد الموضع',
+    'profile.removeCover': 'إزالة الغلاف',
+    'profile.savePosition': 'حفظ الموضع',
+    'profile.dragToReposition': 'اسحب لأعلى أو لأسفل لإعادة تحديد الموضع',
+    'profile.cancel': 'إلغاء',
     'common.visible': 'مرئي',
     'common.total': 'الإجمالي',
     'common.to': 'إلى',
@@ -3974,6 +4234,121 @@ const translations = {
     'search.showResults': 'عرض النتائج',
     'search.salon': 'صالون',
     'search.morocco': 'المغرب',
+
+    // Business Onboarding
+    'onboarding.welcome': 'مرحباً، {name}!',
+    'onboarding.whatDescribes': 'ما الذي يصف عملك بشكل أفضل؟',
+    'onboarding.continue': 'متابعة',
+    'onboarding.back': 'رجوع',
+    'onboarding.completeSetup': 'إكمال الإعداد',
+    'onboarding.creating': 'جاري الإنشاء...',
+    'onboarding.stepOf': 'الخطوة {current} من {total}',
+    'onboarding.loadingMap': 'جاري تحميل الخريطة...',
+
+    // Business Categories
+    'onboarding.cat.salonOwner': 'صاحب صالون',
+    'onboarding.cat.salonOwnerDesc': 'تملك أو تدير مكاناً يزوره العملاء',
+    'onboarding.cat.mobileService': 'خدمة متنقلة',
+    'onboarding.cat.mobileServiceDesc': 'تتنقل إلى مواقع العملاء لتقديم الخدمات',
+    'onboarding.cat.jobSeeker': 'باحث عن عمل',
+    'onboarding.cat.jobSeekerDesc': 'تبحث عن فرص عمل في هذا المجال',
+
+    // Service Category Step
+    'onboarding.chooseServiceCategory': 'اختر فئة الخدمة',
+    'onboarding.selectCategoryFit': 'اختر الفئة التي تناسب خدماتك',
+
+    // Professional Type / Specialty Step
+    'onboarding.whatsSpecialty': 'ما هو تخصصك؟',
+    'onboarding.selectBestDescribes': 'اختر الخيار الذي يصف عملك بشكل أفضل',
+    'onboarding.noSpecialties': 'لا توجد تخصصات متاحة لهذه الفئة حالياً.',
+
+    // Business Details Step
+    'onboarding.businessDetails': 'تفاصيل العمل',
+    'onboarding.tellSalon': 'أخبرنا عن صالونك',
+    'onboarding.tellMobile': 'أخبرنا عن خدمتك المتنقلة',
+    'onboarding.businessName': 'اسم العمل',
+    'onboarding.placeholderSalon': 'مثال: صالون المقص الذهبي',
+    'onboarding.placeholderMobile': 'مثال: حلاقة متنقلة من أحمد',
+    'onboarding.city': 'المدينة',
+    'onboarding.selectCity': 'اختر مدينة',
+    'onboarding.searchCity': 'ابحث عن مدينة...',
+    'onboarding.noCityFound': 'لم يتم العثور على مدينة',
+    'onboarding.phoneNumber': 'رقم الهاتف',
+    'onboarding.phonePlaceholder': 'مثال: +212 6XX XXX XXX',
+    'onboarding.salonLocation': 'موقع الصالون',
+    'onboarding.baseLocation': 'الموقع الرئيسي',
+    'onboarding.clickMapToSet': '(انقر على الخريطة للتحديد)',
+    'onboarding.address': 'العنوان',
+    'onboarding.enterSalonAddress': 'أدخل عنوان صالونك',
+    'onboarding.enterBaseAddress': 'أدخل عنوانك الرئيسي',
+
+    // Years of Experience Step
+    'onboarding.howManyYears': 'كم سنة من الخبرة لديك؟',
+    'onboarding.selectExperienceAs': 'اختر مستوى خبرتك كـ {type}',
+    'onboarding.professional': 'محترف',
+    'onboarding.exp.lessThan1': 'أقل من سنة',
+    'onboarding.exp.lessThan1Desc': 'بداية في المجال',
+    'onboarding.exp.1to3': '1-3 سنوات',
+    'onboarding.exp.1to3Desc': 'بناء المهارات والخبرة الأساسية',
+    'onboarding.exp.3to5': '3-5 سنوات',
+    'onboarding.exp.3to5Desc': 'محترف راسخ بخبرة قوية',
+    'onboarding.exp.5to10': '5-10 سنوات',
+    'onboarding.exp.5to10Desc': 'محترف خبير بمعرفة عميقة',
+    'onboarding.exp.moreThan10': '10 سنوات وأكثر',
+    'onboarding.exp.moreThan10Desc': 'محترف كبير بخبرة واسعة',
+
+    // Certificate Step
+    'onboarding.professionalCertification': 'الشهادة المهنية',
+    'onboarding.haveCertificate': 'هل لديك شهادة أو دبلوم في {type}؟',
+    'onboarding.yourProfession': 'مهنتك',
+    'onboarding.yesCertified': 'نعم، لدي شهادة',
+    'onboarding.yesCertifiedDesc': 'لدي تعليم رسمي أو شهادة مهنية',
+    'onboarding.noNotYet': 'لا، ليس بعد',
+    'onboarding.noNotYetDesc': 'تعلمت من خلال الخبرة والممارسة',
+
+    // Schedule Step
+    'onboarding.setSchedule': 'حدد جدولك',
+    'onboarding.whenCanBook': 'متى يمكن للعملاء الحجز معك؟',
+    'onboarding.closed': 'مغلق',
+    'onboarding.opensAt': 'يفتح في',
+    'onboarding.closesAt': 'يغلق في',
+
+    // Days of Week
+    'onboarding.day.sunday': 'الأحد',
+    'onboarding.day.monday': 'الإثنين',
+    'onboarding.day.tuesday': 'الثلاثاء',
+    'onboarding.day.wednesday': 'الأربعاء',
+    'onboarding.day.thursday': 'الخميس',
+    'onboarding.day.friday': 'الجمعة',
+    'onboarding.day.saturday': 'السبت',
+
+    // Service Mode Step
+    'onboarding.howReceiveCustomers': 'كيف تستقبل العملاء؟',
+    'onboarding.chooseHowCustomers': 'اختر كيف يحصل العملاء على خدماتك',
+    'onboarding.mode.booking': 'حجز عبر الإنترنت',
+    'onboarding.mode.bookingDesc': 'يحجز العملاء المواعيد عبر صفحتك',
+    'onboarding.mode.walkin': 'بدون موعد فقط',
+    'onboarding.mode.walkinDesc': 'يأتي العملاء مباشرة — الأول يُخدم أولاً',
+    'onboarding.mode.both': 'كلاهما',
+    'onboarding.mode.bothDesc': 'قبول الحجز عبر الإنترنت والعملاء بدون موعد',
+
+    // DB Service Categories (keyed by slug)
+    'dbCat.beauty_personal_care': 'الجمال والعناية الشخصية',
+    'dbCat.beauty_personal_care.desc': 'الشعر، المكياج، الأظافر وخدمات العناية الشخصية',
+    'dbCat.health_medical': 'الصحة والطب',
+    'dbCat.health_medical.desc': 'خدمات الصحة والعافية والرعاية الطبية',
+
+    // DB Specialties (keyed by slug)
+    'dbSpec.barber': 'حلاق',
+    'dbSpec.barber.desc': 'متخصص في قصات الشعر للرجال وتشذيب اللحية والعناية.',
+    'dbSpec.hairdresser': 'مصفف شعر',
+    'dbSpec.hairdresser.desc': 'خبير في جميع أنواع تصفيف الشعر والعلاجات.',
+    'dbSpec.makeup': 'مكياج',
+    'dbSpec.makeup.desc': 'فنان مكياج محترف لجميع المناسبات.',
+    'dbSpec.nails': 'أظافر',
+    'dbSpec.nails.desc': 'مانيكير، باديكير وفن الأظافر.',
+    'dbSpec.massage': 'تدليك',
+    'dbSpec.massage.desc': 'جلسات تدليك للاسترخاء والعلاج.',
   }
 };
 

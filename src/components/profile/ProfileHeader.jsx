@@ -247,7 +247,7 @@ export default function ProfileHeader({
         {isRepositioning && (
           <div className="absolute top-0 inset-x-0 flex items-center justify-center gap-2 py-2 bg-black/70 text-white text-xs font-medium pointer-events-none">
             <Move className="w-3.5 h-3.5" />
-            <span>Drag up or down to reposition</span>
+            <span>{t('profile.dragToReposition')}</span>
           </div>
         )}
 
@@ -279,13 +279,13 @@ export default function ProfileHeader({
               onClick={cancelReposition}
               className="pointer-events-auto px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-black/50 hover:bg-black/70 backdrop-blur-sm border border-white/20 transition-all"
             >
-              Cancel
+              {t('profile.cancel')}
             </button>
             <button
               onClick={savePosition}
               className="pointer-events-auto px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-900 bg-white/90 hover:bg-white border border-gray-300 transition-all"
             >
-              Save Position
+              {t('profile.savePosition')}
             </button>
           </div>
         )}
@@ -299,7 +299,7 @@ export default function ProfileHeader({
               className="flex items-center gap-1.5 px-3 py-1.5 bg-black/60 hover:bg-black/70 disabled:opacity-50 backdrop-blur-sm rounded-lg text-xs font-medium text-white transition-all"
             >
               <Camera className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t('editCover') || 'Edit Cover'}</span>
+              <span className="hidden sm:inline">{t('profile.editCover')}</span>
               <ChevronDown className="w-3 h-3" />
             </button>
 
@@ -310,7 +310,7 @@ export default function ProfileHeader({
                   className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <Camera className="w-4 h-4 text-gray-500" />
-                  Change photo
+                  {t('profile.changePhoto')}
                 </button>
                 {localCoverImage && (
                   <button
@@ -318,7 +318,7 @@ export default function ProfileHeader({
                     className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     <Move className="w-4 h-4 text-gray-500" />
-                    Reposition
+                    {t('profile.reposition')}
                   </button>
                 )}
                 {localCoverImage && (
@@ -327,7 +327,7 @@ export default function ProfileHeader({
                     className="flex items-center gap-2.5 w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Remove cover
+                    {t('profile.removeCover')}
                   </button>
                 )}
               </div>
@@ -346,12 +346,12 @@ export default function ProfileHeader({
       </div>
 
       {/* Profile Section */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200" dir={isRTL ? 'rtl' : 'ltr'}>
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <div className={`flex flex-col sm:flex-row ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+          <div className="flex flex-col sm:flex-row">
             
             {/* Profile Photo */}
-            <div className={`relative -mt-12 sm:-mt-16 ${isRTL ? 'mr-0 ml-6 sm:mr-0 sm:ml-6' : 'mr-6 sm:mr-6'} flex-shrink-0 self-start`}>
+            <div className={`relative -mt-12 sm:-mt-16 ${isRTL ? 'ml-6 sm:ml-6' : 'mr-6 sm:mr-6'} flex-shrink-0 self-start`}>
               <motion.div
                 className="relative group"
                 onMouseEnter={() => setIsHoveringProfile(true)}
@@ -373,17 +373,20 @@ export default function ProfileHeader({
                   )}
                 </div>
                 
-                {/* Edit Photo Overlay */}
-                {isOwnProfile && (
+                {/* Upload loading overlay */}
+                {isOwnProfile && isUploadingAvatar && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full z-10">
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  </div>
+                )}
+
+                {/* Edit Photo Overlay (hover only, hidden during upload) */}
+                {isOwnProfile && !isUploadingAvatar && (
                   <motion.button
                     onClick={() => avatarInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-wait"
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                   >
-                    {isUploadingAvatar
-                      ? <Loader2 className="w-6 h-6 text-white animate-spin" />
-                      : <Camera className="w-6 h-6 text-white" />
-                    }
+                    <Camera className="w-6 h-6 text-white" />
                   </motion.button>
                 )}
 
@@ -406,10 +409,10 @@ export default function ProfileHeader({
             </div>
 
             {/* Info & Actions */}
-            <div className={`flex-1 py-4 sm:py-5 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            <div className={`flex-1 py-4 sm:py-5 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4`}>
               
               {/* Name & Location */}
-              <div className={`text-left ${isRTL ? 'text-right' : ''}`}>
+              <div>
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                   {displayName}
                 </h1>
@@ -419,7 +422,7 @@ export default function ProfileHeader({
                   </p>
                 )}
                 {location && (
-                  <p className={`flex items-center gap-1 mt-1 text-sm text-gray-500 ${isRTL ? 'justify-end flex-row-reverse' : 'justify-start'}`}>
+                  <p className={`flex items-center gap-1 mt-1 text-sm text-gray-500`}>
                     <MapPin className="w-3.5 h-3.5" />
                     {location}
                   </p>
@@ -427,10 +430,10 @@ export default function ProfileHeader({
               </div>
 
               {/* Actions */}
-              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-2`}>
                 {/* Social Links */}
                 {Object.entries(socialLinks).length > 0 && (
-                  <div className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center gap-1.5`}>
                     {Object.entries(socialLinks).map(([platform, url]) => {
                       const Icon = socialIcons[platform] || LinkIcon;
                       return url ? (
@@ -450,18 +453,18 @@ export default function ProfileHeader({
                 
                 {/* Edit Profile + Account Settings */}
                 {isOwnProfile && onEditProfile && (
-                  <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <div className={`flex items-center gap-2`}>
                     <button
                       onClick={onEditProfile}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors`}
                     >
                       <Edit3 className="w-4 h-4" />
-                      <span>{t('editProfile') || 'Edit Profile'}</span>
+                      <span>{t('profile.editProfile')}</span>
                     </button>
                     <button
                       onClick={() => openUserProfile()}
                       className="flex items-center justify-center w-9 h-9 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-600 hover:text-gray-900 transition-colors"
-                      title={t('accountSettings') || 'Account Settings'}
+                      title={t('profile.accountSettings')}
                     >
                       <Settings className="w-4 h-4" />
                     </button>

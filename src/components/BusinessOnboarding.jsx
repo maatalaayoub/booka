@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useUser, useAuth } from '@clerk/nextjs';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // ─── SANITIZATION HELPERS ──────────────────────────────────
 function sanitizeText(value) {
@@ -52,19 +53,19 @@ const LocationPicker = dynamic(() => import('./LocationPicker'), {
   ssr: false,
   loading: () => (
     <div className="h-[250px] bg-gray-100 rounded-[5px] flex items-center justify-center">
-      <p className="text-gray-400 text-sm">Loading map...</p>
+      <p className="text-gray-400 text-sm" id="map-loading-placeholder"></p>
     </div>
   ),
 });
 
 const DAYS_OF_WEEK = [
-  { id: 0, name: 'Sunday' },
-  { id: 1, name: 'Monday' },
-  { id: 2, name: 'Tuesday' },
-  { id: 3, name: 'Wednesday' },
-  { id: 4, name: 'Thursday' },
-  { id: 5, name: 'Friday' },
-  { id: 6, name: 'Saturday' },
+  { id: 0, nameKey: 'onboarding.day.sunday' },
+  { id: 1, nameKey: 'onboarding.day.monday' },
+  { id: 2, nameKey: 'onboarding.day.tuesday' },
+  { id: 3, nameKey: 'onboarding.day.wednesday' },
+  { id: 4, nameKey: 'onboarding.day.thursday' },
+  { id: 5, nameKey: 'onboarding.day.friday' },
+  { id: 6, nameKey: 'onboarding.day.saturday' },
 ];
 
 const MOROCCO_CITIES = [
@@ -90,8 +91,8 @@ const MOROCCO_CITIES = [
 const BUSINESS_CATEGORIES = [
   { 
     id: 'salon_owner', 
-    name: 'Salon Owner', 
-    description: 'You own or manage a physical location where clients visit',
+    nameKey: 'onboarding.cat.salonOwner', 
+    descKey: 'onboarding.cat.salonOwnerDesc',
     icon: Store,
     gradient: 'from-violet-500 to-purple-600',
     bgLight: 'bg-violet-50',
@@ -99,8 +100,8 @@ const BUSINESS_CATEGORIES = [
   },
   { 
     id: 'mobile_service', 
-    name: 'Mobile Service Provider', 
-    description: 'You travel to client locations to provide services',
+    nameKey: 'onboarding.cat.mobileService', 
+    descKey: 'onboarding.cat.mobileServiceDesc',
     icon: MapPin,
     gradient: 'from-blue-500 to-cyan-600',
     bgLight: 'bg-blue-50',
@@ -108,8 +109,8 @@ const BUSINESS_CATEGORIES = [
   },
   { 
     id: 'job_seeker', 
-    name: 'Job Seeker', 
-    description: 'You are looking for employment opportunities in the industry',
+    nameKey: 'onboarding.cat.jobSeeker', 
+    descKey: 'onboarding.cat.jobSeekerDesc',
     icon: Search,
     gradient: 'from-emerald-500 to-teal-600',
     bgLight: 'bg-emerald-50',
@@ -133,11 +134,11 @@ const PROFESSIONAL_TYPES = [
 ];
 
 const YEARS_OF_EXPERIENCE = [
-  { id: 'less_than_1', name: 'Less than 1 year', description: 'Just starting out in the industry', icon: Star, color: 'text-gray-500', bg: 'bg-gray-100' },
-  { id: '1_to_3', name: '1-3 years', description: 'Building foundational skills and experience', icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-100' },
-  { id: '3_to_5', name: '3-5 years', description: 'Established professional with solid experience', icon: Award, color: 'text-emerald-500', bg: 'bg-emerald-100' },
-  { id: '5_to_10', name: '5-10 years', description: 'Experienced professional with deep expertise', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-100' },
-  { id: 'more_than_10', name: '10+ years', description: 'Senior professional with extensive experience', icon: Crown, color: 'text-violet-500', bg: 'bg-violet-100' },
+  { id: 'less_than_1', nameKey: 'onboarding.exp.lessThan1', descKey: 'onboarding.exp.lessThan1Desc', icon: Star, color: 'text-gray-500', bg: 'bg-gray-100' },
+  { id: '1_to_3', nameKey: 'onboarding.exp.1to3', descKey: 'onboarding.exp.1to3Desc', icon: TrendingUp, color: 'text-blue-500', bg: 'bg-blue-100' },
+  { id: '3_to_5', nameKey: 'onboarding.exp.3to5', descKey: 'onboarding.exp.3to5Desc', icon: Award, color: 'text-emerald-500', bg: 'bg-emerald-100' },
+  { id: '5_to_10', nameKey: 'onboarding.exp.5to10', descKey: 'onboarding.exp.5to10Desc', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-100' },
+  { id: 'more_than_10', nameKey: 'onboarding.exp.moreThan10', descKey: 'onboarding.exp.moreThan10Desc', icon: Crown, color: 'text-violet-500', bg: 'bg-violet-100' },
 ];
 
 const WORK_LOCATIONS = [
@@ -161,24 +162,24 @@ const WORK_LOCATIONS = [
 const SERVICE_MODES = [
   {
     id: 'booking',
-    name: 'Online Booking',
-    description: 'Customers book appointments online through your page',
+    nameKey: 'onboarding.mode.booking',
+    descKey: 'onboarding.mode.bookingDesc',
     icon: CalendarCheck,
     gradient: 'from-blue-500 to-cyan-600',
     bgLight: 'bg-blue-50',
   },
   {
     id: 'walkin',
-    name: 'Walk-in Only',
-    description: 'Customers come directly without booking — first come, first served',
+    nameKey: 'onboarding.mode.walkin',
+    descKey: 'onboarding.mode.walkinDesc',
     icon: Users,
     gradient: 'from-emerald-500 to-teal-600',
     bgLight: 'bg-emerald-50',
   },
   {
     id: 'both',
-    name: 'Both',
-    description: 'Accept both online bookings and walk-in customers',
+    nameKey: 'onboarding.mode.both',
+    descKey: 'onboarding.mode.bothDesc',
     icon: ArrowLeftRight,
     gradient: 'from-violet-500 to-purple-600',
     bgLight: 'bg-violet-50',
@@ -195,6 +196,15 @@ const DEFAULT_HOURS = DAYS_OF_WEEK.map(day => ({
 export default function BusinessOnboarding({ userName, onComplete }) {
   const { user } = useUser();
   const { getToken } = useAuth();
+  const { t, isRTL } = useLanguage();
+  
+  // Helper to translate DB-sourced text with fallback to original value
+  const tDb = (prefix, slug, field, fallback) => {
+    const key = field ? `${prefix}.${slug}.${field}` : `${prefix}.${slug}`;
+    const translated = t(key);
+    return translated !== key ? translated : fallback;
+  };
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
@@ -599,7 +609,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-8 sm:py-12 px-4">
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center py-8 sm:py-12 px-4" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="w-full max-w-lg">
         {/* Progress indicator */}
         <div className="mb-6 sm:mb-8">
@@ -653,7 +663,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
           </div>
           {/* Step counter text for mobile */}
           <p className="text-center text-xs text-gray-400 mt-2 sm:hidden">
-            Step {currentStep} of {totalSteps}
+            {t('onboarding.stepOf').replace('{current}', currentStep).replace('{total}', totalSteps)}
           </p>
         </div>
 
@@ -661,10 +671,10 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'category' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              Welcome, {displayName}!
+              {t('onboarding.welcome').replace('{name}', displayName)}
             </h2>
             <p className="text-gray-500 text-center mb-8">
-              What best describes your business?
+              {t('onboarding.whatDescribes')}
             </p>
 
             <div className="space-y-4">
@@ -687,8 +697,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     <div className="flex-1 min-w-0">
                       <h3 className={`font-semibold text-lg transition-colors ${
                         isSelected ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-                      }`}>{category.name}</h3>
-                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{category.description}</p>
+                      }`}>{t(category.nameKey)}</h3>
+                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{t(category.descKey)}</p>
                     </div>
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                       isSelected 
@@ -711,7 +721,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                   : 'bg-gray-300 cursor-not-allowed'
               }`}
             >
-              Continue
+              {t('onboarding.continue')}
             </button>
           </div>
         )}
@@ -720,10 +730,10 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'service_category' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              Choose your service category
+              {t('onboarding.chooseServiceCategory')}
             </h2>
             <p className="text-gray-500 text-center mb-8">
-              Select the category that best fits your services
+              {t('onboarding.selectCategoryFit')}
             </p>
 
             {loadingCategories ? (
@@ -751,8 +761,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                       <div className="flex-1 min-w-0">
                         <h3 className={`font-semibold text-lg transition-colors ${
                           isSelected ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-                        }`}>{cat.name}</h3>
-                        <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{cat.description}</p>
+                        }`}>{tDb('dbCat', cat.slug, null, cat.name)}</h3>
+                        <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{tDb('dbCat', cat.slug, 'desc', cat.description)}</p>
                       </div>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                         isSelected 
@@ -772,7 +782,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-3 sm:py-4 rounded-[5px] font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-sm sm:text-base"
               >
-                Back
+                {t('onboarding.back')}
               </button>
               <button
                 onClick={handleNext}
@@ -783,7 +793,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
-                Continue
+                {t('onboarding.continue')}
               </button>
             </div>
           </div>
@@ -793,10 +803,10 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'professional_type' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              What's your specialty?
+              {t('onboarding.whatsSpecialty')}
             </h2>
             <p className="text-gray-500 text-center mb-8">
-              Select the option that best describes your work
+              {t('onboarding.selectBestDescribes')}
             </p>
 
             <div className="space-y-3">
@@ -827,8 +837,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                       <div className="flex-1 min-w-0">
                         <h3 className={`font-semibold transition-colors ${
                           isSelected ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-                        }`}>{type.name}</h3>
-                        <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{type.description}</p>
+                        }`}>{tDb('dbSpec', type.slug, null, type.name)}</h3>
+                        <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{tDb('dbSpec', type.slug, 'desc', type.description)}</p>
                       </div>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                         isSelected 
@@ -841,7 +851,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                   );
                 })
               ) : (
-                <p className="text-center text-gray-400 py-8">No specialties available for this category yet.</p>
+                <p className="text-center text-gray-400 py-8">{t('onboarding.noSpecialties')}</p>
               )}
             </div>
 
@@ -850,7 +860,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-3 sm:py-4 rounded-[5px] font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-sm sm:text-base"
               >
-                Back
+                {t('onboarding.back')}
               </button>
               <button
                 onClick={handleNext}
@@ -861,7 +871,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
-                Continue
+                {t('onboarding.continue')}
               </button>
             </div>
           </div>
@@ -871,12 +881,12 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'business_details' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-6 sm:p-8 border border-gray-100">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-2">
-              Business Details
+              {t('onboarding.businessDetails')}
             </h2>
             <p className="text-gray-500 text-center mb-6 text-sm sm:text-base">
               {businessCategory === 'salon_owner' 
-                ? 'Tell us about your salon' 
-                : 'Tell us about your mobile service'}
+                ? t('onboarding.tellSalon') 
+                : t('onboarding.tellMobile')}
             </p>
 
             <div className="space-y-4" style={{ position: 'relative' }}>
@@ -884,13 +894,13 @@ export default function BusinessOnboarding({ userName, onComplete }) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   <Building2 className="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-gray-400" />
-                  Business Name
+                  {t('onboarding.businessName')}
                 </label>
                 <input
                   type="text"
                   value={businessName}
                   onChange={(e) => setBusinessName(sanitizeText(e.target.value))}
-                  placeholder={businessCategory === 'salon_owner' ? 'e.g. Golden Scissors Salon' : 'e.g. Mobile Cuts by Ahmed'}
+                  placeholder={businessCategory === 'salon_owner' ? t('onboarding.placeholderSalon') : t('onboarding.placeholderMobile')}
                   className="w-full px-4 py-3 border border-gray-200 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-gray-900 bg-white text-sm placeholder:text-gray-400"
                 />
               </div>
@@ -899,7 +909,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
               <div ref={cityRef} className="relative" style={{ zIndex: isCityOpen ? 1000 : 'auto' }}>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   <MapPin className="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-gray-400" />
-                  City
+                  {t('onboarding.city')}
                 </label>
                 <div className="relative">
                   <ChevronDown className={`absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10 transition-transform ${isCityOpen ? 'rotate-180' : ''}`} />
@@ -909,7 +919,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     className="w-full flex items-center px-4 py-3 border border-gray-200 rounded-[5px] text-sm bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent pr-10"
                   >
                     <span className={businessCity ? 'text-gray-900' : 'text-gray-400'}>
-                      {businessCity || 'Select a city'}
+                      {businessCity || t('onboarding.selectCity')}
                     </span>
                   </button>
                 </div>
@@ -925,7 +935,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                           type="text"
                           value={citySearch}
                           onChange={(e) => setCitySearch(e.target.value)}
-                          placeholder="Search city..."
+                          placeholder={t('onboarding.searchCity')}
                           className="w-full py-2 pl-9 pr-3 border border-gray-200 rounded-[5px] text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder:text-gray-400"
                         />
                       </div>
@@ -950,7 +960,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                           </button>
                         ))
                       ) : (
-                        <div className="px-4 py-3 text-sm text-gray-400 text-center">No city found</div>
+                        <div className="px-4 py-3 text-sm text-gray-400 text-center">{t('onboarding.noCityFound')}</div>
                       )}
                     </div>
                   </div>
@@ -961,13 +971,13 @@ export default function BusinessOnboarding({ userName, onComplete }) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   <Phone className="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-gray-400" />
-                  Phone Number
+                  {t('onboarding.phoneNumber')}
                 </label>
                 <input
                   type="tel"
                   value={businessPhone}
                   onChange={(e) => setBusinessPhone(sanitizePhone(e.target.value))}
-                  placeholder="e.g. +212 6XX XXX XXX"
+                  placeholder={t('onboarding.phonePlaceholder')}
                   inputMode="tel"
                   className="w-full px-4 py-3 border border-gray-200 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-gray-900 bg-white text-sm placeholder:text-gray-400"
                 />
@@ -980,8 +990,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                   <div style={{ position: 'relative', zIndex: 0 }}>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
                       <MapPinned className="w-4 h-4 inline-block mr-1.5 -mt-0.5 text-gray-400" />
-                      {businessCategory === 'mobile_service' ? 'Base Location' : 'Salon Location'}
-                      <span className="text-gray-400 font-normal ml-1">(click on the map to set)</span>
+                      {businessCategory === 'mobile_service' ? t('onboarding.baseLocation') : t('onboarding.salonLocation')}
+                      <span className="text-gray-400 font-normal ml-1">{t('onboarding.clickMapToSet')}</span>
                     </label>
                     <LocationPicker
                       latitude={locationLat}
@@ -994,13 +1004,13 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                   {/* Address (entered manually) */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      Address
+                      {t('onboarding.address')}
                     </label>
                     <input
                       type="text"
                       value={businessAddress}
                       onChange={(e) => setBusinessAddress(sanitizeText(e.target.value))}
-                      placeholder={businessCategory === 'mobile_service' ? 'Enter your base address' : 'Enter your salon address'}
+                      placeholder={businessCategory === 'mobile_service' ? t('onboarding.enterBaseAddress') : t('onboarding.enterSalonAddress')}
                       className="w-full px-4 py-3 border border-gray-200 rounded-[5px] text-gray-900 bg-white text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37]"
                     />
                   </div>
@@ -1013,7 +1023,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-3 sm:py-4 rounded-[5px] font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-sm sm:text-base"
               >
-                Back
+                {t('onboarding.back')}
               </button>
               <button
                 onClick={handleNext}
@@ -1024,7 +1034,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
-                Continue
+                {t('onboarding.continue')}
               </button>
             </div>
           </div>
@@ -1034,10 +1044,10 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'years_of_experience' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              How many years of experience?
+              {t('onboarding.howManyYears')}
             </h2>
             <p className="text-gray-500 text-center mb-8">
-              Select your level of experience as a {PROFESSIONAL_TYPES.find(t => t.id === professionalType)?.name || 'professional'}
+              {t('onboarding.selectExperienceAs').replace('{type}', tDb('dbSpec', professionalType, null, specialties.find(s => s.slug === professionalType)?.name) || t('onboarding.professional'))}
             </p>
 
             <div className="space-y-3">
@@ -1060,8 +1070,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     <div className="flex-1 min-w-0">
                       <h3 className={`font-semibold transition-colors ${
                         isSelected ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-                      }`}>{exp.name}</h3>
-                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{exp.description}</p>
+                      }`}>{t(exp.nameKey)}</h3>
+                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-1">{t(exp.descKey)}</p>
                     </div>
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                       isSelected 
@@ -1080,7 +1090,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-3 sm:py-4 rounded-[5px] font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-sm sm:text-base"
               >
-                Back
+                {t('onboarding.back')}
               </button>
               <button
                 onClick={handleNext}
@@ -1091,7 +1101,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
-                Continue
+                {t('onboarding.continue')}
               </button>
             </div>
           </div>
@@ -1101,10 +1111,10 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'certificate' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              Professional Certification
+              {t('onboarding.professionalCertification')}
             </h2>
             <p className="text-gray-500 text-center mb-8">
-              Do you have a certificate or diploma in {PROFESSIONAL_TYPES.find(t => t.id === professionalType)?.name || 'your profession'}?
+              {t('onboarding.haveCertificate').replace('{type}', tDb('dbSpec', professionalType, null, specialties.find(s => s.slug === professionalType)?.name) || t('onboarding.yourProfession'))}
             </p>
 
             <div className="space-y-4">
@@ -1122,8 +1132,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 <div className="flex-1 min-w-0">
                   <h3 className={`font-semibold text-lg transition-colors ${
                     hasCertificate === true ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-                  }`}>Yes, I'm certified</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">I have formal education or certification</p>
+                  }`}>{t('onboarding.yesCertified')}</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">{t('onboarding.yesCertifiedDesc')}</p>
                 </div>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                   hasCertificate === true 
@@ -1148,8 +1158,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 <div className="flex-1 min-w-0">
                   <h3 className={`font-semibold text-lg transition-colors ${
                     hasCertificate === false ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-                  }`}>No, not yet</h3>
-                  <p className="text-sm text-gray-500 mt-0.5">I learned through experience and practice</p>
+                  }`}>{t('onboarding.noNotYet')}</h3>
+                  <p className="text-sm text-gray-500 mt-0.5">{t('onboarding.noNotYetDesc')}</p>
                 </div>
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                   hasCertificate === false 
@@ -1172,7 +1182,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-3 sm:py-4 rounded-[5px] font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-sm sm:text-base"
               >
-                Back
+                {t('onboarding.back')}
               </button>
               <button
                 onClick={handleSubmit}
@@ -1183,7 +1193,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
-                {isSubmitting ? 'Creating...' : 'Complete Setup'}
+                {isSubmitting ? t('onboarding.creating') : t('onboarding.completeSetup')}
               </button>
             </div>
           </div>
@@ -1193,10 +1203,10 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'business_hours' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-4 sm:p-6 md:p-8 border border-gray-100">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-2">
-              Set Your Schedule
+              {t('onboarding.setSchedule')}
             </h2>
             <p className="text-gray-500 text-center mb-6 text-sm sm:text-base">
-              When can clients book with you?
+              {t('onboarding.whenCanBook')}
             </p>
 
             <div className="space-y-2">
@@ -1218,21 +1228,21 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                             isOpen ? 'bg-amber-400' : 'bg-gray-300'
                           }`}
                         >
-                          <div className={`absolute top-0.5 sm:top-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                            isOpen ? 'left-4 sm:left-6' : 'left-0.5 sm:left-1'
+                          <div className={`absolute top-0.5 sm:top-1 start-0.5 sm:start-1 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                            isOpen ? 'translate-x-4 sm:translate-x-5 rtl:-translate-x-4 rtl:sm:-translate-x-5' : 'translate-x-0'
                           }`} />
                         </button>
-                        <span className={`font-medium text-sm sm:text-base ${isOpen ? 'text-gray-900' : 'text-gray-500'}`}>{day.name}</span>
+                        <span className={`font-medium text-sm sm:text-base ${isOpen ? 'text-gray-900' : 'text-gray-500'}`}>{t(day.nameKey)}</span>
                       </div>
 
                       {/* Hours or Closed */}
                       <div className="flex items-center gap-1 sm:gap-2">
                         {isOpen ? (
                           <>
-                            <span className="text-gray-600 text-xs sm:text-sm font-medium hidden xs:inline">
+                            <span className="text-gray-600 text-xs sm:text-sm font-medium hidden xs:inline" dir="ltr">
                               {formatTime(dayHours?.openTime)} - {formatTime(dayHours?.closeTime)}
                             </span>
-                            <span className="text-gray-600 text-xs font-medium xs:hidden">
+                            <span className="text-gray-600 text-xs font-medium xs:hidden" dir="ltr">
                               {dayHours?.openTime} - {dayHours?.closeTime}
                             </span>
                             <button
@@ -1245,7 +1255,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                             </button>
                           </>
                         ) : (
-                          <span className="text-gray-400 text-xs sm:text-sm font-medium">Closed</span>
+                          <span className="text-gray-400 text-xs sm:text-sm font-medium">{t('onboarding.closed')}</span>
                         )}
                       </div>
                     </div>
@@ -1255,18 +1265,20 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                       <div className="p-3 sm:p-4 bg-white border-t border-gray-100">
                         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                           <div className="flex-1">
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Opens at</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{t('onboarding.opensAt')}</label>
                             <input
                               type="time"
+                              dir="ltr"
                               value={dayHours?.openTime || '10:00'}
                               onChange={(e) => updateDayHours(day.id, 'openTime', e.target.value)}
                               className="w-full px-3 py-2.5 border border-gray-200 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-gray-900 bg-white text-sm"
                             />
                           </div>
                           <div className="flex-1">
-                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Closes at</label>
+                            <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">{t('onboarding.closesAt')}</label>
                             <input
                               type="time"
+                              dir="ltr"
                               value={dayHours?.closeTime || '19:00'}
                               onChange={(e) => updateDayHours(day.id, 'closeTime', e.target.value)}
                               className="w-full px-3 py-2.5 border border-gray-200 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-gray-900 bg-white text-sm"
@@ -1296,7 +1308,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-3 sm:py-4 rounded-[5px] font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-sm sm:text-base"
               >
-                Back
+                {t('onboarding.back')}
               </button>
               <button
                 onClick={handleSubmit}
@@ -1313,9 +1325,9 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    Creating...
+                    {t('onboarding.creating')}
                   </span>
-                ) : 'Complete Setup'}
+                ) : t('onboarding.completeSetup')}
               </button>
             </div>
           </div>
@@ -1325,10 +1337,10 @@ export default function BusinessOnboarding({ userName, onComplete }) {
         {currentStepContent === 'service_mode' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">
-              How do you receive customers?
+              {t('onboarding.howReceiveCustomers')}
             </h2>
             <p className="text-gray-500 text-center mb-8">
-              Choose how customers can get your services
+              {t('onboarding.chooseHowCustomers')}
             </p>
 
             <div className="space-y-4">
@@ -1351,8 +1363,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     <div className="flex-1 min-w-0">
                       <h3 className={`font-semibold text-lg transition-colors ${
                         isSelected ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
-                      }`}>{mode.name}</h3>
-                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{mode.description}</p>
+                      }`}>{t(mode.nameKey)}</h3>
+                      <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{t(mode.descKey)}</p>
                     </div>
                     <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all ${
                       isSelected 
@@ -1377,7 +1389,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 onClick={handleBack}
                 className="px-4 sm:px-6 py-3 sm:py-4 rounded-[5px] font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all text-sm sm:text-base"
               >
-                Back
+                {t('onboarding.back')}
               </button>
               <button
                 onClick={handleNext}
@@ -1388,7 +1400,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                     : 'bg-gray-300 cursor-not-allowed'
                 }`}
               >
-                Continue
+                {t('onboarding.continue')}
               </button>
             </div>
           </div>

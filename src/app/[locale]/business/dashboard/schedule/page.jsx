@@ -193,7 +193,7 @@ function TimeSelect24({ value, onChange }) {
 
 // ─── Main Component ─────────────────────────────────────────
 export default function SchedulePage() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, locale } = useLanguage();
   const { businessCategory } = useBusinessCategory();
   const router = useRouter();
   const calendarRef = useRef(null);
@@ -281,7 +281,7 @@ export default function SchedulePage() {
       }
     }
     return count;
-  }, [businessHours]);
+  }, [businessHours, saved]);
 
   const hasChanges = changeCount > 0;
 
@@ -657,8 +657,8 @@ export default function SchedulePage() {
                       onClick={() => updateDay(day.dayOfWeek, 'isOpen', !day.isOpen)}
                     >
                       <div
-                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                          day.isOpen ? 'translate-x-5' : 'translate-x-0.5'
+                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                          day.isOpen ? 'start-5' : 'start-0.5'
                         }`}
                       />
                     </div>
@@ -843,6 +843,8 @@ export default function SchedulePage() {
             <FullCalendarWrapper
               ref={calendarRef}
               events={calendarEvents}
+              locale={locale}
+              noEventsText={t('common.no_events')}
               onDateClick={handleDateClick}
               onEventClick={handleEventClick}
             />

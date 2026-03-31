@@ -591,7 +591,7 @@ export default function JobSeekerProfilePage() {
                     className="sr-only peer"
                   />
                   <div className="w-10 h-5 bg-gray-200 rounded-full peer-checked:bg-[#364153] transition-colors"></div>
-                  <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:translate-x-5 transition-transform"></div>
+                  <div className="absolute top-0.5 start-0.5 w-4 h-4 bg-white rounded-full shadow peer-checked:start-5 transition-all"></div>
                 </div>
                 <span className="text-sm text-gray-600">
                   {hasCertificate

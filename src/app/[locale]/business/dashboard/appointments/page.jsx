@@ -150,10 +150,9 @@ function timesOverlap(startA, endA, startB, endB) {
 
 // ─── Main Component ─────────────────────────────────────────
 export default function AppointmentsPage() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, locale } = useLanguage();
   const { businessCategory } = useBusinessCategory();
   const params = useParams();
-  const locale = params?.locale || 'en';
   const calendarRef = useRef(null);
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -187,7 +186,7 @@ export default function AppointmentsPage() {
   const visibleRangeLabel = useMemo(() => {
     const { start, end } = visibleRange;
     if (!start || !end) return '';
-    const fmt = (d, opts) => d.toLocaleDateString('en-US', opts);
+    const fmt = (d, opts) => d.toLocaleDateString(locale, opts);
     // end from FC is exclusive, so subtract 1 day for display
     const last = new Date(end);
     last.setDate(last.getDate() - 1);
@@ -205,7 +204,7 @@ export default function AppointmentsPage() {
     }
     // Different years
     return `${fmt(start, { month: 'short', day: 'numeric', year: 'numeric' })} — ${fmt(last, { month: 'short', day: 'numeric', year: 'numeric' })}`;
-  }, [visibleRange]);
+  }, [visibleRange, locale]);
 
   // ── Load appointments from database ──
   useEffect(() => {
@@ -1030,6 +1029,8 @@ export default function AppointmentsPage() {
             <FullCalendarWrapper
               ref={calendarRef}
               events={filteredEvents}
+              locale={locale}
+              noEventsText={t('common.no_events')}
               onEventClick={handleEventClick}
               onDateClick={handleDateClick}
               onSelect={handleSelect}
@@ -1263,13 +1264,13 @@ export default function AppointmentsPage() {
                               }`}
                             >
                               <span className="text-[10px] font-medium text-gray-400 uppercase">
-                                {d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })}
+                                {d.toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' })}
                               </span>
                               <span className={`text-[16px] font-bold ${isSelected && !isClosed ? 'text-amber-700' : 'text-gray-900'}`}>
                                 {d.getUTCDate()}
                               </span>
                               <span className="text-[10px] text-gray-400">
-                                {d.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}
+                                {d.toLocaleDateString(locale, { month: 'short', timeZone: 'UTC' })}
                               </span>
                             </button>
                           );

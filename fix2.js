@@ -1,0 +1,1 @@
+const fs = require('fs'); let p = 'src/components/BusinessOnboarding.jsx'; let c = fs.readFileSync(p, 'utf8'); c = c.replace('rounded-full bg-white shadow transition-all $\\{', 'rounded-full bg-white shadow start-0.5 sm:start-1 transition-transform $\\{'); fs.writeFileSync(p, c);

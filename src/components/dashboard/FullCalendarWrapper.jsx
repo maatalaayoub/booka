@@ -11,7 +11,7 @@ const EDGE_SIZE = 60; // px from left/right edge to trigger auto-scroll
 const SCROLL_INTERVAL = 800; // ms between each day shift while at edge
 
 const FullCalendarWrapper = forwardRef(function FullCalendarWrapper(
-  { events, onEventClick, onDateClick, onSelect, onEventDrop, onEventResize, onDatesSet },
+  { events, onEventClick, onDateClick, onSelect, onEventDrop, onEventResize, onDatesSet, locale, noEventsText },
   ref
 ) {
   const calendarRef = useRef(null);
@@ -180,6 +180,9 @@ const FullCalendarWrapper = forwardRef(function FullCalendarWrapper(
         longPressDelay={400}
         selectLongPressDelay={400}
         eventLongPressDelay={400}
+        locale={locale || 'en'}
+        direction={locale === 'ar' ? 'rtl' : 'ltr'}
+        noEventsText={noEventsText || 'No events to display'}
         dayMaxEvents={3}
         eventClick={onEventClick}
         dateClick={onDateClick}

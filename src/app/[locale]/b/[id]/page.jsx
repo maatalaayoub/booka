@@ -205,7 +205,7 @@ function ServiceRow({ service, isSelected, onToggle, canBook, showPrices, accent
 /* ================================================================
    DATE STRIP — horizontal scrolling dates
    ================================================================ */
-function DateStrip({ selectedDate, onSelectDate, businessHours, accent, t }) {
+function DateStrip({ selectedDate, onSelectDate, businessHours, accent, t, locale }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const startDate = addDays(today, weekOffset * 7);
@@ -249,7 +249,7 @@ function DateStrip({ selectedDate, onSelectDate, businessHours, accent, t }) {
                 {isToday ? t('bp.today') : t(`bp.day.${DAY_NAMES[day.getDay()].toLowerCase()}`)}
               </span>
               <span className="text-xl font-extrabold leading-tight">{day.getDate()}</span>
-              <span className="text-[10px] font-medium opacity-70">{day.toLocaleDateString('en', { month: 'short' })}</span>
+              <span className="text-[10px] font-medium opacity-70">{day.toLocaleDateString(locale, { month: 'short' })}</span>
               {closed && !past && <span className="text-[7px] text-red-400 font-bold mt-0.5">{t('bp.closed')}</span>}
             </button>
           );
@@ -384,7 +384,7 @@ function TimeSlotGrid({ slots, selectedSlot, onSelectSlot, loading, accent, t, u
 /* ================================================================
    BOOKING FORM MODAL
    ================================================================ */
-function BookingModal({ open, onClose, business, services, date, slot, accent, t, onSuccess }) {
+function BookingModal({ open, onClose, business, services, date, slot, accent, t, locale, onSuccess }) {
   const { user } = useUser();
   const [step, setStep] = useState('form'); // 'form' | 'summary'
   const [clientName, setClientName] = useState('');
@@ -403,6 +403,13 @@ function BookingModal({ open, onClose, business, services, date, slot, accent, t
       setClientPhone('');
       setNotes('');
       setError(null);
+      // Auto-fetch phone number from user profile
+      fetch('/api/user-profile')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data?.phone) setClientPhone(data.phone);
+        })
+        .catch(() => {});
     }
   }, [open, user]);
 
@@ -475,7 +482,7 @@ function BookingModal({ open, onClose, business, services, date, slot, accent, t
             <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl text-[13px]">
               <div className="flex items-center gap-2 text-gray-600">
                 <Calendar className="w-3.5 h-3.5" />
-                <span>{date.toLocaleDateString('en', { month: 'short', day: 'numeric' })}</span>
+                <span>{date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })}</span>
                 <span className="text-gray-300">•</span>
                 <span>{slot.start}</span>
               </div>
@@ -553,7 +560,7 @@ function BookingModal({ open, onClose, business, services, date, slot, accent, t
                 <div className="flex items-center gap-3">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <span className="text-[14px] text-gray-900">
-                    {date.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                    {date.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -623,7 +630,7 @@ function BookingModal({ open, onClose, business, services, date, slot, accent, t
 /* ================================================================
    SUCCESS MODAL
    ================================================================ */
-function SuccessModal({ appointment, onClose, accent, t }) {
+function SuccessModal({ appointment, onClose, accent, t, locale }) {
   if (!appointment) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -645,8 +652,8 @@ function SuccessModal({ appointment, onClose, accent, t }) {
           <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-3 mb-8">
             {[
               [t('bp.service'), appointment.service],
-              [t('bp.date'), new Date(appointment.startTime).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })],
-              [t('bp.time'), new Date(appointment.startTime).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })],
+              [t('bp.date'), new Date(appointment.startTime).toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })],
+              [t('bp.time'), new Date(appointment.startTime).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' })],
             ].map(([label, val]) => (
               <div key={label} className="flex justify-between text-[14px]">
                 <span className="text-gray-400">{label}</span>
@@ -1183,7 +1190,7 @@ export default function BusinessPage() {
                         </div>
                       </div>
                     </div>
-                    <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} businessHours={business.businessHours} accent={accent} t={t} />
+                    <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} businessHours={business.businessHours} accent={accent} t={t} locale={locale} />
                     {selectedDate && (
                       <TimeSlotGrid slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} loading={slotsLoading} accent={accent} t={t} userBookings={userBookings} crossBusinessBookings={crossBusinessBookings} totalDuration={totalDuration} />
                     )}
@@ -1352,7 +1359,7 @@ export default function BusinessPage() {
                     </div>
 
                     {/* Date picker */}
-                    <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} businessHours={business.businessHours} accent={accent} t={t} />
+                    <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} businessHours={business.businessHours} accent={accent} t={t} locale={locale} />
 
                     {/* Time slots */}
                     {selectedDate && (
@@ -1529,9 +1536,9 @@ export default function BusinessPage() {
       {/* MODALS */}
       <BookingModal open={showBookingModal} onClose={() => setShowBookingModal(false)}
         business={business} services={selectedServices} date={selectedDate} slot={selectedSlot}
-        accent={accent} t={t} onSuccess={handleBookingSuccess} />
+        accent={accent} t={t} locale={locale} onSuccess={handleBookingSuccess} />
 
-      <SuccessModal appointment={bookedAppointment} onClose={() => setBookedAppointment(null)} accent={accent} t={t} />
+      <SuccessModal appointment={bookedAppointment} onClose={() => setBookedAppointment(null)} accent={accent} t={t} locale={locale} />
     </div>
   );
 }

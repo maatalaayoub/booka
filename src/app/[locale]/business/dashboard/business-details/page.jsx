@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useUser } from '@clerk/nextjs';
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import {
   Building2,
   MapPin,
@@ -12,6 +13,7 @@ import {
   Loader2,
   CheckCircle,
   AlertCircle,
+  AlertTriangle,
   Navigation,
   Map,
   Store,
@@ -151,10 +153,14 @@ function SectionCard({ title, icon: Icon, iconColor = 'text-[#364153]', iconBg =
 export default function BusinessDetailsPage() {
   const { user, isLoaded } = useUser();
   const { t, isRTL } = useLanguage();
+  const router = useRouter();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [pendingNavUrl, setPendingNavUrl] = useState(null);
+  const savedFormRef = useRef(null);
   const [businessCategory, setBusinessCategory] = useState(null);
   const [specialtyName, setSpecialtyName] = useState('');
   const [serviceCategoryName, setServiceCategoryName] = useState('');
@@ -181,7 +187,7 @@ export default function BusinessDetailsPage() {
           setBusinessCategory(data.businessCategory);
           setSpecialtyName(data.specialtyName || '');
           setServiceCategoryName(data.serviceCategoryName || '');
-          setForm({
+          const formData = {
             businessName: data.businessName || '',
             address: data.address || '',
             city: data.city || '',
@@ -192,7 +198,9 @@ export default function BusinessDetailsPage() {
             travelRadiusKm: data.travelRadiusKm || '',
             latitude: data.latitude || null,
             longitude: data.longitude || null,
-          });
+          };
+          setForm(formData);
+          savedFormRef.current = JSON.parse(JSON.stringify(formData));
         }
       })
       .catch((err) => console.error('Error fetching business details:', err))
@@ -229,6 +237,7 @@ export default function BusinessDetailsPage() {
       });
 
       if (res.ok) {
+        savedFormRef.current = JSON.parse(JSON.stringify(form));
         setSaveStatus('success');
         setTimeout(() => setSaveStatus(null), 3000);
       } else {
@@ -240,6 +249,65 @@ export default function BusinessDetailsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // ── Track changes ──
+  const changeCount = useMemo(() => {
+    if (!savedFormRef.current) return 0;
+    let count = 0;
+    const keys = Object.keys(form);
+    for (const key of keys) {
+      const curr = form[key] ?? '';
+      const orig = savedFormRef.current[key] ?? '';
+      if (String(curr) !== String(orig)) count++;
+    }
+    return count;
+  }, [form, saveStatus]);
+
+  const hasChanges = changeCount > 0;
+
+  // Warn on browser tab close / refresh
+  useEffect(() => {
+    const handler = (e) => {
+      if (!hasChanges) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasChanges]);
+
+  // Intercept sidebar/link clicks for unsaved changes
+  useEffect(() => {
+    if (!hasChanges) return;
+    const handleClick = (e) => {
+      const anchor = e.target.closest('a[href]');
+      if (!anchor) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('tel:') || href.startsWith('https://')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavUrl(href);
+      setShowUnsavedDialog(true);
+    };
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
+  }, [hasChanges]);
+
+  const handleDiscardAndNavigate = () => {
+    const url = pendingNavUrl;
+    setShowUnsavedDialog(false);
+    setPendingNavUrl(null);
+    savedFormRef.current = JSON.parse(JSON.stringify(form));
+    if (url) router.push(url);
+  };
+
+  const handleSaveAndNavigate = async () => {
+    await handleSave();
+    const url = pendingNavUrl;
+    setShowUnsavedDialog(false);
+    setPendingNavUrl(null);
+    if (url) router.push(url);
   };
 
   const professionalTypeOptions = PROFESSIONAL_TYPES.map((type) => ({
@@ -419,8 +487,8 @@ export default function BusinessDetailsPage() {
 
         <button
           onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 bg-[#364153] text-white rounded-[5px] text-sm font-medium hover:bg-[#364153]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+          disabled={saving || !hasChanges}
+          className="relative flex items-center gap-2 px-6 py-2.5 bg-[#364153] text-white rounded-[5px] text-sm font-medium hover:bg-[#364153]/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
         >
           {saving ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -428,8 +496,54 @@ export default function BusinessDetailsPage() {
             <Save className="w-4 h-4" />
           )}
           {saving ? (t('businessDetails.saving') || 'Saving...') : (t('businessDetails.save') || 'Save Changes')}
+          {hasChanges && !saving && (
+            <span className="absolute -top-2 -right-2 min-w-[20px] h-5 flex items-center justify-center px-1 text-[11px] font-bold bg-red-500 text-white rounded-full">
+              {changeCount}
+            </span>
+          )}
         </button>
       </div>
+
+      {/* ── Unsaved Changes Dialog ── */}
+      {showUnsavedDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className={`bg-white rounded-[5px] shadow-xl max-w-sm w-full mx-4 overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
+            <div className="px-5 pt-5 pb-3">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                </div>
+                <h3 className="text-base font-semibold text-gray-800">{t('common.unsavedTitle')}</h3>
+              </div>
+              <p className="text-sm text-gray-500 leading-relaxed">{t('common.unsavedMessage')}</p>
+              <p className="text-xs text-gray-400 mt-1.5">
+                {changeCount} {t('common.changes')}
+              </p>
+            </div>
+            <div className={`flex gap-2 px-5 pb-5 pt-2 ${isRTL ? '' : 'flex-row-reverse'}`}>
+              <button
+                onClick={() => { setShowUnsavedDialog(false); setPendingNavUrl(null); }}
+                className="flex-1 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-[5px] hover:bg-gray-50 transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleDiscardAndNavigate}
+                className="flex-1 py-2.5 text-sm font-medium text-red-600 border border-red-200 rounded-[5px] hover:bg-red-50 transition-colors"
+              >
+                {t('common.discard')}
+              </button>
+              <button
+                onClick={handleSaveAndNavigate}
+                disabled={saving}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-[#364153] rounded-[5px] hover:bg-[#364153]/90 transition-colors disabled:opacity-60"
+              >
+                {saving ? t('common.saving') : t('common.save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

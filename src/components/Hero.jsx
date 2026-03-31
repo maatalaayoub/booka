@@ -223,8 +223,8 @@ export default function Hero() {
                   >
                     <Bell className="h-4.5 w-4.5" />
                   </Link>
-                  <button
-                    onClick={() => setIsDesktopSideMenuOpen(!isDesktopSideMenuOpen)}
+                  <Link
+                    href={`/${locale}/profile`}
                     className="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden border-2 border-[#364153]/50 transition-all hover:border-[#D4AF37] hover:scale-105"
                   >
                     {user?.imageUrl ? (
@@ -232,7 +232,7 @@ export default function Hero() {
                     ) : (
                       <User className="h-5 w-5 text-white" />
                     )}
-                  </button>
+                  </Link>
                   </>
                 ) : (
                   <div className="flex items-center gap-1 rounded-full bg-[#1E293B]/50 border border-[#364153]/50 p-1 backdrop-blur-md whitespace-nowrap">

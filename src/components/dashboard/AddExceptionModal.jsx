@@ -409,8 +409,8 @@ export default function AddExceptionModal({ isOpen, onClose, onSave, defaultDate
                   onClick={() => handleChange('isFullDay', !formData.isFullDay)}
                 >
                   <div
-                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                      formData.isFullDay ? 'translate-x-5' : 'translate-x-0.5'
+                    className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                      formData.isFullDay ? 'start-5' : 'start-0.5'
                     }`}
                   />
                 </div>
@@ -487,8 +487,8 @@ export default function AddExceptionModal({ isOpen, onClose, onSave, defaultDate
                     onClick={() => handleChange('recurring', !formData.recurring)}
                   >
                     <div
-                      className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                        formData.recurring ? 'translate-x-5' : 'translate-x-0.5'
+                      className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                        formData.recurring ? 'start-5' : 'start-0.5'
                       }`}
                     />
                   </div>

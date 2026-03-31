@@ -8,7 +8,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import listPlugin from '@fullcalendar/list';
 
 const ScheduleCalendarWrapper = forwardRef(function ScheduleCalendarWrapper(
-  { events, onDateClick, onEventClick },
+  { events, onDateClick, onEventClick, locale },
   ref
 ) {
   const calendarRef = useRef(null);
@@ -28,6 +28,8 @@ const ScheduleCalendarWrapper = forwardRef(function ScheduleCalendarWrapper(
       editable={false}
       selectable={true}
       selectMirror={false}
+      locale={locale || 'en'}
+      direction={locale === 'ar' ? 'rtl' : 'ltr'}
       dayMaxEvents={3}
       dateClick={onDateClick}
       eventClick={onEventClick}
