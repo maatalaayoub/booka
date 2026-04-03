@@ -919,7 +919,15 @@ export default function BusinessPage() {
         />
         {/* Top nav buttons */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 z-20">
-          <button onClick={() => router.back()}
+          <button onClick={() => {
+              const referrer = document.referrer;
+              const isAuthPage = referrer && (referrer.includes('/auth/') || referrer.includes('/sign-in') || referrer.includes('/sign-up'));
+              if (!referrer || isAuthPage || window.history.length <= 1) {
+                router.push(`/${locale}`);
+              } else {
+                router.back();
+              }
+            }}
             className="w-10 h-10 rounded-xl bg-black/25 backdrop-blur-md text-white flex items-center justify-center hover:bg-black/40 transition-colors">
             <ArrowLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
