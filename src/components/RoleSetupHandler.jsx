@@ -23,7 +23,10 @@ export default function RoleSetupHandler() {
   const pathname = usePathname();
   const locale = params.locale || 'en';
   const [setupComplete, setSetupComplete] = useState(false);
+  const [retryTrigger, setRetryTrigger] = useState(0);
   const setupAttempted = useRef(false);
+  const retryCount = useRef(0);
+  const MAX_RETRIES = 3;
 
   useEffect(() => {
     async function handleRoleSetup() {
@@ -93,17 +96,33 @@ export default function RoleSetupHandler() {
             setSetupComplete(true);
           } else {
             console.error('Failed to assign role:', result.error, 'Details:', result.details, 'Code:', result.code);
-            setSetupComplete(true);
+            retryCount.current++;
+            if (retryCount.current < MAX_RETRIES) {
+              console.log(`[RoleSetupHandler] Will retry (${retryCount.current}/${MAX_RETRIES})...`);
+              setupAttempted.current = false;
+              setTimeout(() => setRetryTrigger(n => n + 1), 2000 * retryCount.current);
+            } else {
+              console.error('[RoleSetupHandler] Max retries reached, giving up');
+              setSetupComplete(true);
+            }
           }
         } catch (error) {
           console.error('Error during role assignment:', error);
-          setSetupComplete(true);
+          retryCount.current++;
+          if (retryCount.current < MAX_RETRIES) {
+            console.log(`[RoleSetupHandler] Will retry (${retryCount.current}/${MAX_RETRIES})...`);
+            setupAttempted.current = false;
+            setTimeout(() => setRetryTrigger(n => n + 1), 2000 * retryCount.current);
+          } else {
+            console.error('[RoleSetupHandler] Max retries reached, giving up');
+            setSetupComplete(true);
+          }
         }
       }
     }
 
     handleRoleSetup();
-  }, [isLoaded, isSignedIn, hasRole, role, searchParams, locale, assignRole, router, pathname, setupComplete]);
+  }, [isLoaded, isSignedIn, hasRole, role, searchParams, locale, assignRole, router, pathname, setupComplete, retryTrigger]);
 
   // Don't render anything - role setup happens in the background
   return null;

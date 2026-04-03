@@ -81,46 +81,63 @@ export function useRole({ requiredRole = null, redirectTo = '/' } = {}) {
     }
   }, [isLoaded, role, requiredRole, redirectTo, router]);
 
-  // Function to assign role
-  const assignRole = useCallback(async (newRole) => {
+  // Function to assign role (with retry for transient network errors)
+  const assignRole = useCallback(async (newRole, maxRetries = 2) => {
     console.log('[useRole] assignRole called with:', newRole);
-    try {
-      const authHeaders = await getAuthHeaders();
-      const response = await fetch('/api/set-role', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeaders },
-        body: JSON.stringify({ role: newRole }),
-      });
-      
-      const responseText = await response.text();
-      console.log('[useRole] Raw response:', responseText);
-      
-      let data;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
-        data = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('[useRole] Failed to parse response:', parseError);
-        return { success: false, error: 'Invalid server response', details: responseText };
-      }
-      
-      console.log('[useRole] API response:', { status: response.status, data });
-      
-      if (response.ok) {
-        setRole(data.role);
-        setSupabaseUserId(data.userId || null);
-        return { success: true, role: data.role };
-      } else {
-        if (response.status === 403 && data.role) {
-          console.log('[useRole] Role already assigned:', data.role);
-          setRole(data.role);
-          return { success: false, error: data.error, role: data.role, alreadyAssigned: true };
+        if (attempt > 0) {
+          console.log(`[useRole] Retry attempt ${attempt}/${maxRetries}...`);
+          await new Promise(r => setTimeout(r, 1000 * attempt));
         }
-        console.error('[useRole] Error details:', JSON.stringify(data, null, 2));
-        return { success: false, error: data.error, details: data.details, code: data.code };
+        
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch('/api/set-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders },
+          body: JSON.stringify({ role: newRole }),
+        });
+        
+        const responseText = await response.text();
+        console.log('[useRole] Raw response:', responseText);
+        
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('[useRole] Failed to parse response:', parseError);
+          return { success: false, error: 'Invalid server response', details: responseText };
+        }
+        
+        console.log('[useRole] API response:', { status: response.status, data });
+        
+        if (response.ok) {
+          setRole(data.role);
+          setSupabaseUserId(data.userId || null);
+          return { success: true, role: data.role };
+        } else {
+          if (response.status === 403 && data.role) {
+            console.log('[useRole] Role already assigned:', data.role);
+            setRole(data.role);
+            return { success: false, error: data.error, role: data.role, alreadyAssigned: true };
+          }
+          // Retry on server/database errors (5xx), not on client errors (4xx)
+          if (response.status >= 500 && attempt < maxRetries) {
+            console.warn(`[useRole] Server error (${response.status}), will retry...`);
+            continue;
+          }
+          console.error('[useRole] Error details:', JSON.stringify(data, null, 2));
+          return { success: false, error: data.error, details: data.details, code: data.code };
+        }
+      } catch (error) {
+        if (attempt < maxRetries) {
+          console.warn('[useRole] Network error, will retry:', error.message);
+          continue;
+        }
+        console.error('[useRole] Error assigning role after retries:', error);
+        return { success: false, error: 'Network error', details: error.message };
       }
-    } catch (error) {
-      console.error('[useRole] Error assigning role:', error);
-      return { success: false, error: 'Network error', details: error.message };
     }
   }, [getAuthHeaders]);
 

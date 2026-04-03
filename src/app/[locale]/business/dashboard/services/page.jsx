@@ -26,33 +26,33 @@ const CURRENCIES = ['MAD'];
 // ─── SERVICE PRESETS BY PROFESSIONAL TYPE ───────────────────────
 const SERVICE_PRESETS = {
   barber: [
-    'Classic Haircut', 'Fade', 'Beard Trim', 'Shave',
-    'Kids Haircut', 'Line Up', 'Hot Towel Shave', 'Buzz Cut',
-    'Hair Wash', 'Beard Styling',
+    'servicePreset.classicHaircut', 'servicePreset.fade', 'servicePreset.beardTrim', 'servicePreset.shave',
+    'servicePreset.kidsHaircut', 'servicePreset.lineUp', 'servicePreset.hotTowelShave', 'servicePreset.buzzCut',
+    'servicePreset.hairWash', 'servicePreset.beardStyling',
   ],
   hairdresser: [
-    'Haircut', 'Blow Dry', 'Hair Color', 'Highlights',
-    'Balayage', 'Keratin Treatment', 'Hair Wash', 'Toning',
-    'Perm', 'Scalp Treatment',
+    'servicePreset.haircut', 'servicePreset.blowDry', 'servicePreset.hairColor', 'servicePreset.highlights',
+    'servicePreset.balayage', 'servicePreset.keratinTreatment', 'servicePreset.hairWash', 'servicePreset.toning',
+    'servicePreset.perm', 'servicePreset.scalpTreatment',
   ],
   makeup: [
-    'Natural Makeup', 'Bridal Makeup', 'Evening Makeup', 'Party Makeup',
-    'Editorial Makeup', 'Airbrush Makeup', 'Eye Makeup', 'Contouring',
-    'Lash Application', 'Brow Shaping',
+    'servicePreset.naturalMakeup', 'servicePreset.bridalMakeup', 'servicePreset.eveningMakeup', 'servicePreset.partyMakeup',
+    'servicePreset.editorialMakeup', 'servicePreset.airbrushMakeup', 'servicePreset.eyeMakeup', 'servicePreset.contouring',
+    'servicePreset.lashApplication', 'servicePreset.browShaping',
   ],
   nails: [
-    'Manicure', 'Pedicure', 'Gel Nails', 'Acrylic Nails',
-    'Nail Art', 'French Manicure', 'Nail Removal', 'Nail Fill',
-    'Builder Gel', 'Cuticle Care',
+    'servicePreset.manicure', 'servicePreset.pedicure', 'servicePreset.gelNails', 'servicePreset.acrylicNails',
+    'servicePreset.nailArt', 'servicePreset.frenchManicure', 'servicePreset.nailRemoval', 'servicePreset.nailFill',
+    'servicePreset.builderGel', 'servicePreset.cuticleCare',
   ],
   massage: [
-    'Swedish Massage', 'Deep Tissue', 'Hot Stone', 'Sports Massage',
-    'Relaxation Massage', 'Back Massage', 'Neck & Shoulder', 'Full Body',
-    'Aromatherapy', 'Reflexology',
+    'servicePreset.swedishMassage', 'servicePreset.deepTissue', 'servicePreset.hotStone', 'servicePreset.sportsMassage',
+    'servicePreset.relaxationMassage', 'servicePreset.backMassage', 'servicePreset.neckShoulder', 'servicePreset.fullBody',
+    'servicePreset.aromatherapy', 'servicePreset.reflexology',
   ],
   default: [
-    'Classic Haircut', 'Fade', 'Beard Trim', 'Shave',
-    'Hair Color', 'Styling', 'Kids Haircut',
+    'servicePreset.classicHaircut', 'servicePreset.fade', 'servicePreset.beardTrim', 'servicePreset.shave',
+    'servicePreset.hairColor', 'servicePreset.styling', 'servicePreset.kidsHaircut',
   ],
 };
 
@@ -210,20 +210,23 @@ function ServiceModal({ service, specialty, onClose, onSave }) {
               {t('services.serviceName')} <span className="text-red-500">*</span>
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
-              {presets.map(p => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => set('name', form.name === p ? '' : p)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    form.name === p
-                      ? 'bg-[#364153] text-white border-[#364153]'
-                      : 'bg-white text-gray-600 border-gray-200 hover:border-[#364153]/40'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+              {presets.map(p => {
+                const label = t(p);
+                return (
+                  <button
+                    key={p}
+                    type="button"
+                    onClick={() => set('name', form.name === label ? '' : label)}
+                    className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                      form.name === label
+                        ? 'bg-[#364153] text-white border-[#364153]'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-[#364153]/40'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
             </div>
             <input
               type="text"

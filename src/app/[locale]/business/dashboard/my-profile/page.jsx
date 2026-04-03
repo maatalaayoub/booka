@@ -30,20 +30,20 @@ const MOROCCAN_CITIES = [
 ];
 
 const EXPERIENCE_OPTIONS = [
-  { value: '', label: 'Select...' },
-  { value: 'less_than_1', label: 'Less than 1 year' },
-  { value: '1_to_3', label: '1 – 3 years' },
-  { value: '3_to_5', label: '3 – 5 years' },
-  { value: '5_to_10', label: '5 – 10 years' },
-  { value: 'more_than_10', label: '10+ years' },
+  { value: '', labelKey: 'myProfile.select' },
+  { value: 'less_than_1', labelKey: 'onboarding.exp.lessThan1' },
+  { value: '1_to_3', labelKey: 'onboarding.exp.1to3' },
+  { value: '3_to_5', labelKey: 'onboarding.exp.3to5' },
+  { value: '5_to_10', labelKey: 'onboarding.exp.5to10' },
+  { value: 'more_than_10', labelKey: 'onboarding.exp.moreThan10' },
 ];
 
 const PROFESSIONAL_TYPES = [
-  { value: 'barber', label: 'Barber' },
-  { value: 'hairdresser', label: 'Hairdresser' },
-  { value: 'makeup', label: 'Makeup Artist' },
-  { value: 'nails', label: 'Nail Technician' },
-  { value: 'massage', label: 'Massage Therapist' },
+  { value: 'barber', labelKey: 'dbSpec.barber' },
+  { value: 'hairdresser', labelKey: 'dbSpec.hairdresser' },
+  { value: 'makeup', labelKey: 'dbSpec.makeup' },
+  { value: 'nails', labelKey: 'dbSpec.nails' },
+  { value: 'massage', labelKey: 'dbSpec.massage' },
 ];
 
 // ─── SKELETON ────────────────────────────────────────────────
@@ -121,7 +121,7 @@ function FormSelect({ label, icon: Icon, value, onChange, options, disabled = fa
 }
 
 // ─── MULTI SELECT (chips) ───────────────────────────────────
-function FormMultiSelect({ label, icon: Icon, value = [], onChange, options, disabled = false }) {
+function FormMultiSelect({ label, icon: Icon, value = [], onChange, options, disabled = false, placeholder = '' }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -156,7 +156,7 @@ function FormMultiSelect({ label, icon: Icon, value = [], onChange, options, dis
         } ${disabled ? 'bg-gray-50 cursor-not-allowed' : ''}`}
       >
         {value.length === 0 && (
-          <span className="text-gray-400">Select cities...</span>
+          <span className="text-gray-400">{placeholder}</span>
         )}
         {value.map((city) => (
           <span
@@ -472,10 +472,10 @@ export default function JobSeekerProfilePage() {
           </div>
           <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-900">
-              {firstName || lastName ? `${firstName} ${lastName}`.trim() : user?.firstName || 'Your Name'}
+              {firstName || lastName ? `${firstName} ${lastName}`.trim() : user?.firstName || t('myProfile.yourName')}
             </h2>
             <p className="text-sm text-gray-500">
-              {PROFESSIONAL_TYPES.find(pt => pt.value === professionalType)?.label || 'Professional'}
+              {PROFESSIONAL_TYPES.find(pt => pt.value === professionalType)?.labelKey ? t(PROFESSIONAL_TYPES.find(pt => pt.value === professionalType).labelKey) : t('myProfile.professional')}
               {city && ` · ${city}`}
             </p>
             <div className="flex gap-2 mt-2">
@@ -484,7 +484,7 @@ export default function JobSeekerProfilePage() {
                 className="text-xs px-3 py-1.5 border border-gray-300 rounded-[5px] text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-1.5"
               >
                 <Camera className="w-3.5 h-3.5" />
-                Change Photo
+                {t('myProfile.changePhoto')}
               </button>
               {(profileImageUrl || pendingPhotoPreview) && !photoDeleted && (
                 <button
@@ -492,7 +492,7 @@ export default function JobSeekerProfilePage() {
                   className="text-xs px-3 py-1.5 border border-red-200 rounded-[5px] text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1.5"
                 >
                   <X className="w-3.5 h-3.5" />
-                  Remove
+                  {t('myProfile.remove')}
                 </button>
               )}
             </div>
@@ -534,7 +534,7 @@ export default function JobSeekerProfilePage() {
               icon={MapPin}
               value={city}
               onChange={setCity}
-              options={MOROCCAN_CITIES.map(c => ({ value: c, label: c || 'Select city...' }))}
+              options={MOROCCAN_CITIES.map(c => ({ value: c, label: c || t('myProfile.selectCity') }))}
             />
             <FormMultiSelect
               label={t?.('jobSeekerProfile.preferredCity') || 'Preferred Work Cities'}
@@ -542,6 +542,7 @@ export default function JobSeekerProfilePage() {
               value={preferredCity}
               onChange={setPreferredCity}
               options={MOROCCAN_CITIES.filter(c => c).map(c => ({ value: c, label: c }))}
+              placeholder={t('myProfile.selectCities')}
             />
           </SectionCard>
 
@@ -567,7 +568,7 @@ export default function JobSeekerProfilePage() {
               icon={Briefcase}
               value={yearsOfExperience}
               onChange={setYearsOfExperience}
-              options={EXPERIENCE_OPTIONS}
+              options={EXPERIENCE_OPTIONS.map(opt => ({ value: opt.value, label: t(opt.labelKey) }))}
             />
             <FormTextarea
               label={t?.('jobSeekerProfile.education') || 'Education (Diploma, Certificate, Training)'}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import L from 'leaflet';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Fix default marker icon
 const DefaultIcon = L.divIcon({
@@ -34,6 +35,7 @@ const DefaultIcon = L.divIcon({
 });
 
 export default function LocationPicker({ latitude, longitude, onLocationSelect, className = '' }) {
+  const { t } = useLanguage();
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
@@ -108,7 +110,7 @@ export default function LocationPicker({ latitude, longitude, onLocationSelect, 
   if (!ready) {
     return (
       <div className={`bg-gray-100 rounded-[5px] flex items-center justify-center ${className}`} style={{ minHeight: '250px' }}>
-        <p className="text-gray-400 text-sm">Loading map...</p>
+        <p className="text-gray-400 text-sm">{t('onboarding.loadingMap')}</p>
       </div>
     );
   }

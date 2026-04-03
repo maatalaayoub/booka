@@ -114,11 +114,11 @@ const SERVICE_CATEGORY_ICONS = {
 };
 
 const PROFESSIONAL_TYPES = [
-  { id: 'barber', name: 'Barber', description: 'Specializing in men\'s haircuts, beard trims, and grooming.', icon: null, customIcon: '/images/icons-barber.png', color: 'text-slate-700', bg: 'bg-slate-100' },
-  { id: 'hairdresser', name: 'Hairdresser', description: 'Expert in all types of hair styling and treatments.', icon: null, customIcon: '/images/icons-hairdresser.png', color: 'text-pink-600', bg: 'bg-pink-100' },
-  { id: 'makeup', name: 'Makeup', description: 'Professional makeup artist for all occasions.', icon: null, customIcon: '/images/icon-makeup.png', color: 'text-rose-600', bg: 'bg-rose-100' },
-  { id: 'nails', name: 'Nails', description: 'Manicure, pedicure, and nail art services.', icon: null, customIcon: '/images/icon-nails.png', color: 'text-purple-600', bg: 'bg-purple-100' },
-  { id: 'massage', name: 'Massage', description: 'Relaxation and therapeutic massage treatments.', icon: null, customIcon: '/images/icon-massage.png', color: 'text-teal-600', bg: 'bg-teal-100' },
+  { id: 'barber', nameKey: 'dbSpec.barber', descKey: 'dbSpec.barber.desc', icon: null, customIcon: '/images/icons-barber.png', color: 'text-slate-700', bg: 'bg-slate-100' },
+  { id: 'hairdresser', nameKey: 'dbSpec.hairdresser', descKey: 'dbSpec.hairdresser.desc', icon: null, customIcon: '/images/icons-hairdresser.png', color: 'text-pink-600', bg: 'bg-pink-100' },
+  { id: 'makeup', nameKey: 'dbSpec.makeup', descKey: 'dbSpec.makeup.desc', icon: null, customIcon: '/images/icon-makeup.png', color: 'text-rose-600', bg: 'bg-rose-100' },
+  { id: 'nails', nameKey: 'dbSpec.nails', descKey: 'dbSpec.nails.desc', icon: null, customIcon: '/images/icon-nails.png', color: 'text-purple-600', bg: 'bg-purple-100' },
+  { id: 'massage', nameKey: 'dbSpec.massage', descKey: 'dbSpec.massage.desc', icon: null, customIcon: '/images/icon-massage.png', color: 'text-teal-600', bg: 'bg-teal-100' },
 ];
 
 const YEARS_OF_EXPERIENCE = [
@@ -132,18 +132,18 @@ const YEARS_OF_EXPERIENCE = [
 const WORK_LOCATIONS = [
   { 
     id: 'my_place', 
-    name: 'At my place', 
-    description: 'Clients come to the business, such as your own place, a salon, or a suite where other professionals work.' 
+    nameKey: 'onboarding.workLocation.myPlace', 
+    descKey: 'onboarding.workLocation.myPlaceDesc' 
   },
   { 
     id: 'client_location', 
-    name: 'At the client\'s location', 
-    description: 'Services are performed at the client\'s location.' 
+    nameKey: 'onboarding.workLocation.clientLocation', 
+    descKey: 'onboarding.workLocation.clientLocationDesc' 
   },
   { 
     id: 'both', 
-    name: 'Both locations', 
-    description: 'Services can be performed at your place or the client\'s location.' 
+    nameKey: 'onboarding.workLocation.both', 
+    descKey: 'onboarding.workLocation.bothDesc' 
   },
 ];
 
