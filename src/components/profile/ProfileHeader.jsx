@@ -117,6 +117,7 @@ export default function ProfileHeader({
         body: JSON.stringify({ coverImagePosition: rounded }),
       });
       onCoverPositionChange?.(rounded);
+      window.dispatchEvent(new CustomEvent('profile-photo-updated'));
     } catch (err) {
       console.error('Failed to save cover position', err);
     }
@@ -136,6 +137,7 @@ export default function ProfileHeader({
       });
       onCoverChange?.(null);
       onCoverPositionChange?.(50);
+      window.dispatchEvent(new CustomEvent('profile-photo-updated'));
     } catch (err) {
       console.error('Failed to delete cover', err);
     }

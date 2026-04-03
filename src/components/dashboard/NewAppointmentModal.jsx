@@ -106,7 +106,7 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
         return r.json();
       })
       .then(data => setServices((data.services || []).filter(s => s.is_active)))
-      .catch(() => setServices([]))
+      .catch(e => { console.error('Failed to load services:', e); setServices([]); })
       .finally(() => setServicesLoading(false));
 
   }, [isOpen]);

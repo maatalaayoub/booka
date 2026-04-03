@@ -126,7 +126,7 @@ const translations = {
   },
 };
 
-export default function EditProfileDialog({ isOpen, onClose }) {
+export default function EditProfileDialog({ isOpen, onClose, initialProfile = null }) {
   const { user } = useUser();
   const { openUserProfile } = useClerk();
   const { isRTL, locale: language } = useLanguage();
@@ -163,12 +163,27 @@ export default function EditProfileDialog({ isOpen, onClose }) {
 
   // Fetch profile data from database when dialog opens
   useEffect(() => {
-    const fetchProfileData = async () => {
-      if (!isOpen || !user) return;
+    if (!isOpen || !user) return;
 
+    setError('');
+    setUsernameStatus(null);
+
+    // If parent already provides profile data, use it directly
+    if (initialProfile) {
+      setFormData({
+        firstName: initialProfile.firstName || user.firstName || '',
+        lastName: initialProfile.lastName || user.lastName || '',
+        username: initialProfile.username || '',
+        phone: initialProfile.phone || '',
+        birthday: initialProfile.birthday || '',
+        gender: initialProfile.gender || '',
+        city: initialProfile.city || '',
+      });
+      return;
+    }
+
+    const fetchProfileData = async () => {
       setIsFetching(true);
-      setError('');
-      setUsernameStatus(null);
 
       try {
         const response = await fetch('/api/user-profile');

@@ -1056,7 +1056,7 @@ export default function AppointmentsPage() {
           fetch('/api/business/appointments')
             .then(r => r.ok ? r.json() : null)
             .then(data => { if (data) setEvents((data.appointments || []).map(toCalendarEvent)); })
-            .catch(() => {});
+            .catch(e => console.error('Failed to refresh appointments:', e));
         }}
       />
 

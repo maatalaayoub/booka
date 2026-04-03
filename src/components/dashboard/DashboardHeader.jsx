@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useParams } from 'next/navigation';
@@ -8,6 +7,7 @@ import { motion } from 'framer-motion';
 import { Bell, Menu, BadgeCheck, User } from 'lucide-react';
 import Link from 'next/link';
 import { useVerificationStatus } from '@/hooks/useVerificationStatus';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 export default function DashboardHeader() {
   const { user } = useUser();
@@ -15,41 +15,10 @@ export default function DashboardHeader() {
   const locale = params.locale || 'en';
   const { t, isRTL } = useLanguage();
   const { isVerified } = useVerificationStatus();
-  const [avatarUrl, setAvatarUrl] = useState(null);
-
-  // Fetch profile avatar from user_profile
-  useEffect(() => {
-    async function fetchAvatar() {
-      try {
-        const res = await fetch('/api/user-profile');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.profileImageUrl) {
-            setAvatarUrl(data.profileImageUrl);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to fetch avatar:', e);
-      }
-    }
-    fetchAvatar();
-    
-    // Re-fetch when window regains focus (e.g., after changing profile photo)
-    const handleFocus = () => fetchAvatar();
-    window.addEventListener('focus', handleFocus);
-    
-    // Listen for custom event from profile photo change
-    const handleProfileUpdate = () => fetchAvatar();
-    window.addEventListener('profile-photo-updated', handleProfileUpdate);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('profile-photo-updated', handleProfileUpdate);
-    };
-  }, []);
+  const { profile } = useUserProfile({ refetchOnFocus: true, refetchOnProfileUpdate: true });
 
   // Prefer uploaded avatars. If the user has no real image, render a gray fallback.
-  const profileImage = avatarUrl || (user?.hasImage ? user.imageUrl : null);
+  const profileImage = profile?.profileImageUrl || (user?.hasImage ? user.imageUrl : null);
 
   const handleOpenSidebar = () => {
     window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'));

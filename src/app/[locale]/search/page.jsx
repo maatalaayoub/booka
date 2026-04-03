@@ -234,6 +234,7 @@ export default function SearchPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   
   // States
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -269,6 +270,7 @@ export default function SearchPage() {
   }, []);
 
   useEffect(() => {
+    setFetchError(false);
     fetch('/api/businesses')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch');
@@ -280,7 +282,7 @@ export default function SearchPage() {
           setBusinesses(allBiz);
         }
       })
-      .catch(err => console.error('Fetch error:', err))
+      .catch(err => { console.error('Fetch error:', err); setFetchError(true); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -888,6 +890,15 @@ export default function SearchPage() {
             {loading ? (
               <div className="grid gap-4">
                 {[1,2,3].map(i => <div key={i} className="h-48 bg-gray-200 rounded-xl animate-pulse" />)}
+              </div>
+            ) : fetchError ? (
+              <div className="py-20 text-center flex flex-col items-center">
+                <Search className="w-12 h-12 text-red-300 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('search.errorTitle') || 'Something went wrong'}</h3>
+                <p className="text-gray-500 max-w-sm">{t('search.errorDesc') || 'Could not load businesses. Please try again.'}</p>
+                <button onClick={() => window.location.reload()} className="mt-4 text-[#244C70] font-medium hover:underline">
+                  {t('search.retry') || 'Retry'}
+                </button>
               </div>
             ) : filteredBusinesses.length === 0 ? (
               <div className="py-20 text-center flex flex-col items-center">

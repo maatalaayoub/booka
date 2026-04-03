@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -23,18 +23,18 @@ export default function MapPage() {
   const { t, isRTL } = useLanguage();
   const [businesses, setBusinesses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     fetch('/api/businesses')
       .then(res => res.json())
       .then(data => {
         if (data.businesses) {
-          // Flatten grouped businesses into a single array
           const allBiz = Object.values(data.businesses).flat().filter(b => b.latitude && b.longitude);
           setBusinesses(allBiz);
         }
       })
-      .catch(err => console.error(err))
+      .catch(err => { console.error(err); setFetchError(true); })
       .finally(() => setLoading(false));
   }, []);
 
@@ -55,7 +55,18 @@ export default function MapPage() {
       </header>
 
       <div className="flex-1 w-full h-full relative z-0">
-        {!loading && <PlacesMap businesses={businesses} locale={locale} />}
+        {fetchError ? (
+          <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50">
+            <AlertCircle className="w-10 h-10 text-red-400 mb-3" />
+            <p className="text-gray-700 font-semibold mb-1">{t('map.errorTitle') || 'Failed to load map'}</p>
+            <p className="text-gray-400 text-sm mb-4">{t('map.errorDesc') || 'Could not load businesses.'}</p>
+            <button onClick={() => window.location.reload()} className="px-5 py-2 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-gray-800 transition-colors">
+              {t('map.retry') || 'Retry'}
+            </button>
+          </div>
+        ) : !loading ? (
+          <PlacesMap businesses={businesses} locale={locale} />
+        ) : null}
       </div>
     </div>
   );

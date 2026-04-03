@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRole } from '@/hooks/useRole';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { ProfileHeader, EditProfileDialog, ProfilePageNav } from '@/components/profile';
 import Sidebar from '@/components/Sidebar';
 
@@ -36,6 +37,21 @@ export default function BusinessProfilePage() {
     socialLinks: {},
   });
 
+  // Use shared hook for own profile
+  const { profile: ownProfile, refetch: refreshProfile } = useUserProfile({ refetchOnProfileUpdate: true });
+
+  // Sync own profile data to local state
+  useEffect(() => {
+    if (isViewingOther || !ownProfile) return;
+    setProfileData(prev => ({
+      ...prev,
+      coverImage: ownProfile.coverImageUrl || null,
+      coverPosition: ownProfile.coverImagePosition ?? 50,
+      location: ownProfile.city || '',
+      businessName: ownProfile.businessName || '',
+    }));
+  }, [ownProfile, isViewingOther]);
+
   // Fetch viewed user's profile if viewing another user
   useEffect(() => {
     if (!viewingUser) return;
@@ -56,7 +72,8 @@ export default function BusinessProfilePage() {
           businessName: data.business?.business_name || '',
         }));
       })
-      .catch(() => {
+      .catch((e) => {
+        console.error('Failed to fetch viewed user profile:', e);
         setViewedUserData(null);
       })
       .finally(() => {
@@ -75,47 +92,6 @@ export default function BusinessProfilePage() {
       }
     }
   }, [isLoaded, isSignedIn, isBusiness, router, locale, isViewingOther]);
-
-  // Fetch own profile data (cover image, etc.)
-  useEffect(() => {
-    if (isViewingOther || !isLoaded || !isSignedIn || !isBusiness) return;
-    fetch('/api/user-profile')
-      .then(r => {
-        const ct = r.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) return {};
-        return r.json();
-      })
-      .then(data => {
-        setProfileData(prev => ({
-          ...prev,
-          coverImage: data.coverImageUrl || null,
-          coverPosition: data.coverImagePosition ?? 50,
-          location: data.city || '',
-          businessName: data.businessName || '',
-        }));
-      })
-      .catch(() => {});
-  }, [isLoaded, isSignedIn, isBusiness, isViewingOther]);
-
-  // Refresh profile data after editing
-  const refreshProfile = () => {
-    fetch('/api/user-profile')
-      .then(r => {
-        const ct = r.headers.get('content-type') || '';
-        if (!ct.includes('application/json')) return {};
-        return r.json();
-      })
-      .then(data => {
-        setProfileData(prev => ({
-          ...prev,
-          coverImage: data.coverImageUrl || null,
-          coverPosition: data.coverImagePosition ?? 50,
-          location: data.city || '',
-          businessName: data.businessName || '',
-        }));
-      })
-      .catch(() => {});
-  };
 
   // Listen for bottom navigation sidebar toggle
   useEffect(() => {
@@ -239,7 +215,8 @@ export default function BusinessProfilePage() {
       {/* Edit Profile Dialog - only for own profile */}
       {!isViewingOther && (
         <EditProfileDialog 
-          isOpen={isEditProfileOpen} 
+          isOpen={isEditProfileOpen}
+          initialProfile={ownProfile}
           onClose={() => {
             setIsEditProfileOpen(false);
             refreshProfile();

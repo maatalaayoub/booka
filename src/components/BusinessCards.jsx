@@ -337,6 +337,7 @@ export default function BusinessCards() {
   const { t, locale } = useLanguage();
   const [businesses, setBusinesses] = useState({});
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -345,7 +346,9 @@ export default function BusinessCards() {
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         setBusinesses(data.businesses || {});
-      } catch {
+      } catch (e) {
+        console.error('Failed to load businesses:', e);
+        setFetchError(true);
         setBusinesses({});
       } finally {
         setLoading(false);
@@ -378,8 +381,21 @@ export default function BusinessCards() {
           </>
         )}
 
+        {/* Error state */}
+        {!loading && fetchError && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <Briefcase className="w-7 h-7 text-red-400" />
+            </div>
+            <p className="text-gray-500 text-sm mb-3">{t('home.loadError') || 'Could not load businesses.'}</p>
+            <button onClick={() => window.location.reload()} className="text-[#244C70] text-sm font-medium hover:underline">
+              {t('home.retry') || 'Retry'}
+            </button>
+          </div>
+        )}
+
         {/* Business cards by category */}
-        {!loading && hasBusinesses && (
+        {!loading && !fetchError && hasBusinesses && (
           CATEGORY_ORDER.map(type => (
             <CategoryRow
               key={type}
@@ -392,7 +408,7 @@ export default function BusinessCards() {
         )}
 
         {/* Empty state */}
-        {!loading && !hasBusinesses && (
+        {!loading && !fetchError && !hasBusinesses && (
           <div className="text-center py-12">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-7 h-7 text-gray-400" />

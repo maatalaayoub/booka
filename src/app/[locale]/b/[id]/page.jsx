@@ -409,7 +409,7 @@ function BookingModal({ open, onClose, business, services, date, slot, accent, t
         .then(data => {
           if (data?.phone) setClientPhone(data.phone);
         })
-        .catch(() => {});
+        .catch(e => console.error('Failed to fetch user phone:', e));
     }
   }, [open, user]);
 
@@ -795,7 +795,7 @@ export default function BusinessPage() {
           pendingSlotRef.current = null;
         }
       })
-      .catch(() => { setSlots([]); setUserBookings([]); setCrossBusinessBookings([]); })
+      .catch((e) => { console.error('Failed to load slots:', e); setSlots([]); setUserBookings([]); setCrossBusinessBookings([]); })
       .finally(() => setSlotsLoading(false));
   }, [selectedDate, selectedServices, business, totalDuration]);
 
@@ -855,7 +855,7 @@ export default function BusinessPage() {
           setSlots(data.slots || []);
           setUserBookings(data.userBookings || []);
           setCrossBusinessBookings(data.crossBusinessBookings || []);
-        }).catch(() => {});
+        }).catch(e => console.error('Failed to refresh slots:', e));
     }
   };
 

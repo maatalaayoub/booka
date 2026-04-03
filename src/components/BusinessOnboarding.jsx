@@ -253,7 +253,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
     fetch('/api/business/specialty')
       .then(r => r.ok ? r.json() : { categories: [] })
       .then(data => setServiceCategories(data.categories || []))
-      .catch(() => setServiceCategories([]))
+      .catch(e => { console.error('Failed to load service categories:', e); setServiceCategories([]); })
       .finally(() => setLoadingCategories(false));
   }, []);
 
@@ -268,7 +268,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
     fetch(`/api/business/specialty?category_id=${serviceCategoryId}`)
       .then(r => r.ok ? r.json() : { specialties: [] })
       .then(data => setSpecialties(data.specialties || []))
-      .catch(() => setSpecialties([]))
+      .catch(e => { console.error('Failed to load specialties:', e); setSpecialties([]); })
       .finally(() => setLoadingSpecialties(false));
   }, [serviceCategoryId]);
 

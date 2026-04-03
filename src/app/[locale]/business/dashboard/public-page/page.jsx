@@ -338,7 +338,7 @@ export default function PublicPageManager() {
         setSettings(s => ({ ...s, businessName: savedData.fallbackBusinessName }));
       }
       savedSettingsRef.current = initialSettings;
-    }).catch(() => {}).finally(() => setLoading(false));
+    }).catch(e => console.error('Failed to load public page data:', e)).finally(() => setLoading(false));
   }, [isLoaded, user]);
 
   // Count how many logical changes differ from saved state
