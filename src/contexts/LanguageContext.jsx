@@ -898,7 +898,7 @@ const translations = {
     'businessDetails.serviceCategory': 'Service Category',
     'businessDetails.specialty': 'Specialty',
     'businessDetails.businessType': 'Business Type',
-    'businessDetails.category.salon_owner': 'Salon / Shop Owner',
+    'businessDetails.category.business_owner': 'Business Owner',
     'businessDetails.category.mobile_service': 'Mobile Service',
     'businessDetails.category.job_seeker': 'Job Seeker',
     'businessDetails.contactLocation': 'Contact & Location',
@@ -1091,7 +1091,7 @@ const translations = {
     'admin.businesses.subtitle': 'Browse all registered businesses and their public cards.',
     'admin.businesses.searchPlaceholder': 'Search by email or username...',
     'admin.businesses.allCategories': 'All Categories',
-    'admin.businesses.salonOwner': 'Salon Owner',
+    'admin.businesses.businessOwner': 'Business Owner',
     'admin.businesses.mobileService': 'Mobile Service',
     'admin.businesses.jobSeeker': 'Job Seeker',
     'admin.businesses.noResults': 'No businesses found.',
@@ -1223,6 +1223,8 @@ const translations = {
 
     // Business Page
     'bp.linkCopied': 'Link copied!',
+    'bp.addedToFavorites': 'Added to favorites',
+    'bp.removedFromFavorites': 'Removed from favorites',
     'bp.shareTitle': 'Share',
     'bp.copyLink': 'Copy link',
     'bp.cancel': 'Cancel',
@@ -1353,16 +1355,16 @@ const translations = {
     'onboarding.loadingMap': 'Loading map...',
 
     // Business Categories
-    'onboarding.cat.salonOwner': 'Salon Owner',
-    'onboarding.cat.salonOwnerDesc': 'You own or manage a physical location where clients visit',
+    'onboarding.cat.businessOwner': 'Business Owner',
+    'onboarding.cat.businessOwnerDesc': 'You own or manage a physical location where clients visit',
     'onboarding.cat.mobileService': 'Mobile Service Provider',
     'onboarding.cat.mobileServiceDesc': 'You travel to client locations to provide services',
     'onboarding.cat.jobSeeker': 'Job Seeker',
     'onboarding.cat.jobSeekerDesc': 'You are looking for employment opportunities in the industry',
 
     // Service Category Step
-    'onboarding.chooseServiceCategory': 'Choose your service category',
-    'onboarding.selectCategoryFit': 'Select the category that best fits your services',
+    'onboarding.chooseServiceCategory': 'Select the service or business category',
+    'onboarding.selectCategoryFit': 'Choose the category that best describes your business',
 
     // Professional Type / Specialty Step
     'onboarding.whatsSpecialty': "What's your specialty?",
@@ -1371,10 +1373,10 @@ const translations = {
 
     // Business Details Step
     'onboarding.businessDetails': 'Business Details',
-    'onboarding.tellSalon': 'Tell us about your salon',
+    'onboarding.tellSalon': 'Tell us about your business',
     'onboarding.tellMobile': 'Tell us about your mobile service',
     'onboarding.businessName': 'Business Name',
-    'onboarding.placeholderSalon': 'e.g. Golden Scissors Salon',
+    'onboarding.placeholderBusiness': 'e.g. Golden Scissors Salon',
     'onboarding.placeholderMobile': 'e.g. Mobile Cuts by Ahmed',
     'onboarding.city': 'City',
     'onboarding.selectCity': 'Select a city',
@@ -1382,7 +1384,7 @@ const translations = {
     'onboarding.noCityFound': 'No city found',
     'onboarding.phoneNumber': 'Phone Number',
     'onboarding.phonePlaceholder': 'e.g. +212 6XX XXX XXX',
-    'onboarding.salonLocation': 'Salon Location',
+    'onboarding.salonLocation': 'Business Location',
     'onboarding.baseLocation': 'Base Location',
     'onboarding.clickMapToSet': '(click on the map to set)',
     'onboarding.address': 'Address',
@@ -1513,6 +1515,12 @@ const translations = {
     'dbCat.beauty_personal_care.desc': 'Hair, makeup, nails, and personal grooming services',
     'dbCat.health_medical': 'Health & Medical',
     'dbCat.health_medical.desc': 'Health, wellness, and medical services',
+    'dbCat.sports_recreation': 'Sports & Recreation',
+    'dbCat.sports_recreation.desc': 'Football fields, sports facilities, and recreational venues',
+    'dbCat.restaurants_hospitality': 'Restaurants & Hospitality',
+    'dbCat.restaurants_hospitality.desc': 'Restaurants, cafes, and hospitality venues',
+    'dbCat.automotive_vehicles': 'Automotive & Vehicles',
+    'dbCat.automotive_vehicles.desc': 'Book car wash services, mechanical maintenance, or periodic inspection centers',
 
     // DB Specialties (keyed by slug)
     'dbSpec.barber': 'Barber',
@@ -2425,7 +2433,7 @@ const translations = {
     'businessDetails.serviceCategory': 'Catégorie de service',
     'businessDetails.specialty': 'Spécialité',
     'businessDetails.businessType': 'Type d\'activité',
-    'businessDetails.category.salon_owner': 'Propriétaire de salon',
+    'businessDetails.category.business_owner': 'Propriétaire d\'entreprise',
     'businessDetails.category.mobile_service': 'Service mobile',
     'businessDetails.category.job_seeker': 'Chercheur d\'emploi',
     'businessDetails.contactLocation': 'Contact & Emplacement',
@@ -2618,7 +2626,7 @@ const translations = {
     'admin.businesses.subtitle': 'Parcourir toutes les entreprises enregistrées et leurs cartes publiques.',
     'admin.businesses.searchPlaceholder': 'Rechercher par email ou nom d\'utilisateur...',
     'admin.businesses.allCategories': 'Toutes les catégories',
-    'admin.businesses.salonOwner': 'Propriétaire de salon',
+    'admin.businesses.businessOwner': 'Propriétaire d\'entreprise',
     'admin.businesses.mobileService': 'Service mobile',
     'admin.businesses.jobSeeker': 'Chercheur d\'emploi',
     'admin.businesses.noResults': 'Aucune entreprise trouvée.',
@@ -2750,6 +2758,8 @@ const translations = {
 
     // Business Page
     'bp.linkCopied': 'Lien copié !',
+    'bp.addedToFavorites': 'Ajouté aux favoris',
+    'bp.removedFromFavorites': 'Retiré des favoris',
     'bp.shareTitle': 'Partager',
     'bp.copyLink': 'Copier le lien',
     'bp.cancel': 'Annuler',
@@ -2880,16 +2890,16 @@ const translations = {
     'onboarding.loadingMap': 'Chargement de la carte...',
 
     // Business Categories
-    'onboarding.cat.salonOwner': 'Propriétaire de salon',
-    'onboarding.cat.salonOwnerDesc': 'Vous possédez ou gérez un espace physique où les clients se rendent',
+    'onboarding.cat.businessOwner': 'Propriétaire d\'entreprise',
+    'onboarding.cat.businessOwnerDesc': 'Vous possédez ou gérez un espace physique où les clients se rendent',
     'onboarding.cat.mobileService': 'Prestataire mobile',
     'onboarding.cat.mobileServiceDesc': 'Vous vous déplacez chez les clients pour fournir vos services',
     'onboarding.cat.jobSeeker': 'Chercheur d\'emploi',
     'onboarding.cat.jobSeekerDesc': 'Vous recherchez des opportunités d\'emploi dans le secteur',
 
     // Service Category Step
-    'onboarding.chooseServiceCategory': 'Choisissez votre catégorie de service',
-    'onboarding.selectCategoryFit': 'Sélectionnez la catégorie qui correspond le mieux à vos services',
+    'onboarding.chooseServiceCategory': 'Sélectionnez la catégorie de service ou d\'activité',
+    'onboarding.selectCategoryFit': 'Choisissez la catégorie qui décrit le mieux votre activité',
 
     // Professional Type / Specialty Step
     'onboarding.whatsSpecialty': 'Quelle est votre spécialité ?',
@@ -2898,10 +2908,10 @@ const translations = {
 
     // Business Details Step
     'onboarding.businessDetails': 'Détails de l\'entreprise',
-    'onboarding.tellSalon': 'Parlez-nous de votre salon',
+    'onboarding.tellSalon': 'Parlez-nous de votre entreprise',
     'onboarding.tellMobile': 'Parlez-nous de votre service mobile',
     'onboarding.businessName': 'Nom de l\'entreprise',
-    'onboarding.placeholderSalon': 'ex. Salon Les Ciseaux d\'Or',
+    'onboarding.placeholderBusiness': 'ex. Salon Les Ciseaux d\'Or',
     'onboarding.placeholderMobile': 'ex. Coiffure Mobile par Ahmed',
     'onboarding.city': 'Ville',
     'onboarding.selectCity': 'Sélectionnez une ville',
@@ -2909,7 +2919,7 @@ const translations = {
     'onboarding.noCityFound': 'Aucune ville trouvée',
     'onboarding.phoneNumber': 'Numéro de téléphone',
     'onboarding.phonePlaceholder': 'ex. +212 6XX XXX XXX',
-    'onboarding.salonLocation': 'Emplacement du salon',
+    'onboarding.salonLocation': 'Emplacement de l\'entreprise',
     'onboarding.baseLocation': 'Emplacement de base',
     'onboarding.clickMapToSet': '(cliquez sur la carte pour définir)',
     'onboarding.address': 'Adresse',
@@ -3040,6 +3050,12 @@ const translations = {
     'dbCat.beauty_personal_care.desc': 'Coiffure, maquillage, ongles et soins de beauté',
     'dbCat.health_medical': 'Santé & Médical',
     'dbCat.health_medical.desc': 'Services de santé, bien-être et soins médicaux',
+    'dbCat.sports_recreation': 'Sports & Loisirs',
+    'dbCat.sports_recreation.desc': 'Terrains de football, installations sportives et espaces de loisirs',
+    'dbCat.restaurants_hospitality': 'Restaurants & Hôtellerie',
+    'dbCat.restaurants_hospitality.desc': 'Restaurants, cafés et établissements d\'accueil',
+    'dbCat.automotive_vehicles': 'Automobile & Véhicules',
+    'dbCat.automotive_vehicles.desc': 'Réservez un lavage auto, un entretien mécanique ou un centre de contrôle technique',
 
     // DB Specialties (keyed by slug)
     'dbSpec.barber': 'Barbier',
@@ -3952,7 +3968,7 @@ const translations = {
     'businessDetails.serviceCategory': 'فئة الخدمة',
     'businessDetails.specialty': 'التخصص',
     'businessDetails.businessType': 'نوع النشاط',
-    'businessDetails.category.salon_owner': 'صاحب صالون / محل',
+    'businessDetails.category.business_owner': 'صاحب عمل',
     'businessDetails.category.mobile_service': 'خدمة متنقلة',
     'businessDetails.category.job_seeker': 'باحث عن عمل',
     'businessDetails.contactLocation': 'الاتصال والموقع',
@@ -4145,7 +4161,7 @@ const translations = {
     'admin.businesses.subtitle': 'تصفح جميع الأعمال المسجلة وبطاقاتها العامة.',
     'admin.businesses.searchPlaceholder': 'البحث بالبريد الإلكتروني أو اسم المستخدم...',
     'admin.businesses.allCategories': 'جميع الفئات',
-    'admin.businesses.salonOwner': 'صاحب صالون',
+    'admin.businesses.businessOwner': 'صاحب عمل',
     'admin.businesses.mobileService': 'خدمة متنقلة',
     'admin.businesses.jobSeeker': 'باحث عن عمل',
     'admin.businesses.noResults': 'لم يتم العثور على أعمال تجارية.',
@@ -4277,6 +4293,8 @@ const translations = {
 
     // Business Page
     'bp.linkCopied': 'تم نسخ الرابط!',
+    'bp.addedToFavorites': 'تمت الإضافة إلى المفضلة',
+    'bp.removedFromFavorites': 'تمت الإزالة من المفضلة',
     'bp.shareTitle': 'مشاركة',
     'bp.copyLink': 'نسخ الرابط',
     'bp.cancel': 'إلغاء',
@@ -4407,16 +4425,16 @@ const translations = {
     'onboarding.loadingMap': 'جاري تحميل الخريطة...',
 
     // Business Categories
-    'onboarding.cat.salonOwner': 'صاحب صالون',
-    'onboarding.cat.salonOwnerDesc': 'تملك أو تدير مكاناً يزوره العملاء',
+    'onboarding.cat.businessOwner': 'صاحب عمل',
+    'onboarding.cat.businessOwnerDesc': 'تملك أو تدير مكاناً يزوره العملاء',
     'onboarding.cat.mobileService': 'خدمة متنقلة',
     'onboarding.cat.mobileServiceDesc': 'تتنقل إلى مواقع العملاء لتقديم الخدمات',
     'onboarding.cat.jobSeeker': 'باحث عن عمل',
     'onboarding.cat.jobSeekerDesc': 'تبحث عن فرص عمل في هذا المجال',
 
     // Service Category Step
-    'onboarding.chooseServiceCategory': 'اختر فئة الخدمة',
-    'onboarding.selectCategoryFit': 'اختر الفئة التي تناسب خدماتك',
+    'onboarding.chooseServiceCategory': 'اختر فئة الخدمة أو النشاط',
+    'onboarding.selectCategoryFit': 'اختر الفئة التي تصف عملك بشكل أفضل',
 
     // Professional Type / Specialty Step
     'onboarding.whatsSpecialty': 'ما هو تخصصك؟',
@@ -4425,10 +4443,10 @@ const translations = {
 
     // Business Details Step
     'onboarding.businessDetails': 'تفاصيل العمل',
-    'onboarding.tellSalon': 'أخبرنا عن صالونك',
+    'onboarding.tellSalon': 'أخبرنا عن عملك',
     'onboarding.tellMobile': 'أخبرنا عن خدمتك المتنقلة',
     'onboarding.businessName': 'اسم العمل',
-    'onboarding.placeholderSalon': 'مثال: صالون المقص الذهبي',
+    'onboarding.placeholderBusiness': 'مثال: صالون المقص الذهبي',
     'onboarding.placeholderMobile': 'مثال: حلاقة متنقلة من أحمد',
     'onboarding.city': 'المدينة',
     'onboarding.selectCity': 'اختر مدينة',
@@ -4436,7 +4454,7 @@ const translations = {
     'onboarding.noCityFound': 'لم يتم العثور على مدينة',
     'onboarding.phoneNumber': 'رقم الهاتف',
     'onboarding.phonePlaceholder': 'مثال: +212 6XX XXX XXX',
-    'onboarding.salonLocation': 'موقع الصالون',
+    'onboarding.salonLocation': 'موقع العمل',
     'onboarding.baseLocation': 'الموقع الرئيسي',
     'onboarding.clickMapToSet': '(انقر على الخريطة للتحديد)',
     'onboarding.address': 'العنوان',
@@ -4567,6 +4585,12 @@ const translations = {
     'dbCat.beauty_personal_care.desc': 'الشعر، المكياج، الأظافر وخدمات العناية الشخصية',
     'dbCat.health_medical': 'الصحة والطب',
     'dbCat.health_medical.desc': 'خدمات الصحة والعافية والرعاية الطبية',
+    'dbCat.sports_recreation': 'الرياضة والترفيه',
+    'dbCat.sports_recreation.desc': 'ملاعب كرة القدم، المرافق الرياضية وأماكن الترفيه',
+    'dbCat.restaurants_hospitality': 'المطاعم والضيافة',
+    'dbCat.restaurants_hospitality.desc': 'المطاعم، المقاهي وأماكن الضيافة',
+    'dbCat.automotive_vehicles': 'السيارات والمركبات',
+    'dbCat.automotive_vehicles.desc': 'احجز خدمات غسيل السيارات، الصيانة الميكانيكية أو مراكز الفحص الدوري',
 
     // DB Specialties (keyed by slug)
     'dbSpec.barber': 'حلاق',

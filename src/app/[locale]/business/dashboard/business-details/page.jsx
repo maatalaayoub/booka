@@ -397,7 +397,7 @@ export default function BusinessDetailsPage() {
                 value={businessCategory || ''}
                 onChange={() => {}}
                 options={[
-                  { value: 'salon_owner', label: t('businessDetails.category.salon_owner') || 'Salon / Shop Owner' },
+                  { value: 'business_owner', label: t('businessDetails.category.business_owner') || 'Business Owner' },
                   { value: 'mobile_service', label: t('businessDetails.category.mobile_service') || 'Mobile Service' },
                   { value: 'job_seeker', label: t('businessDetails.category.job_seeker') || 'Job Seeker' },
                 ]}

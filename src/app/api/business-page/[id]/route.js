@@ -31,7 +31,7 @@ export async function GET(_request, { params }) {
       `)
       .eq('id', id)
       .eq('onboarding_completed', true)
-      .in('business_category', ['salon_owner', 'mobile_service'])
+      .in('business_category', ['business_owner', 'mobile_service'])
       .single();
 
     if (error || !biz) {

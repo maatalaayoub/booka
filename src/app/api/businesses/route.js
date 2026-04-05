@@ -14,7 +14,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const category = searchParams.get('category');
 
-    // Fetch businesses that completed onboarding (salon_owner or mobile_service only)
+    // Fetch businesses that completed onboarding (business_owner or mobile_service only)
     let query = supabase
       .from('business_info')
       .select(`
@@ -25,7 +25,7 @@ export async function GET(request) {
         business_services ( id, name, price, currency, is_active )
       `)
       .eq('onboarding_completed', true)
-      .in('business_category', ['salon_owner', 'mobile_service']);
+      .in('business_category', ['business_owner', 'mobile_service']);
 
     if (category) {
       query = query.eq('professional_type', category);

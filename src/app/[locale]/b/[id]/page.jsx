@@ -28,6 +28,16 @@ import {
   Heart,
   User,
   FileText,
+  Droplets,
+  Sparkles,
+  Paintbrush,
+  Flame,
+  Layers,
+  Zap,
+  HandMetal,
+  Wand2,
+  Bath,
+  SprayCan,
 } from 'lucide-react';
 
 const ACCENT_COLORS = {
@@ -50,30 +60,80 @@ function formatDate(date) {
 function addDays(date, n) { const d = new Date(date); d.setDate(d.getDate() + n); return d; }
 function isSameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
 
+/* ── service icon mapper based on name keywords ── */
+const SERVICE_ICON_MAP = [
+  { keywords: ['haircut', 'cut', 'trim', 'coupe', 'قص', 'حلاقة', 'تقصير'], icon: Scissors },
+  { keywords: ['beard', 'shave', 'barbe', 'rasage', 'ذقن', 'لحية', 'حلاقة الذقن', 'towel'], icon: Flame },
+  { keywords: ['wash', 'shampoo', 'lavage', 'غسل', 'شامبو'], icon: Droplets },
+  { keywords: ['color', 'colour', 'dye', 'tint', 'coloration', 'صبغ', 'لون', 'تلوين'], icon: Paintbrush },
+  { keywords: ['style', 'styling', 'coiffure', 'تصفيف', 'ستايل'], icon: Wand2 },
+  { keywords: ['spa', 'massage', 'relax', 'سبا', 'مساج', 'استرخاء'], icon: Bath },
+  { keywords: ['facial', 'face', 'skin', 'visage', 'وجه', 'بشرة'], icon: Sparkles },
+  { keywords: ['nail', 'manicure', 'pedicure', 'ongle', 'أظافر'], icon: HandMetal },
+  { keywords: ['treatment', 'keratin', 'protein', 'traitement', 'علاج', 'كيراتين', 'بروتين'], icon: Zap },
+  { keywords: ['spray', 'parfum', 'perfume', 'عطر', 'بخاخ'], icon: SprayCan },
+  { keywords: ['layer', 'extension', 'وصلات', 'طبقات'], icon: Layers },
+];
+
+function getServiceIcon(serviceName) {
+  const name = (serviceName || '').toLowerCase();
+  for (const entry of SERVICE_ICON_MAP) {
+    if (entry.keywords.some(kw => name.includes(kw))) return entry.icon;
+  }
+  return Scissors;
+}
+
 /* ================================================================
    HERO GALLERY  — compact with integrated profile
    ================================================================ */
-function HeroGallery({ gallery, accent, showCover, businessName, businessType, avatarUrl }) {
-  const [idx, setIdx] = useState(0);
+function HeroGallery({ gallery, accent, showCover, businessName, businessType, avatarUrl, isRTL }) {
+  const [current, setCurrent] = useState(0);
+  const [sliding, setSliding] = useState(false);
+  const [slideFrom, setSlideFrom] = useState(0);
   const touchRef = useRef(null);
+  const timerRef = useRef(null);
+
+  const slide = (next) => {
+    if (sliding || next === current) return;
+    setSlideFrom(current);
+    setSliding(true);
+    setCurrent(next);
+    setTimeout(() => { setSliding(false); setSlideFrom(null); }, 750);
+  };
 
   useEffect(() => {
     if (gallery.length <= 1) return;
-    const t = setInterval(() => setIdx(p => (p + 1) % gallery.length), 5000);
-    return () => clearInterval(t);
+    timerRef.current = setInterval(() => {
+      setCurrent(prev => {
+        const next = (prev + 1) % gallery.length;
+        setSlideFrom(prev);
+        setSliding(true);
+        setTimeout(() => { setSliding(false); setSlideFrom(null); }, 750);
+        return next;
+      });
+    }, 5000);
+    return () => clearInterval(timerRef.current);
   }, [gallery.length]);
 
   const handleTouchStart = (e) => { touchRef.current = e.touches[0].clientX; };
   const handleTouchEnd = (e) => {
     if (touchRef.current === null) return;
     const diff = touchRef.current - e.changedTouches[0].clientX;
-    if (Math.abs(diff) > 50) setIdx(p => diff > 0 ? (p + 1) % gallery.length : (p - 1 + gallery.length) % gallery.length);
+    if (Math.abs(diff) > 50) {
+      const next = diff > 0
+        ? (current + 1) % gallery.length
+        : (current - 1 + gallery.length) % gallery.length;
+      slide(next);
+    }
     touchRef.current = null;
   };
 
+  // LTR: images sweep left (new from right). RTL: images sweep right (new from left).
+  const sweepDir = isRTL ? 1 : -1;
+
   if (!showCover || gallery.length === 0) {
     return (
-      <div className="h-48 sd:h-56 w-full relative" style={{ background: `linear-gradient(135deg, ${accent.bg} 0%, ${accent.bg}cc 50%, ${accent.bg}88 100%)` }}>
+      <div className="h-56 sd:h-72 md:h-80 w-full relative" style={{ background: `linear-gradient(135deg, ${accent.bg} 0%, ${accent.bg}cc 50%, ${accent.bg}88 100%)` }}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.1)_0%,transparent_60%)]" />
         {/* Business name overlay */}
         <div className="absolute bottom-0 left-0 right-0 p-5 sd:p-8 z-10">
@@ -92,10 +152,38 @@ function HeroGallery({ gallery, accent, showCover, businessName, businessType, a
   }
 
   return (
-    <div className="h-52 sd:h-64 w-full relative overflow-hidden" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      {gallery.map((url, i) => (
-        <img key={url} src={url} alt="" className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700" style={{ opacity: i === idx ? 1 : 0 }} />
-      ))}
+    <div className="h-56 sd:h-72 md:h-80 w-full relative overflow-hidden" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+      {gallery.map((url, i) => {
+        const isActive = i === current;
+        const isLeaving = i === slideFrom;
+        let transform = `translateX(${-sweepDir * 100}%)`;         // off-screen (waiting)
+        let transition = 'none';
+
+        if (isActive && sliding) {
+          transform = 'translateX(0%)';                             // sliding into view
+          transition = 'transform 700ms ease-in-out';
+        } else if (isActive && !sliding) {
+          transform = 'translateX(0%)';                             // resting in view
+        } else if (isLeaving && sliding) {
+          transform = `translateX(${sweepDir * 100}%)`;             // sliding out
+          transition = 'transform 700ms ease-in-out';
+        }
+
+        return (
+          <img
+            key={url}
+            src={url}
+            alt=""
+            loading={i === 0 ? 'eager' : 'lazy'}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              transform,
+              transition,
+              visibility: isActive || isLeaving ? 'visible' : 'hidden',
+            }}
+          />
+        );
+      })}
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/20" />
       {/* Business name overlay on the hero */}
       <div className="absolute bottom-0 left-0 right-0 p-5 sd:p-8 z-10">
@@ -110,9 +198,9 @@ function HeroGallery({ gallery, accent, showCover, businessName, businessType, a
         </div>
       </div>
       {gallery.length > 1 && (
-        <div className="absolute bottom-3 right-5 flex gap-1.5 z-10">
+        <div className="absolute bottom-3 ltr:right-5 rtl:left-5 flex gap-1.5 z-10">
           {gallery.map((_, i) => (
-            <button key={i} onClick={() => setIdx(i)} className={`h-1.5 rounded-full transition-all ${i === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/40'}`} />
+            <button key={i} onClick={() => slide(i)} className={`h-1.5 rounded-full transition-all ${i === current ? 'w-5 bg-white' : 'w-1.5 bg-white/40'}`} />
           ))}
         </div>
       )}
@@ -153,6 +241,7 @@ function TabBar({ tabs, activeTab, onTabChange, accent }) {
    SERVICE ROW — multi-select with checkbox
    ================================================================ */
 function ServiceRow({ service, isSelected, onToggle, canBook, showPrices, accent, t }) {
+  const Icon = getServiceIcon(service.name);
   return (
     <div
       className={`flex items-center gap-3 py-4 transition-colors cursor-pointer rounded-xl px-2 -mx-2 ${isSelected ? '' : 'hover:bg-gray-50'}`}
@@ -175,7 +264,7 @@ function ServiceRow({ service, isSelected, onToggle, canBook, showPrices, accent
         className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
         style={{ backgroundColor: isSelected ? `${accent.bg}15` : '#f3f4f6' }}
       >
-        <Scissors className="w-[18px] h-[18px]" style={{ color: isSelected ? accent.bg : '#9ca3af' }} />
+        <Icon className="w-[18px] h-[18px]" style={{ color: isSelected ? accent.bg : '#9ca3af' }} />
       </div>
 
       {/* Info */}
@@ -524,7 +613,7 @@ function BookingModal({ open, onClose, business, services, date, slot, accent, t
                 {services.map(s => (
                   <div key={s.id} className="flex items-center gap-3 px-4 py-3">
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${accent.bg}15` }}>
-                      <Scissors className="w-4 h-4" style={{ color: accent.bg }} />
+                      {(() => { const Icon = getServiceIcon(s.name); return <Icon className="w-4 h-4" style={{ color: accent.bg }} />; })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-semibold text-gray-900">{s.name}</p>
@@ -693,6 +782,9 @@ export default function BusinessPage() {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [favAnimating, setFavAnimating] = useState(false);
+  const [favToast, setFavToast] = useState(null);
+  const [favToastVisible, setFavToastVisible] = useState(false);
 
   const favKey = user?.id ? `favoriteBusinesses_${user.id}` : null;
 
@@ -714,9 +806,18 @@ export default function BusinessPage() {
     requireAuth(() => {
       if (!favKey) return;
       const favs = JSON.parse(localStorage.getItem(favKey) || '[]');
+      const willFavorite = !isFavorited;
       const updated = isFavorited ? favs.filter(id => id !== businessId) : [...favs, businessId];
       localStorage.setItem(favKey, JSON.stringify(updated));
-      setIsFavorited(!isFavorited);
+      setIsFavorited(willFavorite);
+      setFavToast(willFavorite ? 'added' : 'removed');
+      setFavToastVisible(true);
+      setTimeout(() => setFavToastVisible(false), 2000);
+      setTimeout(() => setFavToast(null), 2400);
+      if (willFavorite) {
+        setFavAnimating(true);
+        setTimeout(() => setFavAnimating(false), 600);
+      }
     });
   };
 
@@ -916,6 +1017,7 @@ export default function BusinessPage() {
           businessName={business.businessName}
           businessType={t(`home.type.${business.professionalType}`) || business.professionalType?.replace(/_/g, ' ')}
           avatarUrl={business.showProfile ? business.avatarUrl : null}
+          isRTL={isRTL}
         />
         {/* Top nav buttons */}
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between p-4 z-20">
@@ -932,10 +1034,33 @@ export default function BusinessPage() {
             <ArrowLeft className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
           <div className="flex gap-2">
-            <button onClick={toggleFavorite}
-              className="w-10 h-10 rounded-xl bg-black/25 backdrop-blur-md flex items-center justify-center hover:bg-black/40 transition-colors">
-              <Heart className={`w-[18px] h-[18px] transition-colors ${isFavorited ? 'fill-red-500 text-red-500' : 'text-white'}`} />
-            </button>
+            <div className="relative">
+              <button onClick={toggleFavorite}
+                className="w-10 h-10 rounded-xl bg-black/25 backdrop-blur-md flex items-center justify-center hover:bg-black/40 transition-colors relative overflow-hidden">
+                <Heart className={`w-[18px] h-[18px] transition-all duration-300 ${isFavorited ? 'fill-red-500 text-red-500' : 'text-white'} ${favAnimating ? 'animate-[heartPop_0.6s_ease-in-out]' : ''}`} />
+                {favAnimating && (
+                  <span className="absolute inset-0 rounded-xl animate-[heartRing_0.6s_ease-out] border-2 border-red-400 opacity-0" />
+                )}
+              </button>
+              {favToast && (
+                <div
+                  className="absolute top-full mt-2 ltr:right-0 rtl:left-0 z-[70] pointer-events-none whitespace-nowrap"
+                  style={{ animation: favToastVisible ? 'favToastIn 0.35s ease-out forwards' : 'favToastOut 0.35s ease-in forwards' }}
+                >
+                  <div className={`flex items-center gap-2 px-3.5 py-2 rounded-lg shadow-xl backdrop-blur-md text-[13px] font-medium ${
+                    favToast === 'added'
+                      ? 'bg-red-500/90 text-white'
+                      : 'bg-gray-800/90 text-gray-200'
+                  }`}>
+                    <Heart className={`w-3.5 h-3.5 shrink-0 ${favToast === 'added' ? 'fill-white text-white' : 'text-gray-400'}`} />
+                    {t(favToast === 'added' ? 'bp.addedToFavorites' : 'bp.removedFromFavorites')}
+                  </div>
+                  <div className={`absolute -top-1 ltr:right-4 rtl:left-4 w-2 h-2 rotate-45 ${
+                    favToast === 'added' ? 'bg-red-500/90' : 'bg-gray-800/90'
+                  }`} />
+                </div>
+              )}
+            </div>
             <button onClick={async () => {
               const url = window.location.href;
               const shareData = { title: document.title, text: document.title, url };
@@ -1154,10 +1279,12 @@ export default function BusinessPage() {
                         </button>
                       </div>
                       <div className="space-y-2">
-                        {selectedServices.map(s => (
+                        {selectedServices.map(s => {
+                          const SIcon = getServiceIcon(s.name);
+                          return (
                           <div key={s.id} className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accent.bg}12` }}>
-                              <Scissors className="w-3.5 h-3.5" style={{ color: accent.bg }} />
+                              <SIcon className="w-3.5 h-3.5" style={{ color: accent.bg }} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-semibold text-gray-900 truncate">{s.name}</p>
@@ -1170,7 +1297,8 @@ export default function BusinessPage() {
                               <X className="w-3 h-3" />
                             </button>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                         <span className="text-[12px] text-gray-400">{t('bp.total')}</span>
@@ -1321,10 +1449,12 @@ export default function BusinessPage() {
                     {/* Selected services list */}
                     <div className="pb-4 border-b border-gray-200">
                       <div className="space-y-2">
-                        {selectedServices.map(s => (
+                        {selectedServices.map(s => {
+                          const SIcon = getServiceIcon(s.name);
+                          return (
                           <div key={s.id} className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${accent.bg}12` }}>
-                              <Scissors className="w-3.5 h-3.5" style={{ color: accent.bg }} />
+                              <SIcon className="w-3.5 h-3.5" style={{ color: accent.bg }} />
                             </div>
                             <div className="flex-1 min-w-0">
                               <p className="text-[13px] font-semibold text-gray-900 truncate">{s.name}</p>
@@ -1337,7 +1467,8 @@ export default function BusinessPage() {
                               <X className="w-3 h-3" />
                             </button>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                       <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                         <span className="text-[12px] text-gray-400">{t('bp.total')}</span>

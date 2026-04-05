@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import { useAuthUser } from '@/hooks/useAuthUser';
@@ -33,6 +33,8 @@ import {
   CalendarCheck,
   Users,
   ArrowLeftRight,
+  UtensilsCrossed,
+  Car,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
@@ -57,30 +59,30 @@ const DAYS_OF_WEEK = [
 ];
 
 const MOROCCO_CITIES = [
-  'Casablanca', 'Rabat', 'Fès', 'Marrakech', 'Tanger', 'Meknès', 'Agadir',
-  'Oujda', 'Kénitra', 'Tétouan', 'Salé', 'Temara', 'Safi', 'Mohammédia',
-  'Khouribga', 'El Jadida', 'Béni Mellal', 'Nador', 'Taza', 'Settat',
-  'Berrechid', 'Khémisset', 'Inezgane', 'Larache', 'Guelmim', 'Ksar El Kebir',
+  'Casablanca', 'Rabat', 'FÃ¨s', 'Marrakech', 'Tanger', 'MeknÃ¨s', 'Agadir',
+  'Oujda', 'KÃ©nitra', 'TÃ©touan', 'SalÃ©', 'Temara', 'Safi', 'MohammÃ©dia',
+  'Khouribga', 'El Jadida', 'BÃ©ni Mellal', 'Nador', 'Taza', 'Settat',
+  'Berrechid', 'KhÃ©misset', 'Inezgane', 'Larache', 'Guelmim', 'Ksar El Kebir',
   'Taourirt', 'Berkane', 'Sidi Kacem', 'Sidi Slimane', 'Errachidia',
   'Guercif', 'Ouarzazate', 'Fquih Ben Salah', 'Tiznit', 'Tan-Tan',
   'Sefrou', 'Ifrane', 'Azrou', 'Essaouira', 'Taroudant', 'Oulad Teima',
-  'Youssoufia', 'Midelt', 'Chefchaouen', 'Al Hoceïma', 'Ben Guerir',
+  'Youssoufia', 'Midelt', 'Chefchaouen', 'Al HoceÃ¯ma', 'Ben Guerir',
   'Asilah', 'Azemmour', 'Skhirat', 'Bir Jdid', 'Ouazzane',
-  'Tinghir', 'Zagora', 'Dakhla', 'Laâyoune', 'Boujdour', 'Smara',
+  'Tinghir', 'Zagora', 'Dakhla', 'LaÃ¢youne', 'Boujdour', 'Smara',
   'Es-Semara', 'Assa', 'Tata', 'Bouarfa', 'Fnideq', 'Martil',
   'M\'diq', 'Imzouren', 'Driouch', 'Jerada', 'Ain Taoujdate',
   'Moulay Idriss Zerhoun', 'Missour', 'Azilal', 'Demnate', 'Kasba Tadla',
   'Souk El Arbaa', 'Mechra Bel Ksiri', 'Sidi Bennour', 'Ait Melloul',
   'Biougra', 'Chichaoua', 'El Kelaa des Sraghna', 'Ben Slimane',
-  'Bouznika', 'Tifelt', 'Sidi Yahia El Gharb', 'Aïn Harrouda',
+  'Bouznika', 'Tifelt', 'Sidi Yahia El Gharb', 'AÃ¯n Harrouda',
   'Oued Zem', 'Bejaad'
 ];
 
 const BUSINESS_CATEGORIES = [
   { 
-    id: 'salon_owner', 
-    nameKey: 'onboarding.cat.salonOwner', 
-    descKey: 'onboarding.cat.salonOwnerDesc',
+    id: 'business_owner', 
+    nameKey: 'onboarding.cat.businessOwner', 
+    descKey: 'onboarding.cat.businessOwnerDesc',
     icon: Store,
     gradient: 'from-violet-500 to-purple-600',
     bgLight: 'bg-violet-50',
@@ -111,6 +113,9 @@ const SERVICE_CATEGORY_ICONS = {
   Heart,
   Star,
   Scissors,
+  Trophy,
+  UtensilsCrossed,
+  Car,
 };
 
 const PROFESSIONAL_TYPES = [
@@ -208,7 +213,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
   const [workLocation, setWorkLocation] = useState('');
   const [businessHours, setBusinessHours] = useState(DEFAULT_HOURS);
   const [editingDay, setEditingDay] = useState(null);
-  // Business details fields (salon_owner & mobile_service)
+  // Business details fields (business_owner & mobile_service)
   const [businessName, setBusinessName] = useState('');
   const [businessCity, setBusinessCity] = useState('');
   const [businessPhone, setBusinessPhone] = useState('');
@@ -380,16 +385,16 @@ export default function BusinessOnboarding({ userName, onComplete }) {
   // Determine total steps and step content based on business category
   const getTotalSteps = () => {
     if (businessCategory === 'job_seeker') return 5;
-    return 6; // salon_owner and mobile_service now have 6 steps
+    return 6; // business_owner and mobile_service now have 6 steps
   };
   const totalSteps = getTotalSteps();
 
   // Map logical steps to actual step content
-  // For salon_owner: 1=Category, 2=ServiceCategory, 3=ProfessionalType, 4=ServiceMode, 5=BusinessDetails, 6=BusinessHours
+  // For business_owner: 1=Category, 2=ServiceCategory, 3=ProfessionalType, 4=ServiceMode, 5=BusinessDetails, 6=BusinessHours
   // For mobile_service: 1=Category, 2=ServiceCategory, 3=ProfessionalType, 4=ServiceMode, 5=BusinessDetails, 6=BusinessHours
   // For job_seeker: 1=Category, 2=ServiceCategory, 3=ProfessionalType, 4=YearsOfExperience, 5=Certificate
   const getStepContent = () => {
-    if (businessCategory === 'salon_owner' || businessCategory === 'mobile_service') {
+    if (businessCategory === 'business_owner' || businessCategory === 'mobile_service') {
       return {
         1: 'category',
         2: 'service_category',
@@ -511,7 +516,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
       };
 
       // Set work location and business hours based on category
-      if (businessCategory === 'salon_owner') {
+      if (businessCategory === 'business_owner') {
         requestBody.workLocation = 'my_place';
         requestBody.businessHours = businessHours;
         requestBody.businessName = businessName;
@@ -864,14 +869,14 @@ export default function BusinessOnboarding({ userName, onComplete }) {
           </div>
         )}
 
-        {/* Step: Business Details (for salon_owner & mobile_service) */}
+        {/* Step: Business Details (for business_owner & mobile_service) */}
         {currentStepContent === 'business_details' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-6 sm:p-8 border border-gray-100">
             <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-2">
               {t('onboarding.businessDetails')}
             </h2>
             <p className="text-gray-500 text-center mb-6 text-sm sm:text-base">
-              {businessCategory === 'salon_owner' 
+              {businessCategory === 'business_owner' 
                 ? t('onboarding.tellSalon') 
                 : t('onboarding.tellMobile')}
             </p>
@@ -887,7 +892,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                   type="text"
                   value={businessName}
                   onChange={(e) => setBusinessName(sanitizeText(e.target.value))}
-                  placeholder={businessCategory === 'salon_owner' ? t('onboarding.placeholderSalon') : t('onboarding.placeholderMobile')}
+                  placeholder={businessCategory === 'business_owner' ? t('onboarding.placeholderBusiness') : t('onboarding.placeholderMobile')}
                   className="w-full px-4 py-3 border border-gray-200 rounded-[5px] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent text-gray-900 bg-white text-sm placeholder:text-gray-400"
                 />
               </div>
@@ -970,8 +975,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
                 />
               </div>
 
-              {/* Address & Map (salon_owner and mobile_service) */}
-              {(businessCategory === 'salon_owner' || businessCategory === 'mobile_service') && (
+              {/* Address & Map (business_owner and mobile_service) */}
+              {(businessCategory === 'business_owner' || businessCategory === 'mobile_service') && (
                 <>
                   {/* Map for precise location */}
                   <div style={{ position: 'relative', zIndex: 0 }}>
@@ -1320,7 +1325,7 @@ export default function BusinessOnboarding({ userName, onComplete }) {
           </div>
         )}
 
-        {/* Step: Service Mode (for salon_owner & mobile_service) */}
+        {/* Step: Service Mode (for business_owner & mobile_service) */}
         {currentStepContent === 'service_mode' && (
           <div className="bg-white rounded-[5px] shadow-2xl shadow-gray-200/50 p-8 border border-gray-100">
             <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">

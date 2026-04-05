@@ -166,8 +166,8 @@ export async function POST(request) {
     let categoryResult = null;
     let categoryError = null;
 
-    if (businessCategory === 'salon_owner') {
-      // Salon owner data
+    if (businessCategory === 'business_owner') {
+      // Business owner data
       const shopSalonData = {
         business_info_id: businessInfoId,
         business_name: sanitizeText(businessName) || null,

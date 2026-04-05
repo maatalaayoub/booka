@@ -62,7 +62,7 @@ export async function GET(request) {
         let ownerImage = null;
 
         if (bi) {
-          if (bi.business_category === 'salon_owner') {
+          if (bi.business_category === 'business_owner') {
             const { data: shop } = await supabase
               .from('shop_salon_info')
               .select('business_name, city')

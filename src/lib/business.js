@@ -4,7 +4,7 @@
  * Maps business_category values to their category-specific Supabase table names.
  */
 export const CATEGORY_TABLE_MAP = {
-  salon_owner: 'shop_salon_info',
+  business_owner: 'shop_salon_info',
   mobile_service: 'mobile_service_info',
   job_seeker: 'job_seeker_info',
 };

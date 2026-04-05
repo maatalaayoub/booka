@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -52,39 +52,39 @@ export default function Sidebar() {
       icon: LayoutDashboard, 
       label: t('dashboard.sidebar.overview') || 'Overview', 
       href: `/${locale}/business/dashboard`,
-      categories: ['salon_owner', 'mobile_service', 'job_seeker'],
+      categories: ['business_owner', 'mobile_service', 'job_seeker'],
     },
     { 
       icon: Calendar, 
       label: t('dashboard.sidebar.appointments') || 'Bookings', 
       href: `/${locale}/business/dashboard/appointments`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
       excludeServiceModes: ['walkin'],
     },
     { 
       icon: Clock, 
       label: t('dashboard.sidebar.schedule') || 'Schedule', 
       href: `/${locale}/business/dashboard/schedule`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
       excludeServiceModes: ['walkin'],
     },
     { 
       icon: Users, 
       label: t('dashboard.sidebar.clients') || 'Clients', 
       href: `/${locale}/business/dashboard/clients`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
     },
     { 
       icon: Tag, 
       label: t('dashboard.sidebar.services') || 'Services & Prices', 
       href: `/${locale}/business/dashboard/services`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
     },
     { 
       icon: Building2, 
       label: t('dashboard.sidebar.businessDetails') || 'Business Details', 
       href: `/${locale}/business/dashboard/business-details`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
     },
     { 
       icon: UserCircle, 
@@ -120,25 +120,25 @@ export default function Sidebar() {
       icon: Globe, 
       label: t('dashboard.sidebar.publicPage') || 'Business Card', 
       href: `/${locale}/business/dashboard/public-page`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
     },
     { 
       icon: DollarSign, 
       label: t('dashboard.sidebar.earnings') || 'Earnings', 
       href: `/${locale}/business/dashboard/earnings`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
     },
     { 
       icon: BarChart3, 
       label: t('dashboard.sidebar.analytics') || 'Analytics', 
       href: `/${locale}/business/dashboard/analytics`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
     },
     { 
       icon: ShieldCheck, 
       label: t('dashboard.sidebar.verification') || 'Verification', 
       href: `/${locale}/business/dashboard/verification`,
-      categories: ['salon_owner', 'mobile_service'],
+      categories: ['business_owner', 'mobile_service'],
     },
     {
       icon: Navigation,

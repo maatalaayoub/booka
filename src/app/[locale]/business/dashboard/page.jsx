@@ -688,7 +688,7 @@ export default function BusinessDashboard() {
     );
   }
 
-  // Service provider dashboard (salon_owner / mobile_service)
+  // Service provider dashboard (business_owner / mobile_service)
   return (
     <div>
       {/* Dashboard content */}

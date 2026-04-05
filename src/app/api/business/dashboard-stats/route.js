@@ -104,7 +104,7 @@ export async function GET(request) {
         travelFee,
       };
     } else {
-      // salon_owner: total unique clients + rating
+      // business_owner: total unique clients + rating
       const { data: allAppointments } = await supabase
         .from('appointments')
         .select('client_phone')

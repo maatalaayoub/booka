@@ -9,13 +9,13 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 
 const CATEGORY_ICONS = {
-  salon_owner: Store,
+  business_owner: Store,
   mobile_service: Truck,
   job_seeker: Briefcase,
 };
 
 const CATEGORY_COLORS = {
-  salon_owner: 'bg-blue-50 text-blue-600',
+  business_owner: 'bg-blue-50 text-blue-600',
   mobile_service: 'bg-emerald-50 text-emerald-600',
   job_seeker: 'bg-amber-50 text-amber-600',
 };
@@ -71,7 +71,7 @@ export default function AdminBusinessesPage() {
   };
 
   const getCategoryKey = (cat) => {
-    if (cat === 'salon_owner') return 'admin.businesses.salonOwner';
+    if (cat === 'business_owner') return 'admin.businesses.businessOwner';
     if (cat === 'mobile_service') return 'admin.businesses.mobileService';
     if (cat === 'job_seeker') return 'admin.businesses.jobSeeker';
     return '';
@@ -127,7 +127,7 @@ export default function AdminBusinessesPage() {
             className="px-3 py-2 text-sm border border-gray-200 rounded-[5px] focus:outline-none focus:ring-1 focus:ring-[#364153]/30 bg-white"
           >
             <option value="">{t('admin.businesses.allCategories')}</option>
-            <option value="salon_owner">{t('admin.businesses.salonOwner')}</option>
+            <option value="business_owner">{t('admin.businesses.businessOwner')}</option>
             <option value="mobile_service">{t('admin.businesses.mobileService')}</option>
             <option value="job_seeker">{t('admin.businesses.jobSeeker')}</option>
           </select>

@@ -1,4 +1,4 @@
--- Booka.ma Database Schema
+﻿-- Booka.ma Database Schema
 -- Run this in your Supabase SQL Editor
 -- Last updated: February 2026
 
@@ -136,7 +136,10 @@ CREATE POLICY "Specialties viewable by everyone"
 -- Seed initial service categories
 INSERT INTO service_categories (name, slug, description, icon, display_order) VALUES
   ('Beauty & Personal Care', 'beauty_personal_care', 'Hair, makeup, nails, and personal grooming services', 'Sparkles', 1),
-  ('Health & Medical', 'health_medical', 'Health, wellness, and medical services', 'Heart', 2)
+  ('Health & Medical', 'health_medical', 'Health, wellness, and medical services', 'Heart', 2),
+  ('Sports & Recreation', 'sports_recreation', 'Football fields, sports facilities, and recreational venues', 'Trophy', 3),
+  ('Restaurants & Hospitality', 'restaurants_hospitality', 'Restaurants, cafes, and hospitality venues', 'UtensilsCrossed', 4),
+  ('Automotive & Vehicles', 'automotive_vehicles', 'Car wash services, mechanical maintenance, and inspection centers', 'Car', 5)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Seed specialties for Beauty & Personal Care
@@ -159,7 +162,7 @@ ON CONFLICT (slug) DO NOTHING;
 CREATE TABLE IF NOT EXISTS business_info (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-  business_category TEXT NOT NULL CHECK (business_category IN ('salon_owner', 'mobile_service', 'job_seeker')),
+  business_category TEXT NOT NULL CHECK (business_category IN ('business_owner', 'mobile_service', 'job_seeker')),
   professional_type TEXT NOT NULL CHECK (professional_type IN ('barber', 'hairdresser', 'makeup', 'nails', 'massage')),
   service_category_id UUID REFERENCES service_categories(id),
   specialty_id UUID REFERENCES specialties(id),
@@ -193,7 +196,7 @@ CREATE TRIGGER update_business_info_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- SHOP/SALON INFO (for salon_owner category)
+-- SHOP/SALON INFO (for business_owner category)
 -- ============================================
 CREATE TABLE IF NOT EXISTS shop_salon_info (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -435,7 +438,7 @@ CREATE TRIGGER update_user_profile_updated_at
 CREATE TABLE IF NOT EXISTS business_info (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE,
-  business_category TEXT NOT NULL CHECK (business_category IN ('salon_owner', 'mobile_service', 'job_seeker')),
+  business_category TEXT NOT NULL CHECK (business_category IN ('business_owner', 'mobile_service', 'job_seeker')),
   professional_type TEXT NOT NULL CHECK (professional_type IN ('barber', 'hairdresser', 'makeup', 'nails', 'massage')),
   service_category_id UUID REFERENCES service_categories(id),
   specialty_id UUID REFERENCES specialties(id),
@@ -464,7 +467,7 @@ CREATE TRIGGER update_business_info_updated_at
   EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- SHOP/SALON INFO (for salon_owner category)
+-- SHOP/SALON INFO (for business_owner category)
 -- ============================================
 -- Physical location business owners
 CREATE TABLE IF NOT EXISTS shop_salon_info (
@@ -595,11 +598,11 @@ CREATE TRIGGER update_job_seeker_info_updated_at
 
 -- -- Step 1: Create the new tables (already done if you ran the schema above)
 
--- -- Step 2: Migrate salon_owner data
+-- -- Step 2: Migrate business_owner data
 -- INSERT INTO shop_salon_info (business_info_id, work_location, business_hours)
 -- SELECT id, work_location, business_hours
 -- FROM business_info
--- WHERE business_category = 'salon_owner';
+-- WHERE business_category = 'business_owner';
 
 -- -- Step 3: Migrate mobile_service data
 -- INSERT INTO mobile_service_info (business_info_id, work_location, business_hours)
@@ -809,7 +812,7 @@ CREATE TRIGGER update_business_services_updated_at
 -- Migration: remove category column from business_services
 ALTER TABLE business_services DROP COLUMN IF EXISTS category;
 
--- ─── BUSINESS PUBLIC PAGE SETTINGS ──────────────────────────────────────────
+-- â”€â”€â”€ BUSINESS PUBLIC PAGE SETTINGS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 -- Stores per-business card configuration as a single JSONB document.
 -- One row per business_info record (enforced by the UNIQUE constraint).
 -- All mutations go through the service-role API route, so RLS uses the
@@ -857,7 +860,7 @@ CREATE TRIGGER trg_bcs_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- ── Row Level Security ─────────────────────────────────────────────────────
+-- â”€â”€ Row Level Security â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 ALTER TABLE business_card_settings ENABLE ROW LEVEL SECURITY;
 
 -- Service-role key (used by API routes) bypasses RLS entirely.
@@ -928,7 +931,7 @@ CREATE POLICY "owner can delete own card settings"
 -- MIGRATION: Allow 'admin' role
 -- ============================================
 -- The users table role CHECK constraint needs to include 'admin'.
--- Admins are ONLY created via direct DB insert — never through the app.
+-- Admins are ONLY created via direct DB insert â€” never through the app.
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
 ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('user', 'business', 'admin'));
 
@@ -1102,7 +1105,10 @@ CREATE INDEX IF NOT EXISTS idx_business_info_specialty ON business_info(specialt
 -- 4. Seed service categories
 INSERT INTO service_categories (name, slug, description, icon, display_order) VALUES
   ('Beauty & Personal Care', 'beauty_personal_care', 'Hair, makeup, nails, and personal grooming services', 'Sparkles', 1),
-  ('Health & Medical', 'health_medical', 'Health, wellness, and medical services', 'Heart', 2)
+  ('Health & Medical', 'health_medical', 'Health, wellness, and medical services', 'Heart', 2),
+  ('Sports & Recreation', 'sports_recreation', 'Football fields, sports facilities, and recreational venues', 'Trophy', 3),
+  ('Restaurants & Hospitality', 'restaurants_hospitality', 'Restaurants, cafes, and hospitality venues', 'UtensilsCrossed', 4),
+  ('Automotive & Vehicles', 'automotive_vehicles', 'Car wash services, mechanical maintenance, and inspection centers', 'Car', 5)
 ON CONFLICT (slug) DO NOTHING;
 
 -- 5. Seed specialties for Beauty & Personal Care

@@ -108,7 +108,7 @@ const spec = {
         properties: {
           id: { type: 'string', format: 'uuid' },
           user_id: { type: 'string', format: 'uuid' },
-          business_category: { type: 'string', enum: ['salon_owner', 'mobile_service', 'job_seeker'] },
+          business_category: { type: 'string', enum: ['business_owner', 'mobile_service', 'job_seeker'] },
           professional_type: { type: 'string' },
           service_mode: { type: 'string', enum: ['appointment', 'walkin', 'both'] },
           onboarding_completed: { type: 'boolean' },

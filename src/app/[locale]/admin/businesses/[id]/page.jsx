@@ -204,7 +204,7 @@ export default function AdminBusinessDetailPage() {
   const address = shop?.address || mobile?.address || '';
   const category = info?.business_category;
 
-  const categoryLabel = category === 'salon_owner' ? t('admin.businesses.salonOwner')
+  const categoryLabel = category === 'business_owner' ? t('admin.businesses.businessOwner')
     : category === 'mobile_service' ? t('admin.businesses.mobileService')
     : category === 'job_seeker' ? t('admin.businesses.jobSeeker') : '';
 

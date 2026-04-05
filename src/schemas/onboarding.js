@@ -3,7 +3,7 @@ import { z } from 'zod';
 // ─── ONBOARDING ─────────────────────────────────────────────────────────
 
 const validProfessionalTypes = ['barber', 'hairdresser', 'makeup', 'nails', 'massage'];
-const validBusinessCategories = ['salon_owner', 'mobile_service', 'job_seeker'];
+const validBusinessCategories = ['business_owner', 'mobile_service', 'job_seeker'];
 const validServiceModes = ['booking', 'walkin', 'both'];
 
 export const onboardingSchema = z.object({
