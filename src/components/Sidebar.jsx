@@ -302,6 +302,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   >
                     <Users className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
                     <span className="font-medium text-base">{t('worker.dashboard') || 'Worker Dashboard'}</span>
+                    <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-[#D4AF37] text-white rounded-full">PRO</span>
                   </Link>
                 )}
 
