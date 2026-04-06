@@ -12,11 +12,11 @@ import {
 // ── Helper: auth + membership ───────────────────────────────
 async function getWorkerContext(request) {
   const clerkId = await getUserId(request);
-  if (!clerkId) return null;
+  if (!clerkId) return { error: apiError('Unauthorized', 401) };
 
   const supabase = createServerSupabaseClient();
   const userId = await getInternalUserId(supabase, clerkId);
-  if (!userId) return null;
+  if (!userId) return { error: apiError('User not found', 404) };
 
   return { supabase, userId };
 }
@@ -31,7 +31,7 @@ async function getWorkerContext(request) {
 export async function GET(request) {
   try {
     const ctx = await getWorkerContext(request);
-    if (!ctx) return apiError('Unauthorized', 401);
+    if (ctx.error) return ctx.error;
 
     const { searchParams } = new URL(request.url);
     const businessId = searchParams.get('businessId');
@@ -73,7 +73,7 @@ export async function GET(request) {
 export async function PUT(request) {
   try {
     const ctx = await getWorkerContext(request);
-    if (!ctx) return apiError('Unauthorized', 401);
+    if (ctx.error) return ctx.error;
 
     const body = await request.json();
     const { businessId, schedule } = body;
@@ -94,6 +94,8 @@ export async function PUT(request) {
     const businessHours = await getBusinessHours(ctx.supabase, businessId, business.business_category);
 
     const timeRe = /^\d{2}:\d{2}$/;
+    // Normalize time to HH:MM for safe comparison (handles HH:MM:SS from DB)
+    const norm = (t) => (t || '').substring(0, 5);
 
     for (const day of schedule) {
       if (typeof day.dayOfWeek !== 'number' || day.dayOfWeek < 0 || day.dayOfWeek > 6) {
@@ -113,8 +115,13 @@ export async function PUT(request) {
         if (!bizDay || !bizDay.isOpen) {
           return apiError(`Cannot set working hours on a day the business is closed (day ${day.dayOfWeek})`, 400);
         }
-        if (day.openTime < bizDay.openTime || day.closeTime > bizDay.closeTime) {
-          return apiError(`Worker hours must be within business hours (${bizDay.openTime}-${bizDay.closeTime}) for day ${day.dayOfWeek}`, 400);
+        const bizOpen = norm(bizDay.openTime);
+        const bizClose = norm(bizDay.closeTime);
+        if (bizOpen && day.openTime < bizOpen) {
+          return apiError(`Worker open time (${day.openTime}) is before business opens (${bizOpen}) on day ${day.dayOfWeek}`, 400);
+        }
+        if (bizClose && day.closeTime > bizClose) {
+          return apiError(`Worker close time (${day.closeTime}) is after business closes (${bizClose}) on day ${day.dayOfWeek}`, 400);
         }
       }
     }

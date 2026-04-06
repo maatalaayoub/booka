@@ -92,3 +92,79 @@ export async function deleteWorkerSchedule(supabase, businessInfoId, workerId) {
 
   if (error) throw error;
 }
+
+/**
+ * Clamp a time string (HH:MM or HH:MM:SS) to be within [min, max].
+ * Returns HH:MM.
+ */
+function clampTime(time, min, max) {
+  const t = time?.substring(0, 5) || '09:00';
+  if (min && t < min) return min;
+  if (max && t > max) return max;
+  return t;
+}
+
+/**
+ * Sync ALL worker schedules for a business after business hours change.
+ * - If a business day is now closed, mark corresponding worker days as closed.
+ * - If a worker's open_time/close_time fall outside the new business range, clamp them.
+ * @param {object} supabase
+ * @param {string} businessInfoId
+ * @param {Array<{dayOfWeek:number, isOpen:boolean, openTime?:string, closeTime?:string}>} newBusinessHours
+ */
+export async function syncWorkerSchedulesToBusinessHours(supabase, businessInfoId, newBusinessHours) {
+  const allSchedules = await findAllWorkerSchedules(supabase, businessInfoId);
+  if (!allSchedules.length) return;
+
+  const bizByDay = {};
+  for (const bh of newBusinessHours) {
+    bizByDay[bh.dayOfWeek] = bh;
+  }
+
+  const updates = [];
+  for (const ws of allSchedules) {
+    const biz = bizByDay[ws.day_of_week];
+    if (!biz || !biz.isOpen) {
+      // Business is closed this day — close worker too
+      if (ws.is_open) {
+        updates.push({
+          business_info_id: businessInfoId,
+          worker_id: ws.worker_id,
+          day_of_week: ws.day_of_week,
+          is_open: false,
+          open_time: null,
+          close_time: null,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    } else if (ws.is_open && ws.open_time && ws.close_time) {
+      // Clamp worker times to business range
+      const bizOpen = biz.openTime?.substring(0, 5);
+      const bizClose = biz.closeTime?.substring(0, 5);
+      const newOpen = clampTime(ws.open_time, bizOpen, bizClose);
+      const newClose = clampTime(ws.close_time, bizOpen, bizClose);
+      const oldOpen = ws.open_time.substring(0, 5);
+      const oldClose = ws.close_time.substring(0, 5);
+
+      if (newOpen !== oldOpen || newClose !== oldClose) {
+        updates.push({
+          business_info_id: businessInfoId,
+          worker_id: ws.worker_id,
+          day_of_week: ws.day_of_week,
+          is_open: true,
+          open_time: newOpen,
+          close_time: newClose > newOpen ? newClose : newOpen,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }
+  }
+
+  if (updates.length > 0) {
+    const { error } = await supabase
+      .from('worker_schedules')
+      .upsert(updates, { onConflict: 'business_info_id,worker_id,day_of_week' });
+
+    if (error) throw error;
+  }
+}

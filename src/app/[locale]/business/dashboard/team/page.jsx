@@ -707,6 +707,39 @@ const DEFAULT_WEEK = DAY_KEYS.map((_, i) => ({
   closeTime: '18:00',
 }));
 
+/** Generate 24h time options (HH:MM) in 30-min increments, optionally bounded */
+function generateTimeOptions(minTime, maxTime) {
+  const options = [];
+  const [minH, minM] = minTime ? minTime.split(':').map(Number) : [0, 0];
+  const [maxH, maxM] = maxTime ? maxTime.split(':').map(Number) : [23, 30];
+  const minTotal = minH * 60 + minM;
+  const maxTotal = maxH * 60 + maxM;
+  for (let m = minTotal; m <= maxTotal; m += 30) {
+    const hh = String(Math.floor(m / 60)).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    options.push(`${hh}:${mm}`);
+  }
+  return options;
+}
+
+function TimeSelect({ value, onChange, minTime, maxTime, className }) {
+  const options = generateTimeOptions(minTime, maxTime);
+  // If current value is outside the allowed range, still show it so it's visible
+  const hasValue = options.includes(value);
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={className}
+    >
+      {!hasValue && <option value={value}>{value}</option>}
+      {options.map(t => (
+        <option key={t} value={t}>{t}</option>
+      ))}
+    </select>
+  );
+}
+
 function SchedulesTab({ members, t, isRTL }) {
   const [selectedWorkerId, setSelectedWorkerId] = useState(null);
   const [schedule, setSchedule] = useState(DEFAULT_WEEK);
@@ -799,7 +832,7 @@ function SchedulesTab({ members, t, isRTL }) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-[5px] border border-gray-300 p-4">
+      <div className="bg-white rounded-[5px] border border-gray-300 p-3 sm:p-4">
         <p className="text-sm font-medium text-gray-700 mb-1">{t('team.teamSchedule') || 'Team Schedule'}</p>
         <p className="text-xs text-gray-400 mb-3">{t('team.teamScheduleDesc') || 'Set individual working hours for each team member'}</p>
 
@@ -822,7 +855,7 @@ function SchedulesTab({ members, t, isRTL }) {
       </div>
 
       {selectedWorkerId && (
-        <div className="bg-white rounded-[5px] border border-gray-300 p-4 space-y-3">
+        <div className="bg-white rounded-[5px] border border-gray-300 p-3 sm:p-4 space-y-3">
           {loadingSchedule ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -841,51 +874,56 @@ function SchedulesTab({ members, t, isRTL }) {
                 {schedule.map((day) => {
                   const bizDay = businessHours.find(b => b.dayOfWeek === day.dayOfWeek);
                   const businessClosed = bizDay ? !bizDay.isOpen : false;
+                  const bizOpen = bizDay?.openTime?.substring(0, 5) || null;
+                  const bizClose = bizDay?.closeTime?.substring(0, 5) || null;
 
                   return (
-                  <div key={day.dayOfWeek} className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+                  <div key={day.dayOfWeek} className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-2.5 rounded-lg transition-colors ${
                     businessClosed ? 'bg-gray-100/70' : 'bg-gray-50 hover:bg-gray-100'
                   }`}>
-                    {/* Toggle */}
-                    <button
-                      onClick={() => !businessClosed && updateDay(day.dayOfWeek, 'isOpen', !day.isOpen)}
-                      disabled={businessClosed}
-                      className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
-                        businessClosed ? 'bg-gray-300 cursor-not-allowed opacity-60' :
-                        day.isOpen ? 'bg-[#D4AF37]' : 'bg-gray-300'
-                      }`}
-                    >
-                      <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${
-                        day.isOpen && !businessClosed ? (isRTL ? 'left-0.5' : 'right-0.5') : (isRTL ? 'right-0.5' : 'left-0.5')
-                      }`} />
-                    </button>
-                    {/* Day name */}
-                    <span className={`text-sm font-medium w-24 ${
-                      businessClosed ? 'text-gray-400' : day.isOpen ? 'text-gray-900' : 'text-gray-400'
-                    }`}>
-                      {t(`team.scheduleDay.${DAY_KEYS[day.dayOfWeek]}`) || DAY_KEYS[day.dayOfWeek]}
-                    </span>
+                    {/* Toggle + Day name row */}
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => !businessClosed && updateDay(day.dayOfWeek, 'isOpen', !day.isOpen)}
+                        disabled={businessClosed}
+                        className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
+                          businessClosed ? 'bg-gray-300 cursor-not-allowed opacity-60' :
+                          day.isOpen ? 'bg-[#D4AF37]' : 'bg-gray-300'
+                        }`}
+                      >
+                        <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${
+                          day.isOpen && !businessClosed ? (isRTL ? 'left-0.5' : 'right-0.5') : (isRTL ? 'right-0.5' : 'left-0.5')
+                        }`} />
+                      </button>
+                      <span className={`text-sm font-medium w-20 sm:w-24 ${
+                        businessClosed ? 'text-gray-400' : day.isOpen ? 'text-gray-900' : 'text-gray-400'
+                      }`}>
+                        {t(`team.scheduleDay.${DAY_KEYS[day.dayOfWeek]}`) || DAY_KEYS[day.dayOfWeek]}
+                      </span>
+                    </div>
                     {/* Times */}
                     {businessClosed ? (
-                      <span className="text-xs text-gray-400 italic flex-1">{t('worker.businessClosedDay') || 'Business closed'}</span>
+                      <span className="text-xs text-gray-400 italic flex-1 ps-[52px] sm:ps-0">{t('worker.businessClosedDay') || 'Business closed'}</span>
                     ) : day.isOpen ? (
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <input
-                          type="time"
+                      <div className="flex items-center gap-2 flex-1 min-w-0 ps-[52px] sm:ps-0">
+                        <TimeSelect
                           value={day.openTime}
-                          onChange={(e) => updateDay(day.dayOfWeek, 'openTime', e.target.value)}
-                          className="border border-gray-200 rounded-md px-2 py-1 text-sm w-[110px] focus:ring-1 focus:ring-[#D4AF37]/30 outline-none"
+                          onChange={(v) => updateDay(day.dayOfWeek, 'openTime', v)}
+                          minTime={bizOpen}
+                          maxTime={bizClose}
+                          className="border border-gray-200 rounded-md px-2 py-1.5 text-sm w-[80px] sm:w-[90px] focus:ring-1 focus:ring-[#D4AF37]/30 outline-none bg-white appearance-none"
                         />
                         <span className="text-gray-300 text-xs">–</span>
-                        <input
-                          type="time"
+                        <TimeSelect
                           value={day.closeTime}
-                          onChange={(e) => updateDay(day.dayOfWeek, 'closeTime', e.target.value)}
-                          className="border border-gray-200 rounded-md px-2 py-1 text-sm w-[110px] focus:ring-1 focus:ring-[#D4AF37]/30 outline-none"
+                          onChange={(v) => updateDay(day.dayOfWeek, 'closeTime', v)}
+                          minTime={bizOpen}
+                          maxTime={bizClose}
+                          className="border border-gray-200 rounded-md px-2 py-1.5 text-sm w-[80px] sm:w-[90px] focus:ring-1 focus:ring-[#D4AF37]/30 outline-none bg-white appearance-none"
                         />
                       </div>
                     ) : (
-                      <span className="text-xs text-gray-400 flex-1">{t('schedule.closed') || 'Closed'}</span>
+                      <span className="text-xs text-gray-400 flex-1 ps-[52px] sm:ps-0">{t('schedule.closed') || 'Closed'}</span>
                     )}
                   </div>
                   );

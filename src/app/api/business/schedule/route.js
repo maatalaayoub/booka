@@ -7,6 +7,7 @@ import { parseBody, parseQuery } from '@/lib/validate';
 import { updateBusinessHoursSchema, createExceptionSchema, updateExceptionSchema, deleteExceptionSchema } from '@/schemas/schedule';
 import { getBusinessHours, updateBusinessHours } from '@/repositories/business';
 import { findExceptionsByBusiness, createException, updateException, deleteException } from '@/repositories/schedule';
+import { syncWorkerSchedulesToBusinessHours } from '@/repositories/workerSchedule';
 
 // ─── GET: Fetch working hours + schedule exceptions ─────────
 export async function GET(request) {
@@ -50,6 +51,13 @@ export async function PUT(request) {
     if (!tableName) return apiError('Cannot update hours for this category', 400);
 
     await updateBusinessHours(supabase, ctx.businessInfoId, ctx.category, validated.businessHours);
+
+    // Sync all worker schedules: clamp times & close days that are now closed
+    try {
+      await syncWorkerSchedulesToBusinessHours(supabase, ctx.businessInfoId, validated.businessHours);
+    } catch (syncErr) {
+      console.error('[schedule PUT] Worker sync error (non-fatal):', syncErr);
+    }
 
     return apiSuccess();
   } catch (error) {

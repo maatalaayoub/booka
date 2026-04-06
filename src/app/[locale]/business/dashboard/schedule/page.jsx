@@ -84,110 +84,36 @@ const DEFAULT_HOURS = DAY_NAMES.map((_, i) => ({
   closeTime: '19:00',
 }));
 
-const HOURS_24 = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-const MINUTES = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
-
-function TimeDropdown({ options, value, onSelect, max }) {
-  const [open, setOpen] = useState(false);
-  const [inputValue, setInputValue] = useState(value);
-  const ref = useRef(null);
-  const listRef = useRef(null);
-  const inputRef = useRef(null);
-
-  useEffect(() => { setInputValue(value); }, [value]);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-        commitInput();
-      }
-    };
-    if (open) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [open, inputValue]);
-
-  useEffect(() => {
-    if (open && listRef.current) {
-      const active = listRef.current.querySelector('[data-active="true"]');
-      if (active) active.scrollIntoView({ block: 'center' });
-    }
-  }, [open]);
-
-  const commitInput = () => {
-    const num = parseInt(inputValue, 10);
-    if (!isNaN(num) && num >= 0 && num <= max) {
-      onSelect(String(num).padStart(2, '0'));
-    } else {
-      setInputValue(value);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      commitInput();
-      setOpen(false);
-      inputRef.current?.blur();
-    } else if (e.key === 'Escape') {
-      setInputValue(value);
-      setOpen(false);
-      inputRef.current?.blur();
-    }
-  };
-
-  return (
-    <div ref={ref} className="relative">
-      <input
-        ref={inputRef}
-        type="text"
-        inputMode="numeric"
-        maxLength={2}
-        value={inputValue}
-        onChange={(e) => {
-          const v = e.target.value.replace(/\D/g, '').slice(0, 2);
-          setInputValue(v);
-        }}
-        onFocus={(e) => { setOpen(true); e.target.select(); }}
-        onBlur={() => { if (!ref.current?.contains(document.activeElement)) commitInput(); }}
-        onKeyDown={handleKeyDown}
-        className="w-[44px] px-1 py-2 bg-gray-50 border border-gray-200 rounded-[5px] text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-amber-400/40 focus:border-amber-400 cursor-pointer text-center"
-      />
-      {open && (
-        <div
-          ref={listRef}
-          className="absolute z-50 mt-1 bg-white border border-gray-200 rounded-[5px] shadow-lg"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          <style>{`.time-dropdown-list::-webkit-scrollbar { display: none; }`}</style>
-          <div className="time-dropdown-list max-h-48 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-            {options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                data-active={opt === value}
-                onMouseDown={(e) => { e.preventDefault(); onSelect(opt); setOpen(false); }}
-                className={`block w-full px-3 py-1.5 text-sm text-center hover:bg-amber-50 transition-colors ${
-                  opt === value ? 'bg-amber-100 text-amber-700 font-medium' : 'text-gray-700'
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+/** Generate 24h time options (HH:MM) in 30-min increments, optionally bounded */
+function generateTimeOptions(minTime, maxTime) {
+  const options = [];
+  const [minH, minM] = minTime ? minTime.split(':').map(Number) : [0, 0];
+  const [maxH, maxM] = maxTime ? maxTime.split(':').map(Number) : [23, 30];
+  const minTotal = minH * 60 + minM;
+  const maxTotal = maxH * 60 + maxM;
+  for (let m = minTotal; m <= maxTotal; m += 30) {
+    const hh = String(Math.floor(m / 60)).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    options.push(`${hh}:${mm}`);
+  }
+  return options;
 }
 
-function TimeSelect24({ value, onChange }) {
-  const [h, m] = (value || '00:00').split(':');
+function TimeSelect({ value, onChange, minTime, maxTime, disabled, className }) {
+  const options = generateTimeOptions(minTime, maxTime);
+  const hasValue = options.includes(value);
   return (
-    <div dir="ltr" className="flex items-center gap-1">
-      <TimeDropdown options={HOURS_24} value={h} onSelect={(v) => onChange(`${v}:${m}`)} max={23} />
-      <span className="text-gray-500 font-medium">:</span>
-      <TimeDropdown options={MINUTES} value={m} onSelect={(v) => onChange(`${h}:${v}`)} max={59} />
-    </div>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      className={className || "border border-gray-200 rounded-md px-2 py-1.5 text-sm w-[90px] focus:ring-1 focus:ring-amber-400/30 outline-none bg-white appearance-none"}
+    >
+      {!hasValue && <option value={value}>{value}</option>}
+      {options.map(t => (
+        <option key={t} value={t}>{t}</option>
+      ))}
+    </select>
   );
 }
 
@@ -703,12 +629,12 @@ export default function SchedulePage() {
                   {/* Time inputs or Closed label */}
                   {day.isOpen ? (
                     <div className="flex items-center gap-2 flex-1">
-                      <TimeSelect24
+                      <TimeSelect
                         value={day.openTime || '09:00'}
                         onChange={(val) => updateDay(day.dayOfWeek, 'openTime', val)}
                       />
                       <span className="text-gray-400 text-sm">{t('common.to')}</span>
-                      <TimeSelect24
+                      <TimeSelect
                         value={day.closeTime || '19:00'}
                         onChange={(val) => updateDay(day.dayOfWeek, 'closeTime', val)}
                       />
