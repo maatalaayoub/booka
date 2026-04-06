@@ -60,6 +60,7 @@ export async function POST(request) {
         end_time: validated.end_time,
         status: validated.status,
         notes: validated.notes ? sanitizeText(validated.notes) : null,
+        assigned_worker_id: validated.assigned_worker_id ?? null,
       },
     });
 

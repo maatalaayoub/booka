@@ -147,13 +147,19 @@ const FullCalendarWrapper = forwardRef(function FullCalendarWrapper(
     };
   }, []);
 
-  // Custom event rendering to show "modified by client" indicator
+  // Custom event rendering to show worker and "modified by client" indicator
   const renderEventContent = useCallback((eventInfo) => {
-    const { rescheduled_by } = eventInfo.event.extendedProps || {};
+    const { rescheduled_by, assignedWorkerName } = eventInfo.event.extendedProps || {};
     return (
       <div className="fc-event-main-inner" style={{ overflow: 'hidden', height: '100%' }}>
         <div className="fc-event-time">{eventInfo.timeText}</div>
         <div className="fc-event-title">{eventInfo.event.title}</div>
+        {assignedWorkerName && (
+          <div style={{ fontSize: '10px', marginTop: '1px', opacity: 0.85, display: 'flex', alignItems: 'center', gap: '3px' }}>
+            <span style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.7)', flexShrink: 0 }} />
+            {assignedWorkerName}
+          </div>
+        )}
         {rescheduled_by === 'client' && (
           <div style={{ fontSize: '10px', marginTop: '2px', opacity: 0.9, display: 'flex', alignItems: 'center', gap: '3px' }}>
             <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#fff', flexShrink: 0 }} />

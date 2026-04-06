@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { validCoord } from '@/lib/sanitize';
 import { apiError, apiData } from '@/lib/api-response';
+import { findTeamMembers } from '@/repositories/team';
 
 /**
  * GET /api/business-page/[id]
@@ -51,6 +52,19 @@ export async function GET(_request, { params }) {
       .from('schedule_exceptions')
       .select('*')
       .eq('business_info_id', biz.id);
+
+    // Fetch active team members (for worker selection in booking)
+    let teamMembers = [];
+    try {
+      const members = await findTeamMembers(supabase, biz.id);
+      teamMembers = members.map(m => ({
+        id: m.user_id,
+        firstName: m.users?.user_profile?.first_name || '',
+        lastName: m.users?.user_profile?.last_name || '',
+        profileImageUrl: m.users?.user_profile?.profile_image_url || null,
+        role: m.role,
+      }));
+    } catch (_) { /* team members optional */ }
 
     const response = {
       id: biz.id,
@@ -106,6 +120,8 @@ export async function GET(_request, { params }) {
         recurring: ex.recurring,
         recurringDay: ex.recurring_day,
       })),
+      // Team members (for worker selection)
+      teamMembers,
     };
 
     return apiData(response);

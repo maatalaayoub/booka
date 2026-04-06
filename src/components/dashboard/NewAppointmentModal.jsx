@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Loader2,
   MapPin,
+  Users,
 } from 'lucide-react';
 
 function parseDateAndTime(dateStr) {
@@ -70,15 +71,21 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
     notes: '',
     price: '',
     status: 'pending',
+    assignedWorkerId: '',
   });
 
   const [errors, setErrors] = useState({});
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const serviceDropdownRef = useRef(null);
+  const [workerDropdownOpen, setWorkerDropdownOpen] = useState(false);
+  const workerDropdownRef = useRef(null);
 
   // Fetched services from API
   const [services, setServices] = useState([]);
   const [servicesLoading, setServicesLoading] = useState(false);
+
+  // Fetched team members
+  const [teamMembers, setTeamMembers] = useState([]);
 
 
 
@@ -88,14 +95,17 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
       if (serviceDropdownRef.current && !serviceDropdownRef.current.contains(e.target)) {
         setServiceDropdownOpen(false);
       }
+      if (workerDropdownRef.current && !workerDropdownRef.current.contains(e.target)) {
+        setWorkerDropdownOpen(false);
+      }
     }
-    if (serviceDropdownOpen) {
+    if (serviceDropdownOpen || workerDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [serviceDropdownOpen]);
+  }, [serviceDropdownOpen, workerDropdownOpen]);
 
-  // Fetch services and schedule when modal opens
+  // Fetch services and team members when modal opens
   useEffect(() => {
     if (!isOpen) return;
     setServicesLoading(true);
@@ -108,6 +118,16 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
       .then(data => setServices((data.services || []).filter(s => s.is_active)))
       .catch(e => { console.error('Failed to load services:', e); setServices([]); })
       .finally(() => setServicesLoading(false));
+
+    // Fetch team members for worker assignment
+    fetch('/api/business/team')
+      .then(async r => {
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) return { members: [] };
+        return r.json();
+      })
+      .then(data => setTeamMembers(data.members || []))
+      .catch(() => setTeamMembers([]));
 
   }, [isOpen]);
 
@@ -136,6 +156,7 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
         notes: '',
         price: '',
         status: 'pending',
+        assignedWorkerId: '',
       });
       setErrors({});
     }
@@ -207,6 +228,15 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
         price: formData.price || (svc ? String(svc.price) : ''),
         currency: svc ? (svc.currency || 'MAD') : 'MAD',
         status: formData.status,
+        assignedWorkerId: formData.assignedWorkerId || null,
+        assignedWorkerName: formData.assignedWorkerId
+          ? (() => {
+              const m = teamMembers.find(tm => tm.user_id === formData.assignedWorkerId);
+              if (!m) return '';
+              const p = m.users?.user_profile;
+              return p?.first_name ? `${p.first_name} ${p.last_name || ''}`.trim() : m.users?.username || '';
+            })()
+          : '',
       },
     });
   };
@@ -442,6 +472,116 @@ export default function NewAppointmentModal({ isOpen, onClose, onSave, defaultDa
                   </button>
                 </div>
               </div>
+
+              {/* Assign Worker */}
+              {teamMembers.length > 0 && (
+                <div ref={workerDropdownRef} className="relative">
+                  <label className="flex items-center gap-1.5 text-sm font-medium text-gray-700 mb-1.5">
+                    <Users className="w-3.5 h-3.5 text-gray-400" />
+                    {t('newAppointment.assignWorker')}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setWorkerDropdownOpen((v) => !v)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-[5px] border text-sm transition-all text-left ${
+                      workerDropdownOpen
+                        ? 'border-amber-400 ring-2 ring-amber-100'
+                        : 'border-gray-200 hover:border-gray-300'
+                    } bg-white`}
+                  >
+                    {formData.assignedWorkerId ? (
+                      <span className="text-gray-900 font-medium">
+                        {(() => {
+                          const m = teamMembers.find(tm => tm.user_id === formData.assignedWorkerId);
+                          if (!m) return '';
+                          const p = m.users?.user_profile;
+                          return p?.first_name ? `${p.first_name} ${p.last_name || ''}`.trim() : m.users?.username || '';
+                        })()}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">{t('newAppointment.noWorker')}</span>
+                    )}
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${workerDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {workerDropdownOpen && (
+                      <motion.ul
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute z-50 mt-1.5 w-full bg-white border border-gray-200 rounded-[5px] shadow-lg overflow-hidden max-h-60 overflow-y-auto"
+                      >
+                        {/* Unassigned option */}
+                        <li
+                          onClick={() => {
+                            handleChange('assignedWorkerId', '');
+                            setWorkerDropdownOpen(false);
+                          }}
+                          className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+                            !formData.assignedWorkerId ? 'bg-amber-50' : 'hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className={`flex items-center justify-center w-8 h-8 rounded-[5px] flex-shrink-0 ${
+                            !formData.assignedWorkerId ? 'bg-amber-100' : 'bg-gray-100'
+                          }`}>
+                            <Users className={`w-3.5 h-3.5 ${!formData.assignedWorkerId ? 'text-amber-600' : 'text-gray-400'}`} />
+                          </div>
+                          <span className={`text-sm font-medium ${!formData.assignedWorkerId ? 'text-amber-700' : 'text-gray-500'}`}>
+                            {t('newAppointment.noWorker')}
+                          </span>
+                          {!formData.assignedWorkerId && (
+                            <Check className="w-4 h-4 text-amber-500 flex-shrink-0 ml-auto" />
+                          )}
+                        </li>
+                        {teamMembers.map((member) => {
+                          const profile = member.users?.user_profile;
+                          const displayName = profile?.first_name
+                            ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+                            : member.users?.username || '';
+                          const isSelected = formData.assignedWorkerId === member.user_id;
+                          return (
+                            <li
+                              key={member.user_id}
+                              onClick={() => {
+                                handleChange('assignedWorkerId', member.user_id);
+                                setWorkerDropdownOpen(false);
+                              }}
+                              className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors ${
+                                isSelected ? 'bg-amber-50' : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              {profile?.profile_image_url ? (
+                                <img
+                                  src={profile.profile_image_url}
+                                  alt=""
+                                  className="w-8 h-8 rounded-[5px] object-cover flex-shrink-0"
+                                />
+                              ) : (
+                                <div className={`flex items-center justify-center w-8 h-8 rounded-[5px] flex-shrink-0 ${
+                                  isSelected ? 'bg-amber-100' : 'bg-gray-100'
+                                }`}>
+                                  <User className={`w-3.5 h-3.5 ${isSelected ? 'text-amber-600' : 'text-gray-400'}`} />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-sm font-medium truncate ${isSelected ? 'text-amber-700' : 'text-gray-900'}`}>
+                                  {displayName}
+                                </p>
+                                <p className="text-xs text-gray-400 capitalize">{member.role}</p>
+                              </div>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                              )}
+                            </li>
+                          );
+                        })}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
               {/* Date */}
               <div>

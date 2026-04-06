@@ -216,6 +216,7 @@ export default function ExceptionDetailModal({ isOpen, onClose, exception, onDel
                   {t('exceptionDetail.editException') || 'Edit'}
                 </button>
               )}
+              {onDelete && (
               <button
                 onClick={handleDelete}
                 disabled={deleting}
@@ -228,6 +229,7 @@ export default function ExceptionDetailModal({ isOpen, onClose, exception, onDel
                 )}
                 {deleting ? t('exceptionDetail.deleting') : t('exceptionDetail.deleteException')}
               </button>
+              )}
             </div>
           </motion.div>
         </motion.div>

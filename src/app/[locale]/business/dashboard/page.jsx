@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useBusinessCategory } from '@/contexts/BusinessCategoryContext';
 import BusinessOnboarding from '@/components/BusinessOnboarding';
 import AppointmentDetailModal from '@/components/dashboard/AppointmentDetailModal';
+import PendingInvitations from '@/components/dashboard/PendingInvitations';
 import { AnimatePresence, motion } from 'framer-motion';
 import { AlertTriangle, XCircle, CalendarDays, Clock, ChevronLeft, ChevronRight, Check, Loader2, ArrowRight, RotateCw } from 'lucide-react';
 
@@ -730,6 +731,9 @@ export default function BusinessDashboard() {
           <RotateCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
         </button>
       </div>
+
+      {/* Pending Team Invitations */}
+      <PendingInvitations />
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  X, Home, Settings, LogOut, Info, Mail, Shield, LayoutDashboard, ChevronRight, Calendar, Heart, Bell
+  X, Home, Settings, LogOut, Info, Mail, Shield, LayoutDashboard, ChevronRight, Calendar, Heart, Bell, Users
 } from 'lucide-react';
 import ReactCountryFlag from 'react-country-flag';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -34,6 +34,45 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const isLoaded = isClerkLoaded && isRoleLoaded;
   const isHomePage = pathname === `/${locale}` || pathname === `/${locale}/`;
+
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isWorker, setIsWorker] = useState(false);
+
+  // Fetch unread notification count
+  const fetchUnreadCount = useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      const res = await fetch('/api/notifications?countOnly=true');
+      if (res.ok) {
+        const data = await res.json();
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch {
+      // silent
+    }
+  }, [isSignedIn]);
+
+  // Check if user is a team member (worker)
+  const fetchWorkerStatus = useCallback(async () => {
+    if (!isSignedIn) return;
+    try {
+      const res = await fetch('/api/worker/memberships');
+      if (res.ok) {
+        const data = await res.json();
+        const memberships = Array.isArray(data) ? data : (data.data || []);
+        setIsWorker(memberships.length > 0);
+      }
+    } catch {
+      // silent
+    }
+  }, [isSignedIn]);
+
+  useEffect(() => {
+    if (isOpen && isSignedIn) {
+      fetchUnreadCount();
+      fetchWorkerStatus();
+    }
+  }, [isOpen, isSignedIn, fetchUnreadCount, fetchWorkerStatus]);
 
   // Sync currentLang with locale
   useEffect(() => {
@@ -195,8 +234,20 @@ export default function Sidebar({ isOpen, onClose }) {
                   onClick={onClose}
                   className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl transition-all text-[#244C70] hover:bg-gray-50"
                 >
-                  <Bell className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
+                  <div className="relative">
+                    <Bell className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 bg-red-500 text-white text-[10px] font-bold rounded-full">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
                   <span className="font-medium text-base">{t('notifications') || 'Notifications'}</span>
+                  {unreadCount > 0 && (
+                    <span className="ml-auto px-2 py-0.5 bg-red-100 text-red-600 text-xs font-semibold rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Link>
               )}
 
@@ -239,6 +290,18 @@ export default function Sidebar({ isOpen, onClose }) {
                     <LayoutDashboard className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
                     <span className="font-medium text-base">{t('dashboard') || 'Dashboard'}</span>
                     <span className="ml-auto px-2 py-0.5 text-xs font-semibold bg-[#244C70] text-white rounded-full">PRO</span>
+                  </Link>
+                )}
+
+                {/* Worker Dashboard - For team members */}
+                {isLoaded && isWorker && !isBusiness && (
+                  <Link
+                    href={`/${locale}/worker/dashboard`}
+                    onClick={onClose}
+                    className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70] transition-all hover:bg-gray-50"
+                  >
+                    <Users className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
+                    <span className="font-medium text-base">{t('worker.dashboard') || 'Worker Dashboard'}</span>
                   </Link>
                 )}
 

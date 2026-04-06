@@ -458,9 +458,88 @@ function TimeSlotGrid({ slots, selectedSlot, onSelectSlot, loading, accent, t, u
 }
 
 /* ================================================================
+   WORKER PICKER — shown after time slot selection when business has team
+   ================================================================ */
+function WorkerPicker({ workers, selectedWorker, onSelectWorker, loading, accent, t }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+        <span className="ml-2 text-[13px] text-gray-400">{t('bp.loadingWorkers')}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">{t('bp.chooseWorker')}</p>
+      <div className="grid grid-cols-2 gap-2">
+        {/* Any available option */}
+        <button
+          onClick={() => onSelectWorker(null)}
+          className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+            selectedWorker === null
+              ? 'border-current shadow-sm'
+              : 'border-gray-100 hover:border-gray-200'
+          }`}
+          style={selectedWorker === null ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
+        >
+          <div
+            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+            style={{ backgroundColor: selectedWorker === null ? `${accent.bg}15` : '#f3f4f6' }}
+          >
+            <User className="w-4 h-4" style={{ color: selectedWorker === null ? accent.bg : '#9ca3af' }} />
+          </div>
+          <div className="text-left min-w-0">
+            <p className="text-[13px] font-semibold text-gray-900 truncate">{t('bp.anyAvailable')}</p>
+            <p className="text-[11px] text-gray-400 truncate">{t('bp.anyAvailableDesc')}</p>
+          </div>
+        </button>
+        {/* Worker options */}
+        {workers.map(w => {
+          const selected = selectedWorker?.id === w.id;
+          const name = [w.firstName, w.lastName].filter(Boolean).join(' ') || 'Worker';
+          const initials = (w.firstName?.[0] || '') + (w.lastName?.[0] || '');
+          return (
+            <button
+              key={w.id}
+              onClick={() => onSelectWorker(w)}
+              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                selected
+                  ? 'border-current shadow-sm'
+                  : 'border-gray-100 hover:border-gray-200'
+              }`}
+              style={selected ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
+            >
+              {w.profileImageUrl ? (
+                <img src={w.profileImageUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+              ) : (
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+                  style={{ backgroundColor: accent.bg }}
+                >
+                  {initials || <User className="w-4 h-4" />}
+                </div>
+              )}
+              <div className="text-left min-w-0">
+                <p className="text-[13px] font-semibold text-gray-900 truncate">{name}</p>
+                <p className="text-[11px] text-gray-400 truncate capitalize">{w.role}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+      {workers.length === 0 && (
+        <p className="text-[12px] text-gray-400 text-center py-2">{t('bp.noWorkersAvailable')}</p>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
    BOOKING FORM MODAL
    ================================================================ */
-function BookingModal({ open, onClose, business, services, date, slot, accent, t, locale, onSuccess }) {
+function BookingModal({ open, onClose, business, services, date, slot, accent, t, locale, onSuccess, assignedWorkerId }) {
   const { user } = useAuthUser();
   const [step, setStep] = useState('form'); // 'form' | 'summary'
   const [clientName, setClientName] = useState('');
@@ -513,6 +592,7 @@ function BookingModal({ open, onClose, business, services, date, slot, accent, t
           clientName: clientName.trim(),
           clientPhone: clientPhone.trim() || null,
           notes: notes.trim() || null,
+          assignedWorkerId: assignedWorkerId || null,
         }),
       });
       const data = await res.json();
@@ -779,6 +859,13 @@ export default function BusinessPage() {
   const [showBookingPanel, setShowBookingPanel] = useState(false);
   const [userBookings, setUserBookings] = useState([]);
   const [crossBusinessBookings, setCrossBusinessBookings] = useState([]);
+  // Worker selection state
+  const [selectedWorker, setSelectedWorker] = useState(null); // null = "any available", or { id, firstName, lastName, ... }
+  const [availableWorkers, setAvailableWorkers] = useState([]);
+  const [workersLoading, setWorkersLoading] = useState(false);
+  const [hasTeam, setHasTeam] = useState(false); // whether business has team members
+  const [workerPickerReady, setWorkerPickerReady] = useState(false); // show picker only after workers loaded
+
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -831,7 +918,7 @@ export default function BusinessPage() {
     setLoading(true);
     fetch(`/api/business-page/${businessId}`)
       .then(res => { if (!res.ok) throw new Error('not found'); return res.json(); })
-      .then(data => { setBusiness(data); })
+      .then(data => { setBusiness(data); setHasTeam((data.teamMembers || []).length > 0); })
       .catch(() => setError('not_found'))
       .finally(() => setLoading(false));
   }, [businessId]);
@@ -886,6 +973,27 @@ export default function BusinessPage() {
       .catch((e) => { console.error('Failed to load slots:', e); setSlots([]); setUserBookings([]); setCrossBusinessBookings([]); })
       .finally(() => setSlotsLoading(false));
   }, [selectedDate, selectedServices, business, totalDuration]);
+
+  // Fetch available workers when a time slot is selected (only if business has team)
+  useEffect(() => {
+    if (!selectedSlot || !hasTeam || !business || !selectedDate) {
+      setAvailableWorkers([]);
+      setWorkerPickerReady(false);
+      setSelectedWorker(null);
+      return;
+    }
+    setWorkersLoading(true);
+    setWorkerPickerReady(false);
+    setSelectedWorker(null);
+    fetch(`/api/book/available-workers?businessId=${business.id}&date=${formatDate(selectedDate)}&startTime=${selectedSlot.start}&endTime=${selectedSlot.end}`)
+      .then(res => res.json())
+      .then(data => {
+        setAvailableWorkers(data.workers || []);
+        setWorkerPickerReady(true);
+      })
+      .catch((e) => { console.error('Failed to load workers:', e); setAvailableWorkers([]); setWorkerPickerReady(true); })
+      .finally(() => setWorkersLoading(false));
+  }, [selectedSlot, hasTeam, business, selectedDate]);
 
   const accent = business ? (ACCENT_COLORS[business.accentColor] || ACCENT_COLORS.slate) : ACCENT_COLORS.slate;
   const canBook = business?.showBookingButton && business?.serviceMode !== 'walkin';
@@ -1361,7 +1469,11 @@ export default function BusinessPage() {
                     {selectedDate && (
                       <TimeSlotGrid slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} loading={slotsLoading} accent={accent} t={t} userBookings={userBookings} crossBusinessBookings={crossBusinessBookings} totalDuration={totalDuration} isRTL={isRTL} />
                     )}
-                    {selectedSlot && (
+                    {/* Worker picker (only for businesses with team members) */}
+                    {selectedSlot && hasTeam && (
+                      <WorkerPicker workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={setSelectedWorker} loading={workersLoading} accent={accent} t={t} />
+                    )}
+                    {selectedSlot && (!hasTeam || workerPickerReady) && (
                       <button onClick={handleBookNow}
                         className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98] shadow-lg"
                         style={{ backgroundColor: accent.bg }}>
@@ -1536,8 +1648,13 @@ export default function BusinessPage() {
                       <TimeSlotGrid slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} loading={slotsLoading} accent={accent} t={t} userBookings={userBookings} crossBusinessBookings={crossBusinessBookings} totalDuration={totalDuration} isRTL={isRTL} />
                     )}
 
+                    {/* Worker picker (only for businesses with team members) */}
+                    {selectedSlot && hasTeam && (
+                      <WorkerPicker workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={setSelectedWorker} loading={workersLoading} accent={accent} t={t} />
+                    )}
+
                     {/* Confirm button */}
-                    {selectedSlot && (
+                    {selectedSlot && (!hasTeam || workerPickerReady) && (
                       <button onClick={handleBookNow}
                         className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98] shadow-lg"
                         style={{ backgroundColor: accent.bg }}>
@@ -1706,7 +1823,8 @@ export default function BusinessPage() {
       {/* MODALS */}
       <BookingModal open={showBookingModal} onClose={() => setShowBookingModal(false)}
         business={business} services={selectedServices} date={selectedDate} slot={selectedSlot}
-        accent={accent} t={t} locale={locale} onSuccess={handleBookingSuccess} />
+        accent={accent} t={t} locale={locale} onSuccess={handleBookingSuccess}
+        assignedWorkerId={selectedWorker?.id || null} />
 
       <SuccessModal appointment={bookedAppointment} onClose={() => setBookedAppointment(null)} accent={accent} t={t} locale={locale} />
     </div>

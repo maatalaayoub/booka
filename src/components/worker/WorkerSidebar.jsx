@@ -1,41 +1,28 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useBusinessCategory } from '@/contexts/BusinessCategoryContext';
 import {
   LayoutDashboard,
   Calendar,
   Clock,
-  Users,
-  UsersRound,
   Tag,
   DollarSign,
-  BarChart3,
-  Settings,
   Bell,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  Menu,
+  Settings,
   X,
-  Globe,
-  ShieldCheck,
-  Building2,
-  Navigation,
-  UserCircle,
-  FileText,
-  Bookmark,
-  MessageSquare,
-  Video,
 } from 'lucide-react';
 
-export default function Sidebar() {
+export default function WorkerSidebar({ permissions = {} }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationCount, setNotificationCount] = useState(0);
-  const { businessCategory, serviceMode, isLoading: isCategoryLoading } = useBusinessCategory();
+  const [isHovered, setIsHovered] = useState(false);
+  const pathname = usePathname();
+  const params = useParams();
+  const locale = params.locale || 'en';
+  const { t, isRTL } = useLanguage();
 
   // Listen for toggle event from header
   useEffect(() => {
@@ -59,154 +46,70 @@ export default function Sidebar() {
     const interval = setInterval(fetchCount, 30000);
     return () => clearInterval(interval);
   }, []);
-  const [isHovered, setIsHovered] = useState(false);
-  const pathname = usePathname();
-  const params = useParams();
-  const locale = params.locale || 'en';
-  const { t, isRTL } = useLanguage();
 
+  // Build menu items based on permissions
   const allMenuItems = [
-    { 
-      icon: LayoutDashboard, 
-      label: t('dashboard.sidebar.overview') || 'Overview', 
-      href: `/${locale}/business/dashboard`,
-      categories: ['business_owner', 'mobile_service', 'job_seeker'],
-    },
-    { 
-      icon: Calendar, 
-      label: t('dashboard.sidebar.appointments') || 'Bookings', 
-      href: `/${locale}/business/dashboard/appointments`,
-      categories: ['business_owner', 'mobile_service'],
-      excludeServiceModes: ['walkin'],
-    },
-    { 
-      icon: Clock, 
-      label: t('dashboard.sidebar.schedule') || 'Schedule', 
-      href: `/${locale}/business/dashboard/schedule`,
-      categories: ['business_owner', 'mobile_service'],
-      excludeServiceModes: ['walkin'],
-    },
-    { 
-      icon: Users, 
-      label: t('dashboard.sidebar.clients') || 'Clients', 
-      href: `/${locale}/business/dashboard/clients`,
-      categories: ['business_owner', 'mobile_service'],
-    },
-    { 
-      icon: Tag, 
-      label: t('dashboard.sidebar.services') || 'Services & Prices', 
-      href: `/${locale}/business/dashboard/services`,
-      categories: ['business_owner', 'mobile_service'],
-    },
-    { 
-      icon: UsersRound, 
-      label: t('dashboard.sidebar.team') || 'Team', 
-      href: `/${locale}/business/dashboard/team`,
-      categories: ['business_owner', 'mobile_service'],
-    },
-    { 
-      icon: Building2, 
-      label: t('dashboard.sidebar.businessDetails') || 'Business Details', 
-      href: `/${locale}/business/dashboard/business-details`,
-      categories: ['business_owner', 'mobile_service'],
-    },
-    { 
-      icon: UserCircle, 
-      label: t('dashboard.sidebar.myProfile') || 'My Profile', 
-      href: `/${locale}/business/dashboard/my-profile`,
-      categories: ['job_seeker'],
-    },
-    { 
-      icon: FileText, 
-      label: t('dashboard.sidebar.myApplications') || 'My Applications', 
-      href: `/${locale}/business/dashboard/my-applications`,
-      categories: ['job_seeker'],
-    },
-    { 
-      icon: Bookmark, 
-      label: t('dashboard.sidebar.savedJobs') || 'Saved Jobs', 
-      href: `/${locale}/business/dashboard/saved-jobs`,
-      categories: ['job_seeker'],
-    },
-    { 
-      icon: MessageSquare, 
-      label: t('dashboard.sidebar.messages') || 'Messages', 
-      href: `/${locale}/business/dashboard/messages`,
-      categories: ['job_seeker'],
-    },
-    { 
-      icon: Video, 
-      label: t('dashboard.sidebar.interviews') || 'Interviews', 
-      href: `/${locale}/business/dashboard/interviews`,
-      categories: ['job_seeker'],
-    },
-    { 
-      icon: Globe, 
-      label: t('dashboard.sidebar.publicPage') || 'Business Card', 
-      href: `/${locale}/business/dashboard/public-page`,
-      categories: ['business_owner', 'mobile_service'],
-    },
-    { 
-      icon: DollarSign, 
-      label: t('dashboard.sidebar.earnings') || 'Earnings', 
-      href: `/${locale}/business/dashboard/earnings`,
-      categories: ['business_owner', 'mobile_service'],
-    },
-    { 
-      icon: BarChart3, 
-      label: t('dashboard.sidebar.analytics') || 'Analytics', 
-      href: `/${locale}/business/dashboard/analytics`,
-      categories: ['business_owner', 'mobile_service'],
-    },
-    { 
-      icon: ShieldCheck, 
-      label: t('dashboard.sidebar.verification') || 'Verification', 
-      href: `/${locale}/business/dashboard/verification`,
-      categories: ['business_owner', 'mobile_service'],
+    {
+      icon: LayoutDashboard,
+      label: t('worker.sidebar.overview') || 'Overview',
+      href: `/${locale}/worker/dashboard`,
+      always: true,
     },
     {
-      icon: Navigation,
-      label: t('dashboard.sidebar.serviceArea') || 'Service Area',
-      href: `/${locale}/business/dashboard/service-area`,
-      categories: ['mobile_service'],
+      icon: Calendar,
+      label: t('worker.sidebar.appointments') || 'My Appointments',
+      href: `/${locale}/worker/dashboard/appointments`,
+      perm: 'canManageAppointments',
+    },
+    {
+      icon: Clock,
+      label: t('worker.sidebar.schedule') || 'Schedule',
+      href: `/${locale}/worker/dashboard/schedule`,
+      perm: 'canEditSchedule',
+    },
+    {
+      icon: Tag,
+      label: t('worker.sidebar.services') || 'Services',
+      href: `/${locale}/worker/dashboard/services`,
+      perm: 'canManageServices',
+    },
+    {
+      icon: DollarSign,
+      label: t('worker.sidebar.earnings') || 'Earnings',
+      href: `/${locale}/worker/dashboard/earnings`,
+      perm: 'canViewEarnings',
     },
   ];
 
-  const menuItems = isCategoryLoading
-    ? []
-    : allMenuItems.filter(
-        (item) =>
-          (!businessCategory || item.categories.includes(businessCategory)) &&
-          (!item.excludeServiceModes || !item.excludeServiceModes.includes(serviceMode))
-      );
+  const menuItems = allMenuItems.filter(
+    (item) => item.always || permissions[item.perm]
+  );
 
   const bottomItems = [
-    { 
-      icon: Bell, 
-      label: t('dashboard.sidebar.notifications') || 'Notifications', 
-      href: `/${locale}/business/dashboard/notifications`,
-      badge: notificationCount
+    {
+      icon: Bell,
+      label: t('worker.sidebar.notifications') || 'Notifications',
+      href: `/${locale}/worker/dashboard/notifications`,
+      badge: notificationCount,
     },
-    { 
-      icon: Settings, 
-      label: t('dashboard.sidebar.settings') || 'Settings', 
-      href: `/${locale}/business/dashboard/settings` 
+    {
+      icon: Settings,
+      label: t('worker.sidebar.settings') || 'Settings',
+      href: `/${locale}/worker/dashboard/settings`,
     },
   ];
 
   const isActive = (href) => {
-    if (href === `/${locale}/business/dashboard`) {
+    if (href === `/${locale}/worker/dashboard`) {
       return pathname === href;
     }
     return pathname.startsWith(href);
   };
 
-  // Desktop sidebar - collapsed by default, expanded on hover
   const isExpanded = isHovered;
 
   const SidebarContent = ({ forMobile = false }) => (
     <div className={`flex flex-col h-full overflow-hidden ${isRTL ? 'rtl' : 'ltr'}`}>
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-1 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {menuItems.map((item) => (
           <Link
@@ -228,8 +131,7 @@ export default function Sidebar() {
             </span>
           </Link>
         ))}
-        
-        {/* Notifications & Settings */}
+
         {bottomItems.map((item) => (
           <Link
             key={item.href}
@@ -244,7 +146,7 @@ export default function Sidebar() {
           >
             <div className="relative flex-shrink-0">
               <item.icon className={`w-5 h-5 ${isActive(item.href) ? 'text-[#364153]' : 'text-[#364153]/50'}`} />
-              {item.badge && (
+              {item.badge > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#364153] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {item.badge}
                 </span>

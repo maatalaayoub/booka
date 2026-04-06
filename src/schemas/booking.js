@@ -13,6 +13,7 @@ export const createBookingSchema = z.object({
   clientName: z.string().trim().min(2, 'Client name is required'),
   clientPhone: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  assignedWorkerId: zUUID.nullable().optional(),
 }).refine(
   data => (data.serviceIds && data.serviceIds.length > 0) || data.serviceId,
   { message: 'At least one service must be selected', path: ['serviceIds'] }

@@ -7,8 +7,29 @@
 export async function findAppointmentsByBusiness(supabase, businessInfoId) {
   const { data, error } = await supabase
     .from('appointments')
+    .select(`
+      *,
+      assigned_worker:users!appointments_assigned_worker_id_fkey (
+        id, username,
+        user_profile ( first_name, last_name )
+      )
+    `)
+    .eq('business_info_id', businessInfoId)
+    .order('start_time', { ascending: true });
+
+  if (error) throw error;
+  return data || [];
+}
+
+/**
+ * Fetch appointments assigned to a specific worker within a business.
+ */
+export async function findAppointmentsForWorker(supabase, businessInfoId, workerUserId) {
+  const { data, error } = await supabase
+    .from('appointments')
     .select('*')
     .eq('business_info_id', businessInfoId)
+    .eq('assigned_worker_id', workerUserId)
     .order('start_time', { ascending: true });
 
   if (error) throw error;

@@ -21,6 +21,7 @@ import {
   Loader2,
   AlertCircle,
   RefreshCw,
+  Users,
 } from 'lucide-react';
 
 export default function AppointmentDetailModal({
@@ -31,6 +32,7 @@ export default function AppointmentDetailModal({
   onComplete,
   onCancel,
   onReschedule,
+  onReassign,
 }) {
   const [confirmAction, setConfirmAction] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -44,6 +46,8 @@ export default function AppointmentDetailModal({
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [rescheduleSaving, setRescheduleSaving] = useState(false);
   const [rescheduleError, setRescheduleError] = useState(null);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [reassigning, setReassigning] = useState(false);
   const { t } = useLanguage();
 
   // Reset state when modal closes or appointment changes
@@ -58,8 +62,39 @@ export default function AppointmentDetailModal({
       setClosedDates({});
       setConfirmAction(null);
       setActionLoading(false);
+      setTeamMembers([]);
     }
   }, [isOpen]);
+
+  // Fetch team members when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch('/api/business/team')
+      .then(async r => {
+        const ct = r.headers.get('content-type') || '';
+        if (!ct.includes('application/json')) return { members: [] };
+        return r.json();
+      })
+      .then(data => setTeamMembers(data.members || []))
+      .catch(() => setTeamMembers([]));
+  }, [isOpen]);
+
+  const handleReassign = async (workerId) => {
+    if (!appointment?.id) return;
+    setReassigning(true);
+    try {
+      const res = await fetch('/api/business/appointments', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: appointment.id, assigned_worker_id: workerId || null }),
+      });
+      if (res.ok && onReassign) onReassign();
+    } catch (err) {
+      console.error('[AppointmentDetail] Reassign failed:', err);
+    } finally {
+      setReassigning(false);
+    }
+  };
 
   if (!appointment) return null;
 
@@ -432,6 +467,56 @@ export default function AppointmentDetailModal({
                           <div className="flex items-center gap-3">
                             <MapPin className="w-4 h-4 text-gray-400" />
                             <span className="text-[14px] text-gray-900">{appointment.extendedProps.clientAddress}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Assigned Worker card */}
+                  {teamMembers.length > 0 && (
+                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                        <p className="text-[12px] font-semibold text-gray-500 uppercase tracking-wide">{t('appointmentDetail.assignedWorker')}</p>
+                      </div>
+                      <div className="px-4 py-3 space-y-2">
+                        {/* Current assignment */}
+                        <div className="flex items-center gap-3">
+                          <Users className="w-4 h-4 text-gray-400" />
+                          <span className="text-[14px] text-gray-900">
+                            {appointment.extendedProps?.assignedWorkerName || t('newAppointment.noWorker')}
+                          </span>
+                        </div>
+                        {/* Reassign buttons */}
+                        {appointment.extendedProps?.status !== 'completed' && appointment.extendedProps?.status !== 'cancelled' && (
+                          <div className="flex flex-wrap gap-1.5 pt-1">
+                            {appointment.extendedProps?.assignedWorkerId && (
+                              <button
+                                onClick={() => handleReassign(null)}
+                                disabled={reassigning}
+                                className="px-2.5 py-1.5 text-[11px] font-medium rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                              >
+                                {t('appointmentDetail.unassign')}
+                              </button>
+                            )}
+                            {teamMembers.map((member) => {
+                              const profile = member.users?.user_profile;
+                              const name = profile?.first_name
+                                ? `${profile.first_name} ${profile.last_name || ''}`.trim()
+                                : member.users?.username || '';
+                              const isActive = appointment.extendedProps?.assignedWorkerId === member.user_id;
+                              if (isActive) return null;
+                              return (
+                                <button
+                                  key={member.user_id}
+                                  onClick={() => handleReassign(member.user_id)}
+                                  disabled={reassigning}
+                                  className="px-2.5 py-1.5 text-[11px] font-medium rounded-lg border border-amber-200 text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors disabled:opacity-50"
+                                >
+                                  {name}
+                                </button>
+                              );
+                            })}
                           </div>
                         )}
                       </div>

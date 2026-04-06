@@ -102,7 +102,7 @@ async function validateAgainstSchedule(supabase, businessId, startTimeISO, endTi
  * @throws {ServiceError} on business rule violations
  * @returns {object} the created appointment
  */
-export async function createBooking(supabase, { clerkId, businessId, serviceIds, date, startTime, clientName, clientPhone, notes }) {
+export async function createBooking(supabase, { clerkId, businessId, serviceIds, date, startTime, clientName, clientPhone, notes, assignedWorkerId }) {
   // Verify business exists and accepts bookings
   const bizInfo = await findBusinessById(supabase, businessId, 'id, business_category, service_mode, onboarding_completed');
   if (!bizInfo || !bizInfo.onboarding_completed) throw new ServiceError('Business not found', 404);
@@ -174,6 +174,7 @@ export async function createBooking(supabase, { clerkId, businessId, serviceIds,
     end_time: endISO,
     status: 'pending',
     notes: notes ? sanitizeText(notes) : null,
+    assigned_worker_id: assignedWorkerId || null,
   });
 }
 

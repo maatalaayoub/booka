@@ -86,6 +86,11 @@ function computeEndTime(startTime, durationMinutes) {
 // Convert a DB appointment row to a FullCalendar event object
 function toCalendarEvent(apt) {
   const colors = STATUS_COLORS[apt.status] || STATUS_COLORS.confirmed;
+  const worker = apt.assigned_worker;
+  const workerProfile = worker?.user_profile;
+  const workerName = workerProfile?.first_name
+    ? `${workerProfile.first_name} ${workerProfile.last_name || ''}`.trim()
+    : worker?.username || '';
   return {
     id: apt.id,
     title: `${apt.service} — ${apt.client_name}`,
@@ -108,6 +113,8 @@ function toCalendarEvent(apt) {
       previous_start_time: apt.previous_start_time || null,
       previous_end_time: apt.previous_end_time || null,
       rescheduled_by: apt.rescheduled_by || null,
+      assignedWorkerId: apt.assigned_worker_id || null,
+      assignedWorkerName: workerName,
     },
   };
 }
@@ -586,6 +593,7 @@ export default function AppointmentsPage() {
           end_time: eventData.end,
           status: eventData.extendedProps.status || 'confirmed',
           notes: eventData.extendedProps.notes,
+          assigned_worker_id: eventData.extendedProps.assignedWorkerId || null,
         }),
       });
 
@@ -1087,6 +1095,14 @@ export default function AppointmentsPage() {
         onReschedule={() => {
           setIsDetailOpen(false);
           // Refetch appointments to get updated times
+          fetch('/api/business/appointments')
+            .then(r => r.ok ? r.json() : null)
+            .then(data => { if (data) setEvents((data.appointments || []).map(toCalendarEvent)); })
+            .catch(e => console.error('Failed to refresh appointments:', e));
+        }}
+        onReassign={() => {
+          setIsDetailOpen(false);
+          // Refetch appointments to get updated worker assignment
           fetch('/api/business/appointments')
             .then(r => r.ok ? r.json() : null)
             .then(data => { if (data) setEvents((data.appointments || []).map(toCalendarEvent)); })

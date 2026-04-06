@@ -8,6 +8,7 @@ const defaultLocale = 'fr';
 // Define route matchers for different sections
 const isUserRoute = createRouteMatcher(['/user/:path*', '/:locale/user/:path*']);
 const isBusinessRoute = createRouteMatcher(['/business/:path*', '/:locale/business/:path*']);
+const isWorkerRoute = createRouteMatcher(['/worker/:path*', '/:locale/worker/:path*']);
 const isAdminRoute = createRouteMatcher(['/admin/:path*', '/:locale/admin/:path*']);
 const isUserAuthRoute = createRouteMatcher(['/auth/user/:path*', '/:locale/auth/user/:path*']);
 const isBusinessAuthRoute = createRouteMatcher(['/auth/business/:path*', '/:locale/auth/business/:path*']);
@@ -115,6 +116,13 @@ export default clerkMiddleware(async (auth, req) => {
   // Business routes - require authentication
   // Role verification is done on the page level via useRole hook
   if (isBusinessRoute(req)) {
+    if (!userId) {
+      return NextResponse.redirect(new URL(`/${locale}/auth/business/sign-in`, req.url));
+    }
+  }
+
+  // Worker routes - require authentication (membership verified on page level)
+  if (isWorkerRoute(req)) {
     if (!userId) {
       return NextResponse.redirect(new URL(`/${locale}/auth/business/sign-in`, req.url));
     }

@@ -13,6 +13,7 @@ export const createAppointmentSchema = z.object({
   end_time: z.string().min(1, 'End time is required'),
   status: z.enum(['pending', 'confirmed', 'cancelled', 'completed']).default('pending'),
   notes: z.string().optional(),
+  assigned_worker_id: z.string().uuid().nullable().optional(),
 });
 
 // ─── UPDATE APPOINTMENT (business-side) ──────────────────────────────────
@@ -31,6 +32,7 @@ export const updateAppointmentSchema = z.object({
   rescheduled_by: z.enum(['business', 'client']).nullable().optional(),
   previous_start_time: z.string().nullable().optional(),
   previous_end_time: z.string().nullable().optional(),
+  assigned_worker_id: z.string().uuid().nullable().optional(),
 });
 
 // ─── DELETE APPOINTMENT ─────────────────────────────────────────────────
