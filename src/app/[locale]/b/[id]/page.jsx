@@ -458,80 +458,115 @@ function TimeSlotGrid({ slots, selectedSlot, onSelectSlot, loading, accent, t, u
 }
 
 /* ================================================================
-   WORKER PICKER — shown after time slot selection when business has team
+   WORKER PICKER MODAL — dialog shown before booking form for team businesses
    ================================================================ */
-function WorkerPicker({ workers, selectedWorker, onSelectWorker, loading, accent, t }) {
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-4">
-        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-        <span className="ml-2 text-[13px] text-gray-400">{t('bp.loadingWorkers')}</span>
-      </div>
-    );
-  }
+function WorkerPickerModal({ open, onClose, workers, selectedWorker, onSelectWorker, onContinue, loading, accent, t, slot, isRTL }) {
+  if (!open) return null;
 
   return (
-    <div className="space-y-2">
-      <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide">{t('bp.chooseWorker')}</p>
-      <div className="grid grid-cols-2 gap-2">
-        {/* Any available option */}
-        <button
-          onClick={() => onSelectWorker(null)}
-          className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-            selectedWorker === null
-              ? 'border-current shadow-sm'
-              : 'border-gray-100 hover:border-gray-200'
-          }`}
-          style={selectedWorker === null ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
-        >
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-            style={{ backgroundColor: selectedWorker === null ? `${accent.bg}15` : '#f3f4f6' }}
-          >
-            <User className="w-4 h-4" style={{ color: selectedWorker === null ? accent.bg : '#9ca3af' }} />
-          </div>
-          <div className="text-left min-w-0">
-            <p className="text-[13px] font-semibold text-gray-900 truncate">{t('bp.anyAvailable')}</p>
-            <p className="text-[11px] text-gray-400 truncate">{t('bp.anyAvailableDesc')}</p>
-          </div>
-        </button>
-        {/* Worker options */}
-        {workers.map(w => {
-          const selected = selectedWorker?.id === w.id;
-          const name = [w.firstName, w.lastName].filter(Boolean).join(' ') || 'Worker';
-          const initials = (w.firstName?.[0] || '') + (w.lastName?.[0] || '');
-          return (
-            <button
-              key={w.id}
-              onClick={() => onSelectWorker(w)}
-              className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
-                selected
-                  ? 'border-current shadow-sm'
-                  : 'border-gray-100 hover:border-gray-200'
-              }`}
-              style={selected ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
-            >
-              {w.profileImageUrl ? (
-                <img src={w.profileImageUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
-              ) : (
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
-                  style={{ backgroundColor: accent.bg }}
+    <div className="fixed inset-0 z-50 flex items-end sd:items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full sd:max-w-md sd:mx-4 bg-white sd:rounded-[5px] rounded-t-[5px] shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+        {/* Drag handle (mobile) */}
+        <div className="sd:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        </div>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4">
+          <h3 className="text-lg font-bold text-gray-900">{t('bp.chooseWorker')}</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="px-5 pb-6 space-y-4">
+          {/* Compact slot info */}
+          {slot && (
+            <div className="flex items-center justify-center gap-2 p-3 bg-gray-50 rounded-xl text-[13px] text-gray-600">
+              <Calendar className="w-3.5 h-3.5" />
+              <span dir="ltr">{slot.start} {isRTL ? '←' : '→'} {slot.end}</span>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              <span className="ml-2 text-[13px] text-gray-400">{t('bp.loadingWorkers')}</span>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2">
+                {/* Any available option */}
+                <button
+                  onClick={() => onSelectWorker(null)}
+                  className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                    selectedWorker === null
+                      ? 'border-current shadow-sm'
+                      : 'border-gray-100 hover:border-gray-200'
+                  }`}
+                  style={selectedWorker === null ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
                 >
-                  {initials || <User className="w-4 h-4" />}
-                </div>
-              )}
-              <div className="text-left min-w-0">
-                <p className="text-[13px] font-semibold text-gray-900 truncate">{name}</p>
-                <p className="text-[11px] text-gray-400 truncate capitalize">{w.role}</p>
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: selectedWorker === null ? `${accent.bg}15` : '#f3f4f6' }}
+                  >
+                    <User className="w-4 h-4" style={{ color: selectedWorker === null ? accent.bg : '#9ca3af' }} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <p className="text-[13px] font-semibold text-gray-900 truncate">{t('bp.anyAvailable')}</p>
+                    <p className="text-[11px] text-gray-400 truncate">{t('bp.anyAvailableDesc')}</p>
+                  </div>
+                </button>
+                {/* Worker options */}
+                {workers.map(w => {
+                  const selected = selectedWorker?.id === w.id;
+                  const name = [w.firstName, w.lastName].filter(Boolean).join(' ') || 'Worker';
+                  const initials = (w.firstName?.[0] || '') + (w.lastName?.[0] || '');
+                  return (
+                    <button
+                      key={w.id}
+                      onClick={() => onSelectWorker(w)}
+                      className={`flex items-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                        selected
+                          ? 'border-current shadow-sm'
+                          : 'border-gray-100 hover:border-gray-200'
+                      }`}
+                      style={selected ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
+                    >
+                      {w.profileImageUrl ? (
+                        <img src={w.profileImageUrl} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div
+                          className="w-9 h-9 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
+                          style={{ backgroundColor: accent.bg }}
+                        >
+                          {initials || <User className="w-4 h-4" />}
+                        </div>
+                      )}
+                      <div className="text-left min-w-0">
+                        <p className="text-[13px] font-semibold text-gray-900 truncate">{name}</p>
+                        <p className="text-[11px] text-gray-400 truncate capitalize">{w.role}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
-            </button>
-          );
-        })}
+              {workers.length === 0 && (
+                <p className="text-[12px] text-gray-400 text-center py-2">{t('bp.noWorkersAvailable')}</p>
+              )}
+
+              {/* Continue button */}
+              <button onClick={onContinue}
+                className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+                style={{ backgroundColor: accent.bg }}>
+                {t('bp.continueToDetails')}
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      {workers.length === 0 && (
-        <p className="text-[12px] text-gray-400 text-center py-2">{t('bp.noWorkersAvailable')}</p>
-      )}
     </div>
   );
 }
@@ -865,6 +900,7 @@ export default function BusinessPage() {
   const [workersLoading, setWorkersLoading] = useState(false);
   const [hasTeam, setHasTeam] = useState(false); // whether business has team members
   const [workerPickerReady, setWorkerPickerReady] = useState(false); // show picker only after workers loaded
+  const [showWorkerPickerModal, setShowWorkerPickerModal] = useState(false);
 
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
@@ -1038,6 +1074,16 @@ export default function BusinessPage() {
       router.push(`/${locale}/auth/user/sign-in?redirect_url=${encodeURIComponent(`/${locale}/b/${businessId}`)}`);
       return;
     }
+    // For team businesses, show worker picker dialog first
+    if (hasTeam) {
+      setShowWorkerPickerModal(true);
+      return;
+    }
+    setShowBookingModal(true);
+  };
+
+  const handleWorkerPickerContinue = () => {
+    setShowWorkerPickerModal(false);
     setShowBookingModal(true);
   };
 
@@ -1469,11 +1515,7 @@ export default function BusinessPage() {
                     {selectedDate && (
                       <TimeSlotGrid slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} loading={slotsLoading} accent={accent} t={t} userBookings={userBookings} crossBusinessBookings={crossBusinessBookings} totalDuration={totalDuration} isRTL={isRTL} />
                     )}
-                    {/* Worker picker (only for businesses with team members) */}
-                    {selectedSlot && hasTeam && (
-                      <WorkerPicker workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={setSelectedWorker} loading={workersLoading} accent={accent} t={t} />
-                    )}
-                    {selectedSlot && (!hasTeam || workerPickerReady) && (
+                    {selectedSlot && (
                       <button onClick={handleBookNow}
                         className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98] shadow-lg"
                         style={{ backgroundColor: accent.bg }}>
@@ -1648,13 +1690,8 @@ export default function BusinessPage() {
                       <TimeSlotGrid slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} loading={slotsLoading} accent={accent} t={t} userBookings={userBookings} crossBusinessBookings={crossBusinessBookings} totalDuration={totalDuration} isRTL={isRTL} />
                     )}
 
-                    {/* Worker picker (only for businesses with team members) */}
-                    {selectedSlot && hasTeam && (
-                      <WorkerPicker workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={setSelectedWorker} loading={workersLoading} accent={accent} t={t} />
-                    )}
-
                     {/* Confirm button */}
-                    {selectedSlot && (!hasTeam || workerPickerReady) && (
+                    {selectedSlot && (
                       <button onClick={handleBookNow}
                         className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98] shadow-lg"
                         style={{ backgroundColor: accent.bg }}>
@@ -1821,6 +1858,11 @@ export default function BusinessPage() {
       {canBook && <div className="h-20 sd:h-0" />}
 
       {/* MODALS */}
+      <WorkerPickerModal open={showWorkerPickerModal} onClose={() => setShowWorkerPickerModal(false)}
+        workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={setSelectedWorker}
+        onContinue={handleWorkerPickerContinue} loading={workersLoading} accent={accent} t={t}
+        slot={selectedSlot} isRTL={isRTL} />
+
       <BookingModal open={showBookingModal} onClose={() => setShowBookingModal(false)}
         business={business} services={selectedServices} date={selectedDate} slot={selectedSlot}
         accent={accent} t={t} locale={locale} onSuccess={handleBookingSuccess}

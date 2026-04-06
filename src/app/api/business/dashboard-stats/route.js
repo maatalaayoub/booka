@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getUserId } from '@/lib/auth';
 import { getBusinessContext } from '@/lib/business';
+import { findTeamMembers } from '@/repositories/team';
 import { apiError, apiData } from '@/lib/api-response';
 
 export async function GET(request) {
@@ -20,19 +21,34 @@ export async function GET(request) {
     const businessInfoId = ctx.businessInfoId;
     const category = ctx.category;
 
+    // Check if business has a team — if so, filter to owner's own appointments
+    const members = await findTeamMembers(supabase, businessInfoId);
+    const hasTeam = members.length > 1;
+    const ownerFilter = hasTeam ? ctx.userId : null;
+
+    // Helper to apply owner filter to a query
+    const applyOwnerFilter = (query) => {
+      if (ownerFilter) {
+        return query.or(`assigned_worker_id.is.null,assigned_worker_id.eq.${ownerFilter}`);
+      }
+      return query;
+    };
+
     // ── Today's bookings ────────────────────────────────
     const todayStart = new Date();
     todayStart.setUTCHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setUTCHours(23, 59, 59, 999);
 
-    const { count: todayBookings } = await supabase
-      .from('appointments')
-      .select('*', { count: 'exact', head: true })
-      .eq('business_info_id', businessInfoId)
-      .gte('start_time', todayStart.toISOString())
-      .lte('start_time', todayEnd.toISOString())
-      .neq('status', 'cancelled');
+    const { count: todayBookings } = await applyOwnerFilter(
+      supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('business_info_id', businessInfoId)
+        .gte('start_time', todayStart.toISOString())
+        .lte('start_time', todayEnd.toISOString())
+        .neq('status', 'cancelled')
+    );
 
     // ── This week's revenue (completed appointments) ────
     const weekStart = new Date();
@@ -42,13 +58,15 @@ export async function GET(request) {
     weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
     weekEnd.setUTCHours(23, 59, 59, 999);
 
-    const { data: weekAppointments } = await supabase
-      .from('appointments')
-      .select('price')
-      .eq('business_info_id', businessInfoId)
-      .gte('start_time', weekStart.toISOString())
-      .lte('start_time', weekEnd.toISOString())
-      .in('status', ['completed', 'confirmed']);
+    const { data: weekAppointments } = await applyOwnerFilter(
+      supabase
+        .from('appointments')
+        .select('price')
+        .eq('business_info_id', businessInfoId)
+        .gte('start_time', weekStart.toISOString())
+        .lte('start_time', weekEnd.toISOString())
+        .in('status', ['completed', 'confirmed'])
+    );
 
     const weeklyRevenue = (weekAppointments || []).reduce(
       (sum, a) => sum + (parseFloat(a.price) || 0),
@@ -61,14 +79,16 @@ export async function GET(request) {
     const monthAhead = new Date(nowDate);
     monthAhead.setUTCDate(monthAhead.getUTCDate() + 29);
     monthAhead.setUTCHours(23, 59, 59, 999);
-    const { data: upcomingBookings } = await supabase
-      .from('appointments')
-      .select('*')
-      .eq('business_info_id', businessInfoId)
-      .gte('start_time', nowDate.toISOString())
-      .lte('start_time', monthAhead.toISOString())
-      .neq('status', 'cancelled')
-      .order('start_time', { ascending: true });
+    const { data: upcomingBookings } = await applyOwnerFilter(
+      supabase
+        .from('appointments')
+        .select('*')
+        .eq('business_info_id', businessInfoId)
+        .gte('start_time', nowDate.toISOString())
+        .lte('start_time', monthAhead.toISOString())
+        .neq('status', 'cancelled')
+        .order('start_time', { ascending: true })
+    );
 
     // ── Category-specific stats ─────────────────────────
     let categoryStats = {};

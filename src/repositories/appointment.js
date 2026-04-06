@@ -3,9 +3,11 @@
 
 /**
  * Fetch appointments for a business, ordered by start time.
+ * When ownerUserId is provided, only returns appointments assigned to that
+ * user or unassigned (assigned_worker_id is null).
  */
-export async function findAppointmentsByBusiness(supabase, businessInfoId) {
-  const { data, error } = await supabase
+export async function findAppointmentsByBusiness(supabase, businessInfoId, ownerUserId) {
+  let query = supabase
     .from('appointments')
     .select(`
       *,
@@ -14,8 +16,13 @@ export async function findAppointmentsByBusiness(supabase, businessInfoId) {
         user_profile ( first_name, last_name )
       )
     `)
-    .eq('business_info_id', businessInfoId)
-    .order('start_time', { ascending: true });
+    .eq('business_info_id', businessInfoId);
+
+  if (ownerUserId) {
+    query = query.or(`assigned_worker_id.is.null,assigned_worker_id.eq.${ownerUserId}`);
+  }
+
+  const { data, error } = await query.order('start_time', { ascending: true });
 
   if (error) throw error;
   return data || [];
@@ -214,7 +221,7 @@ export async function findCrossBusinessConflicts(supabase, clerkId, businessInfo
 export async function findAppointmentsInRange(supabase, businessInfoId, startISO, endISO, statuses = ['confirmed']) {
   const { data } = await supabase
     .from('appointments')
-    .select('start_time, end_time')
+    .select('start_time, end_time, assigned_worker_id, status')
     .eq('business_info_id', businessInfoId)
     .in('status', statuses)
     .gte('start_time', startISO)

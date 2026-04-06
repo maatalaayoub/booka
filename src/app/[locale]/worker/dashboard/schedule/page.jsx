@@ -4,7 +4,6 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import {
-  Plus,
   Clock,
   CalendarDays,
   Save,
@@ -14,17 +13,14 @@ import {
   Palmtree,
   Plane,
   HelpCircle,
-  Trash2,
   Loader2,
   RotateCw,
   ChevronLeft,
   ChevronRight,
   Check,
   AlertCircle,
-  Info,
-  Pencil,
+  UserCog,
 } from 'lucide-react';
-import AddExceptionModal from '@/components/dashboard/AddExceptionModal';
 import ExceptionDetailModal from '@/components/dashboard/ExceptionDetailModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useWorker } from '@/contexts/WorkerContext';
@@ -181,15 +177,15 @@ function TimeSelect24({ value, onChange, disabled }) {
   const [h, m] = (value || '00:00').split(':');
   if (disabled) {
     return (
-      <div className="flex items-center gap-1 opacity-60">
-        <span className="w-[44px] px-1 py-2 bg-gray-100 border border-gray-200 rounded-[5px] text-sm text-gray-500 text-center">{h}</span>
-        <span className="text-gray-400 font-medium">:</span>
-        <span className="w-[44px] px-1 py-2 bg-gray-100 border border-gray-200 rounded-[5px] text-sm text-gray-500 text-center">{m}</span>
+      <div dir="ltr" className="flex items-center gap-1">
+        <span className="w-[44px] px-1 py-2 bg-gray-50 border border-gray-200 rounded-[5px] text-sm text-gray-700 text-center">{h}</span>
+        <span className="text-gray-500 font-medium">:</span>
+        <span className="w-[44px] px-1 py-2 bg-gray-50 border border-gray-200 rounded-[5px] text-sm text-gray-700 text-center">{m}</span>
       </div>
     );
   }
   return (
-    <div className="flex items-center gap-1">
+    <div dir="ltr" className="flex items-center gap-1">
       <TimeDropdown options={HOURS_24} value={h} onSelect={(v) => onChange(`${v}:${m}`)} max={23} />
       <span className="text-gray-500 font-medium">:</span>
       <TimeDropdown options={MINUTES} value={m} onSelect={(v) => onChange(`${h}:${v}`)} max={59} />
@@ -203,51 +199,63 @@ export default function WorkerSchedulePage() {
   const { activeMembership, permissions } = useWorker();
   const calendarRef = useRef(null);
   const [businessHours, setBusinessHours] = useState(DEFAULT_HOURS);
+  const [workerHours, setWorkerHours] = useState(DEFAULT_HOURS);
   const [exceptions, setExceptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [hasCustomSchedule, setHasCustomSchedule] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalDefaultDate, setModalDefaultDate] = useState(null);
-  const [editingException, setEditingException] = useState(null);
+  const [hasWorkerSchedule, setHasWorkerSchedule] = useState(false);
   const [activeTab, setActiveTab] = useState('hours');
   const [currentView, setCurrentView] = useState('dayGridMonth');
-  const [deletingId, setDeletingId] = useState(null);
   const [selectedExc, setSelectedExc] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const savedHoursRef = useRef(null);
   const [refreshing, setRefreshing] = useState(false);
+  const savedWorkerRef = useRef(null);
 
   const canEdit = !!permissions?.canEditSchedule;
   const businessId = activeMembership?.businessInfoId;
 
-  // ── Fetch schedule + exceptions ──
+  // ── Helper: merge worker hours with business hours context ──
+  const mergeWorkerData = (data) => {
+    if (data.businessHours && data.businessHours.length > 0) {
+      setBusinessHours(data.businessHours);
+    } else {
+      setBusinessHours(DEFAULT_HOURS);
+    }
+
+    if (data.workerHours && data.workerHours.length > 0) {
+      const merged = DAY_KEYS.map((_, i) => {
+        const existing = data.workerHours.find((w) => w.dayOfWeek === i);
+        return existing || { dayOfWeek: i, isOpen: false, openTime: '09:00', closeTime: '19:00' };
+      });
+      setWorkerHours(merged);
+      savedWorkerRef.current = JSON.parse(JSON.stringify(merged));
+      setHasWorkerSchedule(true);
+    } else {
+      // Default worker hours to match business hours
+      const bh = data.businessHours && data.businessHours.length > 0 ? data.businessHours : DEFAULT_HOURS;
+      const defaultWorker = bh.map((b) => ({
+        dayOfWeek: b.dayOfWeek,
+        isOpen: b.isOpen,
+        openTime: b.openTime || '09:00',
+        closeTime: b.closeTime || '19:00',
+      }));
+      setWorkerHours(defaultWorker);
+      savedWorkerRef.current = JSON.parse(JSON.stringify(defaultWorker));
+      setHasWorkerSchedule(false);
+    }
+
+    setExceptions(data.exceptions || []);
+  };
+
+  // ── Fetch all data ──
   const fetchAll = useCallback(async () => {
     if (!businessId) return;
     try {
       const res = await fetch(`/api/worker/schedule?businessId=${businessId}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.schedule && data.schedule.length > 0) {
-          const merged = DAY_KEYS.map((_, i) => {
-            const existing = data.schedule.find(s => s.day_of_week === i);
-            return existing ? {
-              dayOfWeek: i,
-              isOpen: existing.is_open,
-              openTime: existing.open_time?.substring(0, 5) || '09:00',
-              closeTime: existing.close_time?.substring(0, 5) || '19:00',
-            } : { dayOfWeek: i, isOpen: false, openTime: '09:00', closeTime: '19:00' };
-          });
-          setBusinessHours(merged);
-          savedHoursRef.current = JSON.parse(JSON.stringify(merged));
-          setHasCustomSchedule(true);
-        } else {
-          setBusinessHours(DEFAULT_HOURS);
-          savedHoursRef.current = JSON.parse(JSON.stringify(DEFAULT_HOURS));
-          setHasCustomSchedule(false);
-        }
-        setExceptions(data.exceptions || []);
+        mergeWorkerData(data);
       }
     } catch {
       // silent
@@ -264,21 +272,7 @@ export default function WorkerSchedulePage() {
       const res = await fetch(`/api/worker/schedule?businessId=${businessId}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.schedule && data.schedule.length > 0) {
-          const merged = DAY_KEYS.map((_, i) => {
-            const existing = data.schedule.find(s => s.day_of_week === i);
-            return existing ? {
-              dayOfWeek: i,
-              isOpen: existing.is_open,
-              openTime: existing.open_time?.substring(0, 5) || '09:00',
-              closeTime: existing.close_time?.substring(0, 5) || '19:00',
-            } : { dayOfWeek: i, isOpen: false, openTime: '09:00', closeTime: '19:00' };
-          });
-          setBusinessHours(merged);
-          savedHoursRef.current = JSON.parse(JSON.stringify(merged));
-          setHasCustomSchedule(true);
-        }
-        setExceptions(data.exceptions || []);
+        mergeWorkerData(data);
       }
     } catch {
       // silent
@@ -287,19 +281,19 @@ export default function WorkerSchedulePage() {
     }
   };
 
-  // ── Save working hours ──
-  const saveHours = async () => {
+  // ── Save worker hours ──
+  const saveWorkerHours = async () => {
     if (!businessId || !canEdit) return;
     setSaving(true);
     try {
       const res = await fetch('/api/worker/schedule', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessId, schedule: businessHours }),
+        body: JSON.stringify({ businessId, schedule: workerHours }),
       });
       if (res.ok) {
-        savedHoursRef.current = JSON.parse(JSON.stringify(businessHours));
-        setHasCustomSchedule(true);
+        savedWorkerRef.current = JSON.parse(JSON.stringify(workerHours));
+        setHasWorkerSchedule(true);
         setSaved(true);
         setTimeout(() => setSaved(false), 3000);
       }
@@ -310,79 +304,75 @@ export default function WorkerSchedulePage() {
     }
   };
 
-  // ── Update a day's hours ──
-  const updateDay = (dayIndex, field, value) => {
+  // ── Update a worker day ──
+  const updateWorkerDay = (dayIndex, field, value) => {
     if (!canEdit) return;
-    setBusinessHours((prev) =>
-      prev.map((d) => d.dayOfWeek === dayIndex ? { ...d, [field]: value } : d)
+    setWorkerHours((prev) =>
+      prev.map((d) => {
+        if (d.dayOfWeek !== dayIndex) return d;
+        const updated = { ...d, [field]: value };
+
+        // When toggling on, default to business hours for that day
+        if (field === 'isOpen' && value === true) {
+          const bizDay = businessHours.find((b) => b.dayOfWeek === dayIndex);
+          if (bizDay) {
+            updated.openTime = bizDay.openTime || '09:00';
+            updated.closeTime = bizDay.closeTime || '19:00';
+          }
+        }
+
+        return updated;
+      })
     );
   };
 
-  // Change count
+  // ── Clamp worker time within business hours ──
+  const clampTime = (dayIndex, field, value) => {
+    const bizDay = businessHours.find((b) => b.dayOfWeek === dayIndex);
+    if (!bizDay) return;
+
+    setWorkerHours((prev) =>
+      prev.map((d) => {
+        if (d.dayOfWeek !== dayIndex) return d;
+        const updated = { ...d, [field]: value };
+
+        // Clamp open/close within business bounds
+        if (bizDay.openTime && updated.openTime < bizDay.openTime) {
+          updated.openTime = bizDay.openTime;
+        }
+        if (bizDay.closeTime && updated.closeTime > bizDay.closeTime) {
+          updated.closeTime = bizDay.closeTime;
+        }
+        // Ensure open < close
+        if (updated.openTime >= updated.closeTime) {
+          if (field === 'openTime') {
+            updated.closeTime = bizDay.closeTime;
+          } else {
+            updated.openTime = bizDay.openTime;
+          }
+        }
+
+        return updated;
+      })
+    );
+  };
+
+  // ── Change count ──
   const changeCount = useMemo(() => {
-    if (!savedHoursRef.current) return 0;
+    if (!savedWorkerRef.current) return 0;
     let count = 0;
-    for (let i = 0; i < businessHours.length; i++) {
-      const curr = businessHours[i];
-      const orig = savedHoursRef.current[i];
+    for (let i = 0; i < workerHours.length; i++) {
+      const curr = workerHours[i];
+      const orig = savedWorkerRef.current[i];
       if (!orig) { count++; continue; }
       if (curr.isOpen !== orig.isOpen || curr.openTime !== orig.openTime || curr.closeTime !== orig.closeTime) {
         count++;
       }
     }
     return count;
-  }, [businessHours, saved]);
+  }, [workerHours, saved]);
 
   const hasChanges = changeCount > 0;
-
-  // ── Add or update exception ──
-  const addException = async (exceptionData) => {
-    if (exceptionData.id) {
-      const res = await fetch('/api/worker/schedule', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessId, ...exceptionData }),
-      });
-      if (res.ok) {
-        const { exception } = await res.json();
-        setExceptions((prev) => prev.map((e) => e.id === exception.id ? exception : e));
-      } else {
-        throw new Error('Failed to update exception');
-      }
-    } else {
-      const res = await fetch('/api/worker/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessId, ...exceptionData }),
-      });
-      if (res.ok) {
-        const { exception } = await res.json();
-        setExceptions((prev) => [...prev, exception]);
-      } else {
-        throw new Error('Failed to add exception');
-      }
-    }
-  };
-
-  const openEditModal = (exc) => {
-    setEditingException(exc);
-    setModalDefaultDate(null);
-    setIsModalOpen(true);
-  };
-
-  const deleteException = async (id) => {
-    setDeletingId(id);
-    await new Promise((r) => setTimeout(r, 0));
-    try {
-      const res = await fetch(`/api/worker/schedule?id=${id}&businessId=${businessId}`, { method: 'DELETE' });
-      if (res.ok) {
-        await new Promise((r) => setTimeout(r, 400));
-        setExceptions((prev) => prev.filter((e) => e.id !== id));
-      }
-    } finally {
-      setDeletingId(null);
-    }
-  };
 
   // ── Calendar navigation ──
   const goToday = () => calendarRef.current?.getApi()?.today();
@@ -403,16 +393,18 @@ export default function WorkerSchedulePage() {
         const date = new Date(startDate);
         date.setDate(date.getDate() + w * 7 + d);
         const dayOfWeek = date.getDay();
-        const dayConf = businessHours.find((h) => h.dayOfWeek === dayOfWeek);
-        if (dayConf?.isOpen && dayConf.openTime && dayConf.closeTime) {
-          const dateStr = date.toISOString().split('T')[0];
+        const dateStr = date.toISOString().split('T')[0];
+
+        // Worker hours
+        const wDay = workerHours.find((h) => h.dayOfWeek === dayOfWeek);
+        if (wDay?.isOpen && wDay.openTime && wDay.closeTime) {
           events.push({
             id: `wh_${dateStr}`,
-            title: t('schedule.workingHours'),
-            start: `${dateStr}T${dayConf.openTime}:00`,
-            end: `${dateStr}T${dayConf.closeTime}:00`,
+            title: t('worker.myWorkingHours'),
+            start: `${dateStr}T${wDay.openTime}:00`,
+            end: `${dateStr}T${wDay.closeTime}:00`,
             display: 'background',
-            backgroundColor: '#D4AF3720',
+            backgroundColor: '#3B82F620',
             borderColor: 'transparent',
           });
         }
@@ -457,14 +449,7 @@ export default function WorkerSchedulePage() {
       }
     });
     return events;
-  }, [businessHours, exceptions, t]);
-
-  const handleDateClick = useCallback((info) => {
-    if (!canEdit) return;
-    setEditingException(null);
-    setModalDefaultDate(info.dateStr);
-    setIsModalOpen(true);
-  }, [canEdit]);
+  }, [workerHours, exceptions, t]);
 
   const handleEventClick = useCallback((info) => {
     const ex = info.event.extendedProps;
@@ -472,15 +457,6 @@ export default function WorkerSchedulePage() {
     setSelectedExc(ex);
     setIsDetailOpen(true);
   }, []);
-
-  const deleteFromDetail = async (id) => {
-    const res = await fetch(`/api/worker/schedule?id=${id}&businessId=${businessId}`, { method: 'DELETE' });
-    if (res.ok) {
-      setExceptions((prev) => prev.filter((e) => e.id !== id));
-    } else {
-      throw new Error('Failed to delete');
-    }
-  };
 
   if (loading) {
     return (
@@ -529,54 +505,15 @@ export default function WorkerSchedulePage() {
           <h1 className="text-2xl font-bold text-gray-900">{t('worker.mySchedule')}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{t('worker.myScheduleDesc')}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-[5px] transition-colors disabled:opacity-50"
-            title={t('schedule.refresh')}
-          >
-            <RotateCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
-          {canEdit && (
-            <>
-              <div className="flex-1 sm:hidden" />
-              <button
-                onClick={() => {
-                  setEditingException(null);
-                  setModalDefaultDate(null);
-                  setIsModalOpen(true);
-                }}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#364153] hover:bg-[#2a3444] text-white rounded-[5px] font-medium text-sm transition-colors shadow-sm"
-              >
-                <Plus className="w-4 h-4" />
-                {t('schedule.addException')}
-              </button>
-            </>
-          )}
-        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="p-2.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-[5px] transition-colors disabled:opacity-50"
+          title={t('schedule.refresh')}
+        >
+          <RotateCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+        </button>
       </div>
-
-      {/* ── No edit permission notice ── */}
-      {!canEdit && (
-        <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-sm text-amber-700">
-            {t('worker.noSchedulePerm')}
-          </p>
-        </div>
-      )}
-
-      {/* ── No custom schedule info ── */}
-      {!hasCustomSchedule && (
-        <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-blue-700">{t('worker.noScheduleSet')}</p>
-            <p className="text-xs text-blue-600 mt-0.5">{t('worker.noScheduleSetDesc')}</p>
-          </div>
-        </div>
-      )}
 
       {/* ── Tab Switcher ── */}
       <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-[5px] w-fit">
@@ -611,13 +548,29 @@ export default function WorkerSchedulePage() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
-          {/* Working Hours Card */}
+          {/* No edit permission notice */}
+          {!canEdit && (
+            <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-700">
+                {t('worker.noSchedulePerm')}
+              </p>
+            </div>
+          )}
+
+          {/* Worker Working Hours Card (editable) */}
           <div className="bg-white rounded-[5px] border border-gray-200 overflow-hidden">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-gray-900">{t('schedule.weeklyHours')}</h2>
+              <div>
+                <div className="flex items-center gap-2">
+                  <UserCog className="w-4 h-4 text-blue-500" />
+                  <h2 className="text-base font-semibold text-gray-900">{t('worker.myWorkingHours')}</h2>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">{t('worker.myWorkingHoursDesc')}</p>
+              </div>
               {canEdit && (
                 <button
-                  onClick={saveHours}
+                  onClick={saveWorkerHours}
                   disabled={!hasChanges || saving}
                   className={`relative inline-flex items-center gap-2 px-4 py-2 rounded-[5px] text-sm font-medium transition-all ${
                     hasChanges
@@ -639,65 +592,76 @@ export default function WorkerSchedulePage() {
             </div>
 
             <div className="divide-y divide-gray-50">
-              {businessHours.map((day) => (
-                <div
-                  key={day.dayOfWeek}
-                  className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 transition-colors ${
-                    day.isOpen ? 'bg-white' : 'bg-gray-50/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 sm:w-44">
-                    <div
-                      className={`relative w-10 h-5 rounded-full transition-colors ${
-                        canEdit ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'
-                      } ${day.isOpen ? 'bg-amber-500' : 'bg-gray-300'}`}
-                      onClick={() => canEdit && updateDay(day.dayOfWeek, 'isOpen', !day.isOpen)}
-                    >
-                      <div
-                        className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
-                          day.isOpen ? 'start-5' : 'start-0.5'
-                        }`}
-                      />
-                    </div>
-                    <span className={`text-sm font-semibold ${day.isOpen ? 'text-gray-900' : 'text-gray-400'}`}>
-                      {t(`days.${DAY_KEYS[day.dayOfWeek]}`)}
-                    </span>
-                  </div>
+              {workerHours.map((day) => {
+                const bizDay = businessHours.find((b) => b.dayOfWeek === day.dayOfWeek);
+                const businessClosed = !bizDay || !bizDay.isOpen;
+                const isToday = new Date().getDay() === day.dayOfWeek;
 
-                  {day.isOpen ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <TimeSelect24
-                        value={day.openTime || '09:00'}
-                        onChange={(val) => updateDay(day.dayOfWeek, 'openTime', val)}
-                        disabled={!canEdit}
-                      />
-                      <span className="text-gray-400 text-sm">{t('common.to')}</span>
-                      <TimeSelect24
-                        value={day.closeTime || '19:00'}
-                        onChange={(val) => updateDay(day.dayOfWeek, 'closeTime', val)}
-                        disabled={!canEdit}
-                      />
+                return (
+                  <div
+                    key={day.dayOfWeek}
+                    className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 transition-colors ${
+                      isToday ? 'bg-blue-50/60 border-l-2 border-l-blue-500' : businessClosed ? 'bg-gray-50/50' : day.isOpen ? 'bg-white' : 'bg-gray-50/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 sm:w-44">
+                      <div
+                        className={`relative w-10 h-5 rounded-full transition-colors ${
+                          businessClosed || !canEdit ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                        } ${day.isOpen && !businessClosed ? 'bg-blue-500' : 'bg-gray-300'}`}
+                        onClick={() => !businessClosed && canEdit && updateWorkerDay(day.dayOfWeek, 'isOpen', !day.isOpen)}
+                      >
+                        <div
+                          className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                            day.isOpen && !businessClosed ? 'start-5' : 'start-0.5'
+                          }`}
+                        />
+                      </div>
+                      <span className={`text-sm font-semibold ${day.isOpen && !businessClosed ? 'text-gray-900' : 'text-gray-400'}`}>
+                        {t(`days.${DAY_KEYS[day.dayOfWeek]}`)}
+                      </span>
                     </div>
-                  ) : (
-                    <span className="text-sm text-gray-400 italic">{t('schedule.closed')}</span>
-                  )}
-                </div>
-              ))}
+
+                    {businessClosed ? (
+                      <span className="text-sm text-gray-400 italic">{t('worker.businessClosedDay')}</span>
+                    ) : day.isOpen ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        <TimeSelect24
+                          value={day.openTime || '09:00'}
+                          onChange={(val) => clampTime(day.dayOfWeek, 'openTime', val)}
+                          disabled={!canEdit}
+                        />
+                        <span className="text-gray-400 text-sm">{t('common.to')}</span>
+                        <TimeSelect24
+                          value={day.closeTime || '19:00'}
+                          onChange={(val) => clampTime(day.dayOfWeek, 'closeTime', val)}
+                          disabled={!canEdit}
+                        />
+
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-400 italic">{t('schedule.dayOff')}</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Exceptions List */}
+          {/* Exceptions List (read-only, business-wide) */}
           <div className="bg-white rounded-[5px] border border-gray-200 overflow-hidden">
             <div className="px-4 sm:px-6 py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900">{t('schedule.exceptions')}</h2>
-              <p className="text-xs text-gray-400 mt-0.5">{t('schedule.exceptionsDesc')}</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-gray-900">{t('schedule.exceptions')}</h2>
+                <span className="px-2 py-0.5 text-[10px] font-semibold uppercase bg-gray-100 text-gray-500 rounded-full">{t('common.readOnly')}</span>
+              </div>
+              <p className="text-xs text-gray-400 mt-0.5">{t('worker.businessExceptionsDesc')}</p>
             </div>
 
             {exceptions.length === 0 ? (
               <div className="px-4 sm:px-6 py-12 text-center">
                 <Coffee className="w-10 h-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-sm text-gray-500">{t('schedule.noExceptions')}</p>
-                <p className="text-xs text-gray-400 mt-1">{t('schedule.noExceptionsHint')}</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50">
@@ -729,7 +693,7 @@ export default function WorkerSchedulePage() {
                           )}
                           {ex.is_full_day
                             ? (!ex.end_date || ex.end_date === ex.date ? ` — ${t('schedule.fullDay')}` : '')
-                            : ` — ${ex.start_time} ${t('common.to')} ${ex.end_time}`}
+                            : <>{' — '}<span dir="ltr">{ex.start_time} {t('common.to')} {ex.end_time}</span></>}
                           {ex.recurring && (
                             <span className="ml-1 text-amber-600">
                               <RotateCw className="w-3 h-3 inline -mt-0.5 mr-0.5" />
@@ -738,27 +702,6 @@ export default function WorkerSchedulePage() {
                           )}
                         </p>
                       </div>
-                      {canEdit && (
-                        <>
-                          <button
-                            onClick={() => openEditModal(ex)}
-                            className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-[5px] transition-colors flex-shrink-0"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteException(ex.id)}
-                            disabled={deletingId === ex.id}
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-[5px] transition-colors flex-shrink-0 disabled:opacity-50"
-                          >
-                            {deletingId === ex.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </>
-                      )}
                     </div>
                   );
                 })}
@@ -821,8 +764,8 @@ export default function WorkerSchedulePage() {
 
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-sm bg-amber-200 border border-amber-300" />
-                  <span className="text-xs text-gray-500">{t('schedule.working')}</span>
+                  <div className="w-3 h-3 rounded-sm bg-blue-200 border border-blue-400" />
+                  <span className="text-xs text-gray-500">{t('worker.myWorkingHours')}</span>
                 </div>
                 {Object.entries(EXCEPTION_COLORS).slice(0, 4).map(([type, color]) => (
                   <div key={type} className="flex items-center gap-1.5">
@@ -840,26 +783,13 @@ export default function WorkerSchedulePage() {
               events={calendarEvents}
               locale={locale}
               noEventsText={t('common.no_events')}
-              onDateClick={handleDateClick}
               onEventClick={handleEventClick}
             />
           </div>
         </motion.div>
       )}
 
-      {/* ── Exception Modal ── */}
-      {canEdit && (
-        <AddExceptionModal
-          isOpen={isModalOpen}
-          onClose={() => { setIsModalOpen(false); setEditingException(null); }}
-          onSave={addException}
-          defaultDate={modalDefaultDate}
-          editException={editingException}
-          businessHours={businessHours}
-        />
-      )}
-
-      {/* ── Exception Detail Modal ── */}
+      {/* ── Exception Detail Modal (read-only) ── */}
       <ExceptionDetailModal
         isOpen={isDetailOpen}
         onClose={() => {
@@ -867,8 +797,6 @@ export default function WorkerSchedulePage() {
           setSelectedExc(null);
         }}
         exception={selectedExc}
-        onDelete={canEdit ? deleteFromDetail : undefined}
-        onEdit={canEdit ? (exc) => openEditModal(exc) : undefined}
       />
     </div>
   );

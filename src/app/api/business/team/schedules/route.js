@@ -1,7 +1,7 @@
 import { getUserId } from '@/lib/auth';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiError, apiData, apiSuccess } from '@/lib/api-response';
-import { getBusinessContext } from '@/repositories/business';
+import { getBusinessContext, getBusinessHours } from '@/repositories/business';
 import { findTeamMember } from '@/repositories/team';
 import {
   findWorkerSchedule,
@@ -13,6 +13,7 @@ import {
  * GET /api/business/team/schedules?workerId=UUID
  * Fetch worker schedules. If workerId is provided, returns that worker's schedule.
  * Otherwise returns all worker schedules for the business.
+ * Always includes businessHours so the UI can disable closed days.
  */
 export async function GET(request) {
   try {
@@ -23,6 +24,8 @@ export async function GET(request) {
     const ctx = await getBusinessContext(supabase, clerkId);
     if (!ctx) return apiError('Business not found', 404);
 
+    const businessHours = await getBusinessHours(supabase, ctx.businessInfoId, ctx.category);
+
     const { searchParams } = new URL(request.url);
     const workerId = searchParams.get('workerId');
 
@@ -32,11 +35,11 @@ export async function GET(request) {
       if (!member) return apiError('Worker not found in this business', 404);
 
       const schedule = await findWorkerSchedule(supabase, ctx.businessInfoId, workerId);
-      return apiData({ workerId, schedule });
+      return apiData({ workerId, schedule, businessHours });
     }
 
     const schedules = await findAllWorkerSchedules(supabase, ctx.businessInfoId);
-    return apiData({ schedules });
+    return apiData({ schedules, businessHours });
   } catch (err) {
     console.error('[team/schedules GET]', err);
     return apiError('Internal server error');

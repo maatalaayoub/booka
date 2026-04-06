@@ -710,13 +710,14 @@ const DEFAULT_WEEK = DAY_KEYS.map((_, i) => ({
 function SchedulesTab({ members, t, isRTL }) {
   const [selectedWorkerId, setSelectedWorkerId] = useState(null);
   const [schedule, setSchedule] = useState(DEFAULT_WEEK);
+  const [businessHours, setBusinessHours] = useState([]);
   const [loadingSchedule, setLoadingSchedule] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null); // null | 'saved' | 'error'
   const [hasCustomSchedule, setHasCustomSchedule] = useState(false);
 
-  // Workers only (exclude owners)
-  const workers = members.filter(m => m.role === 'worker');
+  // All active members (owner + workers)
+  const teamMembers = members.filter(m => m.role === 'owner' || m.role === 'worker');
 
   const loadSchedule = useCallback(async (workerId) => {
     setLoadingSchedule(true);
@@ -725,6 +726,7 @@ function SchedulesTab({ members, t, isRTL }) {
       const res = await fetch(`/api/business/team/schedules?workerId=${workerId}`);
       if (res.ok) {
         const data = await res.json();
+        if (data.businessHours) setBusinessHours(data.businessHours);
         if (data.schedule && data.schedule.length > 0) {
           const merged = DAY_KEYS.map((_, i) => {
             const existing = data.schedule.find(s => s.day_of_week === i);
@@ -785,7 +787,7 @@ function SchedulesTab({ members, t, isRTL }) {
     ));
   };
 
-  if (workers.length === 0) {
+  if (teamMembers.length === 0) {
     return (
       <div className="bg-white rounded-[5px] border border-gray-300 p-8 text-center">
         <Calendar className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -798,21 +800,22 @@ function SchedulesTab({ members, t, isRTL }) {
   return (
     <div className="space-y-4">
       <div className="bg-white rounded-[5px] border border-gray-300 p-4">
-        <p className="text-sm font-medium text-gray-700 mb-1">{t('team.workerSchedule') || 'Worker Schedule'}</p>
-        <p className="text-xs text-gray-400 mb-3">{t('team.workerScheduleDesc') || 'Set individual working hours for each team member'}</p>
+        <p className="text-sm font-medium text-gray-700 mb-1">{t('team.teamSchedule') || 'Team Schedule'}</p>
+        <p className="text-xs text-gray-400 mb-3">{t('team.teamScheduleDesc') || 'Set individual working hours for each team member'}</p>
 
-        {/* Worker selector */}
+        {/* Member selector */}
         <select
           value={selectedWorkerId || ''}
           onChange={(e) => setSelectedWorkerId(e.target.value || null)}
           className="w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-[#D4AF37]/30 focus:border-[#D4AF37] outline-none bg-white"
         >
-          <option value="">{t('team.selectWorker') || 'Select a worker'}</option>
-          {workers.map(m => {
+          <option value="">{t('team.selectMember') || 'Select a team member'}</option>
+          {teamMembers.map(m => {
             const profile = m.users?.user_profile;
-            const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || m.users?.username || 'Worker';
+            const name = [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || m.users?.username || 'Member';
+            const roleLabel = m.role === 'owner' ? (t('team.owner') || 'Owner') : (t('team.worker') || 'Worker');
             return (
-              <option key={m.user_id} value={m.user_id}>{name}</option>
+              <option key={m.user_id} value={m.user_id}>{name} ({roleLabel})</option>
             );
           })}
         </select>
@@ -835,25 +838,37 @@ function SchedulesTab({ members, t, isRTL }) {
 
               {/* Day schedule rows */}
               <div className="space-y-2">
-                {schedule.map((day) => (
-                  <div key={day.dayOfWeek} className="flex items-center gap-3 p-2.5 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                {schedule.map((day) => {
+                  const bizDay = businessHours.find(b => b.dayOfWeek === day.dayOfWeek);
+                  const businessClosed = bizDay ? !bizDay.isOpen : false;
+
+                  return (
+                  <div key={day.dayOfWeek} className={`flex items-center gap-3 p-2.5 rounded-lg transition-colors ${
+                    businessClosed ? 'bg-gray-100/70' : 'bg-gray-50 hover:bg-gray-100'
+                  }`}>
                     {/* Toggle */}
                     <button
-                      onClick={() => updateDay(day.dayOfWeek, 'isOpen', !day.isOpen)}
+                      onClick={() => !businessClosed && updateDay(day.dayOfWeek, 'isOpen', !day.isOpen)}
+                      disabled={businessClosed}
                       className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
+                        businessClosed ? 'bg-gray-300 cursor-not-allowed opacity-60' :
                         day.isOpen ? 'bg-[#D4AF37]' : 'bg-gray-300'
                       }`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-white absolute top-0.5 transition-all ${
-                        day.isOpen ? (isRTL ? 'left-0.5' : 'right-0.5') : (isRTL ? 'right-0.5' : 'left-0.5')
+                        day.isOpen && !businessClosed ? (isRTL ? 'left-0.5' : 'right-0.5') : (isRTL ? 'right-0.5' : 'left-0.5')
                       }`} />
                     </button>
                     {/* Day name */}
-                    <span className={`text-sm font-medium w-24 ${day.isOpen ? 'text-gray-900' : 'text-gray-400'}`}>
+                    <span className={`text-sm font-medium w-24 ${
+                      businessClosed ? 'text-gray-400' : day.isOpen ? 'text-gray-900' : 'text-gray-400'
+                    }`}>
                       {t(`team.scheduleDay.${DAY_KEYS[day.dayOfWeek]}`) || DAY_KEYS[day.dayOfWeek]}
                     </span>
                     {/* Times */}
-                    {day.isOpen ? (
+                    {businessClosed ? (
+                      <span className="text-xs text-gray-400 italic flex-1">{t('worker.businessClosedDay') || 'Business closed'}</span>
+                    ) : day.isOpen ? (
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <input
                           type="time"
@@ -873,7 +888,8 @@ function SchedulesTab({ members, t, isRTL }) {
                       <span className="text-xs text-gray-400 flex-1">{t('schedule.closed') || 'Closed'}</span>
                     )}
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Save button */}

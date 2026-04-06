@@ -32,14 +32,3 @@ CREATE POLICY "Service role full access on worker_schedules"
   FOR ALL
   USING (true)
   WITH CHECK (true);
-
--- ============================================================
--- WORKER SCHEDULE EXCEPTIONS
--- Personal breaks, closures, holidays for each worker.
--- ============================================================
-
-ALTER TABLE schedule_exceptions
-  ADD COLUMN IF NOT EXISTS worker_id UUID REFERENCES users(id) ON DELETE CASCADE;
-
-CREATE INDEX IF NOT EXISTS idx_schedule_exceptions_worker ON schedule_exceptions(worker_id);
-CREATE INDEX IF NOT EXISTS idx_schedule_exceptions_business_worker ON schedule_exceptions(business_info_id, worker_id);

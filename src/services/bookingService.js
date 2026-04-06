@@ -19,6 +19,8 @@ import {
 } from '@/repositories/appointment';
 import { findBusinessById, getBusinessHours as fetchBusinessHours } from '@/repositories/business';
 import { findServicesByIds } from '@/repositories/service';
+import { findTeamMembers } from '@/repositories/team';
+import { findAllWorkerSchedules } from '@/repositories/workerSchedule';
 
 // Re-export pure helpers from booking.js that don't do DB I/O
 export { toHHMM, getDaySchedule, generateTimeSlots, checkTimeAgainstExceptions } from './booking';
@@ -271,20 +273,80 @@ export async function getAvailableSlots(supabase, { businessId, dateStr, duratio
   const { openTime, closeTime } = schedule;
 
   const exResult = await checkExceptions(supabase, businessId, dateStr, dayOfWeek);
+
   if (exResult.closed) return { slots: [], closed: true, message: exResult.message };
 
   const dayStart = `${dateStr}T00:00:00.000Z`;
   const dayEnd = `${dateStr}T23:59:59.999Z`;
-  const appointments = await findAppointmentsInRange(supabase, businessId, dayStart, dayEnd);
+  const allActiveAppointments = await findAppointmentsInRange(supabase, businessId, dayStart, dayEnd, ['confirmed', 'pending']);
 
-  const appointmentRanges = appointments.map(apt => ({
-    start: toHHMM(new Date(apt.start_time)),
-    end: toHHMM(new Date(apt.end_time)),
-  }));
+  // Check if this business has a team
+  const members = await findTeamMembers(supabase, businessId);
+  const hasTeam = members.length > 0;
 
-  const allBlocked = [...exResult.blockedRanges, ...appointmentRanges];
+  const appointmentRanges = allActiveAppointments
+    .filter(apt => apt.status !== 'cancelled')
+    .map(apt => ({
+      start: toHHMM(new Date(apt.start_time)),
+      end: toHHMM(new Date(apt.end_time)),
+    }));
 
-  const slots = generateTimeSlots({ openTime, closeTime, duration, blockedRanges: allBlocked, dateStr });
+  // For team businesses: only use exceptions as global blocks (appointments checked per-worker)
+  // For solo businesses: all appointments block globally
+  const allBlocked = hasTeam
+    ? [...exResult.blockedRanges]
+    : [...exResult.blockedRanges, ...appointmentRanges];
+
+  let slots = generateTimeSlots({ openTime, closeTime, duration, blockedRanges: allBlocked, dateStr });
+
+  // ─── Worker availability filter ───────────────────────────────────
+  // If the business has a team, mark a slot as unavailable when NO worker can serve it.
+  if (hasTeam) {
+    const workerSchedules = await findAllWorkerSchedules(supabase, businessId);
+
+    slots = slots.map(slot => {
+      if (!slot.available) return slot; // already blocked
+
+      // Use slot.start (not slot.time) — generateTimeSlots returns { start, end, available }
+      const [sh, sm] = slot.start.split(':').map(Number);
+      const slotStartMin = sh * 60 + sm;
+      const slotEndMin = slotStartMin + duration;
+      const slotEnd = `${String(Math.floor(slotEndMin / 60)).padStart(2, '0')}:${String(slotEndMin % 60).padStart(2, '0')}`;
+      const slotStartISO = `${dateStr}T${slot.start}:00.000Z`;
+      const slotEndISO = `${dateStr}T${slotEnd}:00.000Z`;
+
+      // Check if at least one member can serve this slot
+      const hasAvailableWorker = members.some(member => {
+        const workerId = member.user_id;
+
+        // Check worker's personal schedule for this day
+        const wSched = workerSchedules.find(
+          ws => ws.worker_id === workerId && ws.day_of_week === dayOfWeek
+        );
+        if (wSched) {
+          if (!wSched.is_open) return false;
+          const wOpen = wSched.open_time?.substring(0, 5);
+          const wClose = wSched.close_time?.substring(0, 5);
+          if (wOpen && wClose) {
+            if (slot.start < wOpen || slotEnd > wClose) return false;
+          }
+        }
+        // If no schedule → follows business hours (already within bounds)
+
+        // Check if worker has a conflicting appointment (confirmed or pending)
+        const hasConflict = allActiveAppointments.some(apt => {
+          if (apt.assigned_worker_id !== workerId) return false;
+          if (apt.status === 'cancelled') return false;
+          return apt.start_time < slotEndISO && apt.end_time > slotStartISO;
+        });
+        if (hasConflict) return false;
+
+        return true; // This worker is available
+      });
+
+      return hasAvailableWorker ? slot : { ...slot, available: false };
+    });
+  }
 
   let userBookings = [];
   let crossBusinessBookings = [];

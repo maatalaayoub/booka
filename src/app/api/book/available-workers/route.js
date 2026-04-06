@@ -39,10 +39,10 @@ export async function GET(request) {
     const [year, month, day] = dateStr.split('-').map(Number);
     const dayOfWeek = new Date(year, month - 1, day).getDay();
 
-    // Get all appointments for this day at this business
+    // Get all active appointments for this day at this business
     const dayStart = `${dateStr}T00:00:00.000Z`;
     const dayEnd = `${dateStr}T23:59:59.999Z`;
-    const appointments = await findAppointmentsInRange(supabase, businessId, dayStart, dayEnd);
+    const appointments = await findAppointmentsInRange(supabase, businessId, dayStart, dayEnd, ['confirmed', 'pending']);
 
     // Determine available workers
     const availableWorkers = [];

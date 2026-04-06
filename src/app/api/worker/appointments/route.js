@@ -53,15 +53,22 @@ export async function PUT(request) {
     if (!userId) return apiError('User not found', 404);
 
     const body = await request.json();
-    const { id, businessId, status } = body;
+    const { id, businessId, status, start_time, end_time, rescheduled_by, previous_start_time, previous_end_time } = body;
 
-    if (!id || !businessId || !status) {
-      return apiError('id, businessId, and status are required', 400);
+    if (!id || !businessId) {
+      return apiError('id and businessId are required', 400);
     }
 
-    const ALLOWED_STATUSES = ['confirmed', 'completed', 'cancelled'];
-    if (!ALLOWED_STATUSES.includes(status)) {
-      return apiError('Invalid status', 400);
+    // Must provide either status or reschedule times
+    if (!status && !start_time) {
+      return apiError('status or start_time is required', 400);
+    }
+
+    if (status) {
+      const ALLOWED_STATUSES = ['confirmed', 'completed', 'cancelled'];
+      if (!ALLOWED_STATUSES.includes(status)) {
+        return apiError('Invalid status', 400);
+      }
     }
 
     // Verify team membership and permission
@@ -89,7 +96,16 @@ export async function PUT(request) {
       return apiError(`Cannot change status from ${appt.status}`, 400);
     }
 
-    const updated = await updateAppointmentByBusiness(supabase, id, businessId, { status });
+    // Build update fields
+    const updateFields = {};
+    if (status) updateFields.status = status;
+    if (start_time) updateFields.start_time = start_time;
+    if (end_time) updateFields.end_time = end_time;
+    if (rescheduled_by !== undefined) updateFields.rescheduled_by = rescheduled_by;
+    if (previous_start_time !== undefined) updateFields.previous_start_time = previous_start_time;
+    if (previous_end_time !== undefined) updateFields.previous_end_time = previous_end_time;
+
+    const updated = await updateAppointmentByBusiness(supabase, id, businessId, updateFields);
 
     return apiData({ appointment: updated });
   } catch (error) {

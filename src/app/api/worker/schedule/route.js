@@ -1,14 +1,13 @@
 import { getUserId, getInternalUserId } from '@/lib/auth';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { apiError, apiData, apiSuccess, validationResponse } from '@/lib/api-response';
-import { parseBody, parseQuery } from '@/lib/validate';
-import { sanitizeText } from '@/lib/sanitize';
+import { apiError, apiData, apiSuccess } from '@/lib/api-response';
 import { findTeamMember } from '@/repositories/team';
+import { findBusinessById, getBusinessHours } from '@/repositories/business';
+import { findExceptionsByBusiness } from '@/repositories/schedule';
 import {
   findWorkerSchedule,
   upsertWorkerWeekSchedule,
 } from '@/repositories/workerSchedule';
-import { createExceptionSchema, updateExceptionSchema, deleteExceptionSchema } from '@/schemas/schedule';
 
 // ── Helper: auth + membership ───────────────────────────────
 async function getWorkerContext(request) {
@@ -22,21 +21,12 @@ async function getWorkerContext(request) {
   return { supabase, userId };
 }
 
-// ── Helper: find worker exceptions ──────────────────────────
-async function findWorkerExceptions(supabase, businessId, userId) {
-  const { data, error } = await supabase
-    .from('schedule_exceptions')
-    .select('*')
-    .eq('business_info_id', businessId)
-    .eq('worker_id', userId)
-    .order('date', { ascending: true });
-  if (error) throw error;
-  return data || [];
-}
-
 /**
  * GET /api/worker/schedule?businessId=X
- * Returns the current worker's schedule + exceptions for a business.
+ * Returns:
+ *  - businessHours: the business weekly working hours (read-only context)
+ *  - workerHours: the worker's personal working hours within the business
+ *  - exceptions: shared business exceptions
  */
 export async function GET(request) {
   try {
@@ -50,12 +40,24 @@ export async function GET(request) {
     const membership = await findTeamMember(ctx.supabase, businessId, ctx.userId);
     if (!membership) return apiError('Not a team member', 403);
 
-    const [schedule, exceptions] = await Promise.all([
+    const business = await findBusinessById(ctx.supabase, businessId);
+    if (!business) return apiError('Business not found', 404);
+
+    const [businessHours, workerSchedule, exceptions] = await Promise.all([
+      getBusinessHours(ctx.supabase, businessId, business.business_category),
       findWorkerSchedule(ctx.supabase, businessId, ctx.userId),
-      findWorkerExceptions(ctx.supabase, businessId, ctx.userId),
+      findExceptionsByBusiness(ctx.supabase, businessId),
     ]);
 
-    return apiData({ schedule, exceptions });
+    // Convert worker_schedules rows to camelCase format
+    const workerHours = workerSchedule.map((s) => ({
+      dayOfWeek: s.day_of_week,
+      isOpen: s.is_open,
+      openTime: s.open_time?.substring(0, 5) || null,
+      closeTime: s.close_time?.substring(0, 5) || null,
+    }));
+
+    return apiData({ businessHours, workerHours, exceptions });
   } catch (error) {
     console.error('[Worker Schedule GET]', error);
     return apiError('Internal server error', 500);
@@ -64,7 +66,9 @@ export async function GET(request) {
 
 /**
  * PUT /api/worker/schedule
- * Worker updates their own working hours (requires canEditSchedule).
+ * Save the worker's personal working hours (requires canEditSchedule).
+ * Validates that worker hours fall within business hours.
+ * Body: { businessId, schedule: [{ dayOfWeek, isOpen, openTime?, closeTime? }] }
  */
 export async function PUT(request) {
   try {
@@ -84,17 +88,33 @@ export async function PUT(request) {
       return apiError('No schedule edit permission', 403);
     }
 
+    // Fetch business hours for validation
+    const business = await findBusinessById(ctx.supabase, businessId);
+    if (!business) return apiError('Business not found', 404);
+    const businessHours = await getBusinessHours(ctx.supabase, businessId, business.business_category);
+
+    const timeRe = /^\d{2}:\d{2}$/;
+
     for (const day of schedule) {
       if (typeof day.dayOfWeek !== 'number' || day.dayOfWeek < 0 || day.dayOfWeek > 6) {
         return apiError('dayOfWeek must be 0-6', 400);
       }
+
       if (day.isOpen) {
         if (!day.openTime || !day.closeTime) {
           return apiError('openTime and closeTime required for open days', 400);
         }
-        const timeRe = /^\d{2}:\d{2}$/;
         if (!timeRe.test(day.openTime) || !timeRe.test(day.closeTime)) {
           return apiError('Times must be in HH:MM format', 400);
+        }
+
+        // Validate against business hours
+        const bizDay = businessHours.find((b) => b.dayOfWeek === day.dayOfWeek);
+        if (!bizDay || !bizDay.isOpen) {
+          return apiError(`Cannot set working hours on a day the business is closed (day ${day.dayOfWeek})`, 400);
+        }
+        if (day.openTime < bizDay.openTime || day.closeTime > bizDay.closeTime) {
+          return apiError(`Worker hours must be within business hours (${bizDay.openTime}-${bizDay.closeTime}) for day ${day.dayOfWeek}`, 400);
         }
       }
     }
@@ -103,142 +123,6 @@ export async function PUT(request) {
     return apiSuccess({ schedule: result });
   } catch (error) {
     console.error('[Worker Schedule PUT]', error);
-    return apiError('Internal server error', 500);
-  }
-}
-
-/**
- * POST /api/worker/schedule
- * Worker adds a personal exception (requires canEditSchedule).
- */
-export async function POST(request) {
-  try {
-    const ctx = await getWorkerContext(request);
-    if (!ctx) return apiError('Unauthorized', 401);
-
-    const body = await request.json();
-    const { businessId, ...exceptionBody } = body;
-    if (!businessId) return apiError('businessId is required', 400);
-
-    const membership = await findTeamMember(ctx.supabase, businessId, ctx.userId);
-    if (!membership) return apiError('Not a team member', 403);
-    if (!membership.permissions?.canEditSchedule) {
-      return apiError('No schedule edit permission', 403);
-    }
-
-    const { error: validationError, data: validated } = parseBody(createExceptionSchema, exceptionBody);
-    if (validationError) return validationResponse(validationError);
-
-    const fullDay = validated.isFullDay === true || (!validated.startTime && !validated.endTime);
-
-    const { data, error } = await ctx.supabase
-      .from('schedule_exceptions')
-      .insert({
-        business_info_id: businessId,
-        worker_id: ctx.userId,
-        title: sanitizeText(validated.title),
-        type: validated.type,
-        date: validated.date,
-        end_date: fullDay && validated.endDate ? validated.endDate : null,
-        start_time: fullDay ? null : (validated.startTime || null),
-        end_time: fullDay ? null : (validated.endTime || null),
-        is_full_day: fullDay,
-        recurring: validated.recurring,
-        recurring_day: validated.recurring ? validated.recurringDay : null,
-        notes: sanitizeText(validated.notes) || null,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return apiSuccess({ exception: data });
-  } catch (error) {
-    console.error('[Worker Schedule POST]', error);
-    return apiError('Internal server error', 500);
-  }
-}
-
-/**
- * DELETE /api/worker/schedule?id=X&businessId=Y
- * Worker deletes their own exception.
- */
-export async function DELETE(request) {
-  try {
-    const ctx = await getWorkerContext(request);
-    if (!ctx) return apiError('Unauthorized', 401);
-
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    const businessId = searchParams.get('businessId');
-    if (!id || !businessId) return apiError('id and businessId are required', 400);
-
-    const membership = await findTeamMember(ctx.supabase, businessId, ctx.userId);
-    if (!membership) return apiError('Not a team member', 403);
-
-    const { error } = await ctx.supabase
-      .from('schedule_exceptions')
-      .delete()
-      .eq('id', id)
-      .eq('business_info_id', businessId)
-      .eq('worker_id', ctx.userId);
-
-    if (error) throw error;
-    return apiSuccess();
-  } catch (error) {
-    console.error('[Worker Schedule DELETE]', error);
-    return apiError('Internal server error', 500);
-  }
-}
-
-/**
- * PATCH /api/worker/schedule
- * Worker updates an existing personal exception.
- */
-export async function PATCH(request) {
-  try {
-    const ctx = await getWorkerContext(request);
-    if (!ctx) return apiError('Unauthorized', 401);
-
-    const body = await request.json();
-    const { businessId, ...exceptionBody } = body;
-    if (!businessId) return apiError('businessId is required', 400);
-
-    const membership = await findTeamMember(ctx.supabase, businessId, ctx.userId);
-    if (!membership) return apiError('Not a team member', 403);
-    if (!membership.permissions?.canEditSchedule) {
-      return apiError('No schedule edit permission', 403);
-    }
-
-    const { error: validationError, data: validated } = parseBody(updateExceptionSchema, exceptionBody);
-    if (validationError) return validationResponse(validationError);
-
-    const fullDay = validated.isFullDay === true || (!validated.startTime && !validated.endTime);
-
-    const { data, error } = await ctx.supabase
-      .from('schedule_exceptions')
-      .update({
-        title: sanitizeText(validated.title),
-        type: validated.type,
-        date: validated.date,
-        end_date: fullDay && validated.endDate ? validated.endDate : null,
-        start_time: fullDay ? null : (validated.startTime || null),
-        end_time: fullDay ? null : (validated.endTime || null),
-        is_full_day: fullDay,
-        recurring: validated.recurring,
-        recurring_day: validated.recurring ? validated.recurringDay : null,
-        notes: sanitizeText(validated.notes) || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', validated.id)
-      .eq('business_info_id', businessId)
-      .eq('worker_id', ctx.userId)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return apiSuccess({ exception: data });
-  } catch (error) {
-    console.error('[Worker Schedule PATCH]', error);
     return apiError('Internal server error', 500);
   }
 }

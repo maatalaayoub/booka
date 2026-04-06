@@ -33,6 +33,8 @@ export default function AppointmentDetailModal({
   onCancel,
   onReschedule,
   onReassign,
+  mode = 'business', // 'business' | 'worker'
+  businessId,        // required when mode='worker'
 }) {
   const [confirmAction, setConfirmAction] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -66,9 +68,9 @@ export default function AppointmentDetailModal({
     }
   }, [isOpen]);
 
-  // Fetch team members when modal opens
+  // Fetch team members when modal opens (business mode only)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || mode === 'worker') return;
     fetch('/api/business/team')
       .then(async r => {
         const ct = r.headers.get('content-type') || '';
@@ -195,10 +197,14 @@ export default function AppointmentDetailModal({
     try {
       const newStart = `${rescheduleDate}T${selectedSlot.start}:00Z`;
       const newEnd = `${rescheduleDate}T${selectedSlot.end}:00Z`;
-      const res = await fetch('/api/business/appointments', {
+      const apiUrl = mode === 'worker' ? '/api/worker/appointments' : '/api/business/appointments';
+      const body = mode === 'worker'
+        ? { id: appointment.id, businessId, start_time: newStart, end_time: newEnd }
+        : { id: appointment.id, start_time: newStart, end_time: newEnd };
+      const res = await fetch(apiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: appointment.id, start_time: newStart, end_time: newEnd }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

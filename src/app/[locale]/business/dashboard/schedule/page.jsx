@@ -183,7 +183,7 @@ function TimeDropdown({ options, value, onSelect, max }) {
 function TimeSelect24({ value, onChange }) {
   const [h, m] = (value || '00:00').split(':');
   return (
-    <div className="flex items-center gap-1">
+    <div dir="ltr" className="flex items-center gap-1">
       <TimeDropdown options={HOURS_24} value={h} onSelect={(v) => onChange(`${v}:${m}`)} max={23} />
       <span className="text-gray-500 font-medium">:</span>
       <TimeDropdown options={MINUTES} value={m} onSelect={(v) => onChange(`${h}:${v}`)} max={59} />
@@ -672,11 +672,13 @@ export default function SchedulePage() {
             </div>
 
             <div className="divide-y divide-gray-50">
-              {businessHours.map((day) => (
+              {businessHours.map((day) => {
+                const isToday = new Date().getDay() === day.dayOfWeek;
+                return (
                 <div
                   key={day.dayOfWeek}
                   className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 transition-colors ${
-                    day.isOpen ? 'bg-white' : 'bg-gray-50/50'
+                    isToday ? 'bg-amber-50/60 border-l-2 border-l-amber-500' : day.isOpen ? 'bg-white' : 'bg-gray-50/50'
                   }`}
                 >
                   {/* Day name + toggle */}
@@ -715,7 +717,7 @@ export default function SchedulePage() {
                     <span className="text-sm text-gray-400 italic">{t('schedule.closed')}</span>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
           </div>
 
@@ -762,7 +764,7 @@ export default function SchedulePage() {
                           )}
                           {ex.is_full_day
                             ? (!ex.end_date || ex.end_date === ex.date ? ` — ${t('schedule.fullDay')}` : '')
-                            : ` — ${ex.start_time} ${t('common.to')} ${ex.end_time}`}
+                            : <>{' — '}<span dir="ltr">{ex.start_time} {t('common.to')} {ex.end_time}</span></>}
                           {ex.recurring && (
                             <span className="ml-1 text-amber-600">
                               <RotateCw className="w-3 h-3 inline -mt-0.5 mr-0.5" />

@@ -6,6 +6,7 @@ import { apiError, apiSuccess, apiData, validationResponse } from '@/lib/api-res
 import { parseBody, parseQuery } from '@/lib/validate';
 import { createAppointmentSchema, updateAppointmentSchema, deleteAppointmentSchema } from '@/schemas/appointment';
 import { findAppointmentsByBusiness, deleteAppointmentByBusiness } from '@/repositories/appointment';
+import { findTeamMembers } from '@/repositories/team';
 import { createBusinessAppointment, updateBusinessAppointment, ServiceError } from '@/services/bookingService';
 
 // ─── GET: Fetch all appointments for the business ───────────
@@ -22,7 +23,14 @@ export async function GET(request) {
       return apiData({ appointments: [] });
     }
 
-    const appointments = await findAppointmentsByBusiness(supabase, ctx.businessInfoId);
+    // If this business has a team, only show the owner's own appointments
+    const members = await findTeamMembers(supabase, ctx.businessInfoId);
+    const hasTeam = members.length > 1;
+    const appointments = await findAppointmentsByBusiness(
+      supabase,
+      ctx.businessInfoId,
+      hasTeam ? ctx.userId : null
+    );
     return apiData({ appointments });
   } catch (err) {
     console.error('[appointments GET] Unexpected error:', err);

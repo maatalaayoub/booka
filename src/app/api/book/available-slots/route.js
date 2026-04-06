@@ -29,7 +29,7 @@ export async function GET(request) {
     if (err instanceof ServiceError) {
       return apiError(err.message, err.status);
     }
-    console.error('[available-slots GET]', err);
+    console.error('[available-slots GET] ERROR:', err?.message, err?.stack);
     return apiError('Internal server error');
   }
 }
