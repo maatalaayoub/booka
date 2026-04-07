@@ -199,7 +199,7 @@ export default function NotificationsPage() {
         <div className="px-4 py-3.5 flex items-center gap-3">
           <button
             onClick={() => router.back()}
-            className="hidden sd:flex w-9 h-9 rounded-xl bg-gray-100 items-center justify-center hover:bg-gray-200 transition-colors"
+            className="flex w-9 h-9 rounded-xl bg-gray-100 items-center justify-center hover:bg-gray-200 transition-colors"
           >
             <ArrowLeft className={`w-4.5 h-4.5 text-gray-700 ${isRTL ? 'rotate-180' : ''}`} />
           </button>

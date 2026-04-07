@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Menu, ChevronDown, User, Bell } from 'lucide-react';
+import { Search, MapPin, Menu, ChevronDown, User, Bell, Home } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ReactCountryFlag from 'react-country-flag';
@@ -11,6 +11,7 @@ import { useAuthUser } from '@/hooks/useAuthUser';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/hooks/useRole';
 import Sidebar from '@/components/Sidebar';
+import NotificationPopup from '@/components/NotificationPopup';
 
 const languages = [
   { code: 'en', name: 'English', countryCode: 'GB' },
@@ -31,6 +32,7 @@ export default function Hero() {
   const [isCityOpen, setIsCityOpen] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [serviceMode, setServiceMode] = useState('atHome');
   const langRef = useRef(null);
   const cityRef = useRef(null);
   const searchBarRef = useRef(null);
@@ -57,6 +59,64 @@ export default function Hero() {
     const lang = languages.find(l => l.code === locale);
     if (lang) setCurrentLang(lang);
   }, [locale]);
+
+  // Restore service mode from sessionStorage
+  useEffect(() => {
+    const savedMode = sessionStorage.getItem('serviceMode');
+    if (savedMode) setServiceMode(savedMode);
+  }, []);
+
+  const handleServiceModeChange = (mode) => {
+    setServiceMode(mode);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('serviceMode', mode);
+    }
+  };
+
+  const serviceModes = [
+    { key: 'inShop', icon: MapPin, titleKey: 'serviceMode.inShop' },
+    { key: 'atHome', icon: Home, titleKey: 'serviceMode.atHome' },
+  ];
+
+  // Shared service mode toggle component
+  const ServiceModeToggle = ({ size = 'md' }) => {
+    const isCompact = size === 'sm';
+    return (
+      <div className={`relative inline-flex gap-0.5 rounded-full bg-[#1E293B]/60 border border-[#364153]/50 backdrop-blur-md ${
+        isCompact ? 'p-[3px]' : 'p-1'
+      }`}>
+        {serviceModes.map((mode) => {
+          const isSelected = serviceMode === mode.key;
+          const Icon = mode.icon;
+          return (
+            <button
+              key={mode.key}
+              onClick={() => handleServiceModeChange(mode.key)}
+              className={`relative flex items-center rounded-full font-semibold transition-all duration-200 z-10 ${
+                isCompact ? 'gap-1.5 px-3 py-2 text-xs' : 'gap-2 px-5 py-2.5 text-sm'
+              } ${
+                isSelected
+                  ? 'text-[#1e293b]'
+                  : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              {isSelected && (
+                <motion.div
+                  layoutId={`serviceMode-${size}`}
+                  className="absolute inset-0 bg-white rounded-full shadow-sm"
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                />
+              )}
+              <span className={`relative flex items-center ${isCompact ? 'gap-1.5' : 'gap-2'}`}>
+                <Icon className={`transition-colors duration-200 ${isCompact ? 'w-3.5 h-3.5' : 'w-4.5 h-4.5'} ${isSelected ? 'text-[#D4AF37]' : ''}`} strokeWidth={2.2} />
+                <span>{t(mode.titleKey)}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   // Close language dropdown when clicking outside
   useEffect(() => {
@@ -216,13 +276,10 @@ export default function Hero() {
               <div className="hidden sd:flex items-center justify-end gap-3 shrink-0">
                 {isSignedIn ? (
                   <>
-                  <Link
-                    href={`/${locale}/notifications`}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E293B]/50 border border-[#364153]/50 text-gray-300 transition-all hover:bg-[#364153]/50 hover:text-white"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="h-4.5 w-4.5" />
-                  </Link>
+                  <NotificationPopup
+                    className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#1E293B]/50 border border-[#364153]/50 text-gray-300 transition-all hover:bg-[#364153]/50 hover:text-white"
+                    iconSize="h-4.5 w-4.5"
+                  />
                   <Link
                     href={`/${locale}/profile`}
                     className="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden border-2 border-[#364153]/50 transition-all hover:border-[#D4AF37] hover:scale-105"
@@ -321,13 +378,10 @@ export default function Hero() {
           <div className="flex items-center gap-3 sd:hidden">
             {/* Notification bell for signed-in users */}
             {isLoaded && isSignedIn && (
-              <Link
-                href={`/${locale}/notifications`}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1E293B]/50 border border-[#364153]/50 text-gray-300 transition-all hover:text-white"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-              </Link>
+              <NotificationPopup
+                className="relative flex h-9 w-9 items-center justify-center rounded-full bg-[#1E293B]/50 border border-[#364153]/50 text-gray-300 transition-all hover:text-white"
+                iconSize="h-5 w-5"
+              />
             )}
             {/* Profile link for signed-in users */}
             {isLoaded && isSignedIn && user && (
@@ -357,14 +411,13 @@ export default function Hero() {
               ) : isSignedIn ? (
                 // Signed in state
                 <>
+                  {/* Service Mode Toggle - Desktop */}
+                  <ServiceModeToggle size="sm" />
                   {/* Notification Bell */}
-                  <Link
-                    href={`/${locale}/notifications`}
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1E293B]/50 border border-[#364153]/50 text-gray-300 transition-all hover:bg-[#364153]/50 hover:text-white backdrop-blur-md"
-                    aria-label="Notifications"
-                  >
-                    <Bell className="h-5 w-5" />
-                  </Link>
+                  <NotificationPopup
+                    className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#1E293B]/50 border border-[#364153]/50 text-gray-300 transition-all hover:bg-[#364153]/50 hover:text-white backdrop-blur-md"
+                    iconSize="h-5 w-5"
+                  />
                   {/* Profile Button - Direct Link */}
                   <Link
                     href={isBusiness ? `/${locale}/business/profile` : `/${locale}/profile`}
@@ -504,6 +557,11 @@ export default function Hero() {
                   );
                 })()}
               </h1>
+            </div>
+
+            {/* Service Mode Toggle - Mobile */}
+            <div className="sd:hidden mb-8 flex justify-center w-full">
+              <ServiceModeToggle size="md" />
             </div>
 
             {/* Search Bar */}

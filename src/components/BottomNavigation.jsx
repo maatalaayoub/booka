@@ -30,6 +30,7 @@ const excludedPaths = [
   '/b/',
   '/profile',
   '/business/profile',
+  '/notifications',
 ];
 
 export default function BottomNavigation() {
