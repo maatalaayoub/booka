@@ -22,6 +22,14 @@ const CATEGORY_ICONS = {
   massage: Sparkles,
 };
 
+const CATEGORY_STYLES = {
+  barber:      { bg: 'bg-violet-100', text: 'text-violet-600' },
+  hairdresser: { bg: 'bg-rose-100', text: 'text-rose-600' },
+  makeup:      { bg: 'bg-amber-100', text: 'text-amber-600' },
+  nails:       { bg: 'bg-orange-100', text: 'text-orange-600' },
+  massage:     { bg: 'bg-cyan-100', text: 'text-cyan-600' },
+};
+
 // ─── SINGLE BUSINESS CARD ────────────────────────────────────
 function BusinessCard({ business, t, locale }) {
   const router = useRouter();
@@ -223,6 +231,7 @@ function CategoryRow({ type, businesses, t, locale }) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const Icon = CATEGORY_ICONS[type] || Scissors;
+  const style = CATEGORY_STYLES[type] || { bg: 'bg-gray-100', text: 'text-gray-600' };
 
   const checkScroll = () => {
     const el = scrollRef.current;
@@ -251,8 +260,8 @@ function CategoryRow({ type, businesses, t, locale }) {
       {/* Category header */}
       <div className="flex items-center justify-between mb-4 px-1">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#364153] to-[#4a5568] flex items-center justify-center shadow-sm">
-            <Icon className="w-4.5 h-4.5 text-white" />
+          <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center`}>
+            <Icon className={`w-5 h-5 ${style.text}`} strokeWidth={1.8} />
           </div>
           <div>
             <h3 className="text-[15px] font-bold text-[#364153] leading-tight">
@@ -365,7 +374,7 @@ export default function BusinessCards() {
   const hasBusinesses = Object.values(businesses).some(arr => arr && arr.length > 0);
 
   return (
-    <section className="bg-gray-50 py-10">
+    <section className="bg-white py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <div className="mb-6">

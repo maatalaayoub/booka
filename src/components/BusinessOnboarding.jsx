@@ -35,6 +35,8 @@ import {
   ArrowLeftRight,
   UtensilsCrossed,
   Car,
+  CarFront,
+  HardHat,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
@@ -116,6 +118,8 @@ const SERVICE_CATEGORY_ICONS = {
   Trophy,
   UtensilsCrossed,
   Car,
+  CarFront,
+  HardHat,
 };
 
 const PROFESSIONAL_TYPES = [

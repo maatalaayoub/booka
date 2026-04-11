@@ -1435,9 +1435,12 @@ const translations = {
     'bookings.getDirections': 'Directions',
     'bookings.totalDuration': 'Total duration',
 
+    // Home Page - Browse by Category
+    'home.browseByCategory': 'Browse by Category',
+
     // Home Page - Business Cards
-    'home.businessesTitle': 'Discover Professionals Near You',
-    'home.businessesSubtitle': 'Browse top-rated barbers, hairdressers, and beauty professionals',
+    'home.businessesTitle': 'Discover Services Near You',
+    'home.businessesSubtitle': 'Browse top-rated professionals and businesses in your area',
     'home.noBusinesses': 'No businesses available at the moment',
     'home.loadError': 'Could not load businesses.',
     'home.retry': 'Retry',
@@ -1771,6 +1774,10 @@ const translations = {
     'dbCat.restaurants_hospitality.desc': 'Restaurants, cafes, and hospitality venues',
     'dbCat.automotive_vehicles': 'Automotive & Vehicles',
     'dbCat.automotive_vehicles.desc': 'Book car wash services, mechanical maintenance, or periodic inspection centers',
+    'dbCat.vehicle_rental': 'Vehicle Rental',
+    'dbCat.vehicle_rental.desc': 'Cars, bicycles, motorcycles, and other transportation rental services',
+    'dbCat.construction_equipment_rental': 'Construction & Equipment Rental',
+    'dbCat.construction_equipment_rental.desc': 'Tools and machinery for construction, home maintenance, and repair',
 
     // DB Specialties (keyed by slug)
     'dbSpec.barber': 'Barber',
@@ -3212,9 +3219,12 @@ const translations = {
     'bookings.getDirections': 'Itinéraire',
     'bookings.totalDuration': 'Durée totale',
 
+    // Home Page - Browse by Category
+    'home.browseByCategory': 'Explorez par catégorie',
+
     // Home Page - Business Cards
-    'home.businessesTitle': 'Découvrez les professionnels près de chez vous',
-    'home.businessesSubtitle': 'Parcourez les meilleurs barbiers, coiffeurs et professionnels de la beauté',
+    'home.businessesTitle': 'Découvrez les services près de chez vous',
+    'home.businessesSubtitle': 'Parcourez les meilleurs professionnels et entreprises de votre région',
     'home.noBusinesses': 'Aucun commerce disponible pour le moment',
     'home.loadError': 'Impossible de charger les commerces.',
     'home.retry': 'Réessayer',
@@ -3548,6 +3558,10 @@ const translations = {
     'dbCat.restaurants_hospitality.desc': 'Restaurants, cafés et établissements d\'accueil',
     'dbCat.automotive_vehicles': 'Automobile & Véhicules',
     'dbCat.automotive_vehicles.desc': 'Réservez un lavage auto, un entretien mécanique ou un centre de contrôle technique',
+    'dbCat.vehicle_rental': 'Location de Véhicules',
+    'dbCat.vehicle_rental.desc': 'Voitures, vélos, motos et autres moyens de transport en location',
+    'dbCat.construction_equipment_rental': 'Location d\'Équipements de Construction',
+    'dbCat.construction_equipment_rental.desc': 'Outils et machines pour la construction, l\'entretien et la réparation de maisons',
 
     // DB Specialties (keyed by slug)
     'dbSpec.barber': 'Barbier',
@@ -4997,9 +5011,12 @@ const translations = {
     'bookings.getDirections': 'الاتجاهات',
     'bookings.totalDuration': 'المدة الإجمالية',
 
+    // Home Page - Browse by Category
+    'home.browseByCategory': 'تصفح حسب الفئة',
+
     // Home Page - Business Cards
-    'home.businessesTitle': 'اكتشف المحترفين بالقرب منك',
-    'home.businessesSubtitle': 'تصفح أفضل الحلاقين ومصففي الشعر ومحترفي التجميل',
+    'home.businessesTitle': 'اكتشف الخدمات بالقرب منك',
+    'home.businessesSubtitle': 'تصفح أفضل المحترفين والأعمال في منطقتك',
     'home.noBusinesses': 'لا توجد أعمال متاحة حاليًا',
     'home.loadError': 'تعذر تحميل الأعمال.',
     'home.retry': 'إعادة المحاولة',
@@ -5333,6 +5350,10 @@ const translations = {
     'dbCat.restaurants_hospitality.desc': 'المطاعم، المقاهي وأماكن الضيافة',
     'dbCat.automotive_vehicles': 'السيارات والمركبات',
     'dbCat.automotive_vehicles.desc': 'احجز خدمات غسيل السيارات، الصيانة الميكانيكية أو مراكز الفحص الدوري',
+    'dbCat.vehicle_rental': 'تأجير المركبات',
+    'dbCat.vehicle_rental.desc': 'سيارات، دراجات هوائية، دراجات نارية ووسائل نقل أخرى للإيجار',
+    'dbCat.construction_equipment_rental': 'تأجير معدات البناء',
+    'dbCat.construction_equipment_rental.desc': 'أدوات وآلات للبناء وصيانة وإصلاح المنازل',
 
     // DB Specialties (keyed by slug)
     'dbSpec.barber': 'حلاق',
