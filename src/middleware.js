@@ -77,7 +77,7 @@ export async function middleware(req) {
   // ────────────────────────────────────────────────────────
 
   // The /access page lives outside [locale], skip locale routing for it
-  if (isAccessPage) {
+  if (isAccessPage || isAccessApi) {
     return NextResponse.next();
   }
 
