@@ -1,10 +1,11 @@
-import { Geist } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import ClientProvider from "@/components/ClientProvider";
 
-const geistSans = Geist({
+const geistSans = localFont({
+  src: "../../public/font/GeistVF.woff2",
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 
