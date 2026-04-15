@@ -146,7 +146,8 @@ INSERT INTO service_categories (name, slug, description, icon, display_order) VA
   ('Restaurants & Hospitality', 'restaurants_hospitality', 'Restaurants, cafes, and hospitality venues', 'UtensilsCrossed', 4),
   ('Automotive & Vehicles', 'automotive_vehicles', 'Car wash services, mechanical maintenance, and inspection centers', 'Car', 5),
   ('Vehicle Rental', 'vehicle_rental', 'Cars, bicycles, motorcycles, and other transportation rental services', 'CarFront', 6),
-  ('Construction & Equipment Rental', 'construction_equipment_rental', 'Tools and machinery for construction, home maintenance, and repair', 'HardHat', 7)
+  ('Construction & Equipment Rental', 'construction_equipment_rental', 'Tools and machinery for construction, home maintenance, and repair', 'HardHat', 7),
+  ('Men''s Barbering', 'mens_barbering', 'Men''s haircuts, beard trims, shaves, and grooming services', 'Scissors', 8)
 ON CONFLICT (slug) DO NOTHING;
 
 -- Seed specialties for Beauty & Personal Care
@@ -1120,7 +1121,8 @@ INSERT INTO service_categories (name, slug, description, icon, display_order) VA
   ('Restaurants & Hospitality', 'restaurants_hospitality', 'Restaurants, cafes, and hospitality venues', 'UtensilsCrossed', 4),
   ('Automotive & Vehicles', 'automotive_vehicles', 'Car wash services, mechanical maintenance, and inspection centers', 'Car', 5),
   ('Vehicle Rental', 'vehicle_rental', 'Cars, bicycles, motorcycles, and other transportation rental services', 'CarFront', 6),
-  ('Construction & Equipment Rental', 'construction_equipment_rental', 'Tools and machinery for construction, home maintenance, and repair', 'HardHat', 7)
+  ('Construction & Equipment Rental', 'construction_equipment_rental', 'Tools and machinery for construction, home maintenance, and repair', 'HardHat', 7),
+  ('Men''s Barbering', 'mens_barbering', 'Men''s haircuts, beard trims, shaves, and grooming services', 'Scissors', 8)
 ON CONFLICT (slug) DO NOTHING;
 
 -- 5. Seed specialties for Beauty & Personal Care

@@ -459,6 +459,84 @@ function TimeSlotGrid({ slots, selectedSlot, onSelectSlot, loading, accent, t, u
 }
 
 /* ================================================================
+   INLINE WORKER SELECTOR — shown between selected services and date picker
+   ================================================================ */
+function WorkerSelector({ workers, selectedWorker, onSelectWorker, loading, accent, t }) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-4">
+        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+        <span className="ml-2 text-[12px] text-gray-400">{t('bp.loadingWorkers')}</span>
+      </div>
+    );
+  }
+
+  if (!workers || workers.length === 0) return null;
+
+  return (
+    <div>
+      <p className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide mb-3">{t('bp.chooseWorker')}</p>
+      <div className="space-y-2">
+        {/* Any available option */}
+        <button
+          onClick={() => onSelectWorker(null)}
+          className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+            selectedWorker === null
+              ? 'border-current shadow-sm'
+              : 'border-gray-100 hover:border-gray-200'
+          }`}
+          style={selectedWorker === null ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
+        >
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: selectedWorker === null ? `${accent.bg}15` : '#f3f4f6' }}
+          >
+            <User className="w-4 h-4" style={{ color: selectedWorker === null ? accent.bg : '#9ca3af' }} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-gray-900">{t('bp.anyAvailable')}</p>
+            <p className="text-[11px] text-gray-400">{t('bp.anyAvailableDesc')}</p>
+          </div>
+        </button>
+        {/* Worker options */}
+        {workers.map(w => {
+          const selected = selectedWorker?.id === w.id;
+          const name = [w.firstName, w.lastName].filter(Boolean).join(' ') || 'Worker';
+          const initials = (w.firstName?.[0] || '') + (w.lastName?.[0] || '');
+          return (
+            <button
+              key={w.id}
+              onClick={() => onSelectWorker(w)}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left ${
+                selected
+                  ? 'border-current shadow-sm'
+                  : 'border-gray-100 hover:border-gray-200'
+              }`}
+              style={selected ? { borderColor: accent.bg, backgroundColor: `${accent.bg}08` } : {}}
+            >
+              {w.profileImageUrl ? (
+                <img src={w.profileImageUrl} alt="" className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+              ) : (
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0"
+                  style={{ backgroundColor: accent.bg }}
+                >
+                  {initials || <User className="w-4 h-4" />}
+                </div>
+              )}
+              <div className="min-w-0">
+                <p className="text-[13px] font-semibold text-gray-900 truncate">{name}</p>
+                <p className="text-[11px] text-gray-400 truncate capitalize">{w.role}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
    WORKER PICKER MODAL — dialog shown before booking form for team businesses
    ================================================================ */
 function WorkerPickerModal({ open, onClose, workers, selectedWorker, onSelectWorker, onContinue, loading, accent, t, slot, isRTL }) {
@@ -1095,7 +1173,8 @@ export default function BusinessPage() {
     if (!selectedDate || selectedServices.length === 0 || !business) return;
     setSlotsLoading(true);
     setSelectedSlot(null);
-    fetch(`/api/book/available-slots?businessId=${business.id}&date=${formatDate(selectedDate)}&duration=${totalDuration}`)
+    const workerParam = selectedWorker?.id ? `&workerId=${selectedWorker.id}` : '';
+    fetch(`/api/book/available-slots?businessId=${business.id}&date=${formatDate(selectedDate)}&duration=${totalDuration}${workerParam}`)
       .then(res => res.json())
       .then(data => {
         setSlots(data.slots || []);
@@ -1110,28 +1189,26 @@ export default function BusinessPage() {
       })
       .catch((e) => { console.error('Failed to load slots:', e); setSlots([]); setUserBookings([]); setCrossBusinessBookings([]); })
       .finally(() => setSlotsLoading(false));
-  }, [selectedDate, selectedServices, business, totalDuration]);
+  }, [selectedDate, selectedServices, business, totalDuration, selectedWorker]);
 
-  // Fetch available workers when a time slot is selected (only if business has team)
+  // Fetch available workers (team members) when the business has a team – shown inline before date picker
   useEffect(() => {
-    if (!selectedSlot || !hasTeam || !business || !selectedDate) {
+    if (!hasTeam || !business) {
       setAvailableWorkers([]);
       setWorkerPickerReady(false);
-      setSelectedWorker(null);
       return;
     }
     setWorkersLoading(true);
     setWorkerPickerReady(false);
-    setSelectedWorker(null);
-    fetch(`/api/book/available-workers?businessId=${business.id}&date=${formatDate(selectedDate)}&startTime=${selectedSlot.start}&endTime=${selectedSlot.end}`)
+    fetch(`/api/business-page/${business.id}`)
       .then(res => res.json())
       .then(data => {
-        setAvailableWorkers(data.workers || []);
+        setAvailableWorkers(data.teamMembers || []);
         setWorkerPickerReady(true);
       })
       .catch((e) => { console.error('Failed to load workers:', e); setAvailableWorkers([]); setWorkerPickerReady(true); })
       .finally(() => setWorkersLoading(false));
-  }, [selectedSlot, hasTeam, business, selectedDate]);
+  }, [hasTeam, business]);
 
   const accent = business ? (ACCENT_COLORS[business.accentColor] || ACCENT_COLORS.slate) : ACCENT_COLORS.slate;
   const canBook = business?.showBookingButton && business?.serviceMode !== 'walkin';
@@ -1176,16 +1253,6 @@ export default function BusinessPage() {
       router.push(`/${locale}/auth/user/sign-in?redirect_url=${encodeURIComponent(`/${locale}/b/${businessId}`)}`);
       return;
     }
-    // For team businesses, show worker picker dialog first
-    if (hasTeam) {
-      setShowWorkerPickerModal(true);
-      return;
-    }
-    setShowBookingModal(true);
-  };
-
-  const handleWorkerPickerContinue = () => {
-    setShowWorkerPickerModal(false);
     setShowBookingModal(true);
   };
 
@@ -1194,7 +1261,8 @@ export default function BusinessPage() {
     setBookedAppointment(appointment);
     setSelectedSlot(null);
     if (selectedDate && selectedServices.length > 0 && business) {
-      fetch(`/api/book/available-slots?businessId=${business.id}&date=${formatDate(selectedDate)}&duration=${totalDuration}`)
+      const workerParam = selectedWorker?.id ? `&workerId=${selectedWorker.id}` : '';
+      fetch(`/api/book/available-slots?businessId=${business.id}&date=${formatDate(selectedDate)}&duration=${totalDuration}${workerParam}`)
         .then(res => res.json()).then(data => {
           setSlots(data.slots || []);
           setUserBookings(data.userBookings || []);
@@ -1734,6 +1802,10 @@ export default function BusinessPage() {
                         </div>
                       </div>
                     </div>
+                    {/* Worker selector (for team businesses) */}
+                    {hasTeam && workerPickerReady && (
+                      <WorkerSelector workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={(w) => { setSelectedWorker(w); setSelectedSlot(null); }} loading={workersLoading} accent={accent} t={t} />
+                    )}
                     <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} businessHours={business.businessHours} accent={accent} t={t} locale={locale} />
                     {selectedDate && (
                       <TimeSlotGrid slots={slots} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} loading={slotsLoading} accent={accent} t={t} userBookings={userBookings} crossBusinessBookings={crossBusinessBookings} totalDuration={totalDuration} isRTL={isRTL} />
@@ -1904,6 +1976,11 @@ export default function BusinessPage() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Worker selector (for team businesses) */}
+                    {hasTeam && workerPickerReady && (
+                      <WorkerSelector workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={(w) => { setSelectedWorker(w); setSelectedSlot(null); }} loading={workersLoading} accent={accent} t={t} />
+                    )}
 
                     {/* Date picker */}
                     <DateStrip selectedDate={selectedDate} onSelectDate={setSelectedDate} businessHours={business.businessHours} accent={accent} t={t} locale={locale} />
@@ -2088,11 +2165,6 @@ export default function BusinessPage() {
         startIndex={galleryStartIndex}
         isRTL={isRTL}
       />
-
-      <WorkerPickerModal open={showWorkerPickerModal} onClose={() => setShowWorkerPickerModal(false)}
-        workers={availableWorkers} selectedWorker={selectedWorker} onSelectWorker={setSelectedWorker}
-        onContinue={handleWorkerPickerContinue} loading={workersLoading} accent={accent} t={t}
-        slot={selectedSlot} isRTL={isRTL} />
 
       <BookingModal open={showBookingModal} onClose={() => setShowBookingModal(false)}
         business={business} services={selectedServices} date={selectedDate} slot={selectedSlot}

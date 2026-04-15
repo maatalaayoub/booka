@@ -43,4 +43,5 @@ export const availableSlotsSchema = z.object({
   businessId: zUUID,
   date: zDateStr,
   duration: z.coerce.number().int().min(5).max(480).default(30),
+  workerId: zUUID.nullable().optional(),
 });

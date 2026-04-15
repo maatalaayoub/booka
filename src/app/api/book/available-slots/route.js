@@ -11,7 +11,7 @@ export async function GET(request) {
     const { error: validationError, data: validated } = parseQuery(availableSlotsSchema, searchParams);
     if (validationError) return validationResponse(validationError);
 
-    const { businessId, date: dateStr, duration } = validated;
+    const { businessId, date: dateStr, duration, workerId } = validated;
 
     const supabase = createServerSupabaseClient();
 
@@ -22,7 +22,7 @@ export async function GET(request) {
       // Auth not available — public access
     }
 
-    const result = await getAvailableSlots(supabase, { businessId, dateStr, duration, authId });
+    const result = await getAvailableSlots(supabase, { businessId, dateStr, duration, authId, workerId: workerId || null });
 
     return apiData(result);
   } catch (err) {

@@ -254,7 +254,7 @@ export async function cancelBooking(supabase, { authId, appointmentId }) {
 /**
  * Generate available time slots for a date.
  */
-export async function getAvailableSlots(supabase, { businessId, dateStr, duration, authId }) {
+export async function getAvailableSlots(supabase, { businessId, dateStr, duration, authId, workerId }) {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
   const requested = new Date(dateStr + 'T00:00:00Z');
@@ -301,8 +301,12 @@ export async function getAvailableSlots(supabase, { businessId, dateStr, duratio
 
   // ─── Worker availability filter ───────────────────────────────────
   // If the business has a team, mark a slot as unavailable when NO worker can serve it.
+  // If a specific workerId is provided, only check that worker's availability.
   if (hasTeam) {
     const workerSchedules = await findAllWorkerSchedules(supabase, businessId);
+    const membersToCheck = workerId
+      ? members.filter(m => m.user_id === workerId)
+      : members;
 
     slots = slots.map(slot => {
       if (!slot.available) return slot; // already blocked
@@ -316,12 +320,12 @@ export async function getAvailableSlots(supabase, { businessId, dateStr, duratio
       const slotEndISO = `${dateStr}T${slotEnd}:00.000Z`;
 
       // Check if at least one member can serve this slot
-      const hasAvailableWorker = members.some(member => {
-        const workerId = member.user_id;
+      const hasAvailableWorker = membersToCheck.some(member => {
+        const mWorkerId = member.user_id;
 
         // Check worker's personal schedule for this day
         const wSched = workerSchedules.find(
-          ws => ws.worker_id === workerId && ws.day_of_week === dayOfWeek
+          ws => ws.worker_id === mWorkerId && ws.day_of_week === dayOfWeek
         );
         if (wSched) {
           if (!wSched.is_open) return false;
@@ -335,7 +339,7 @@ export async function getAvailableSlots(supabase, { businessId, dateStr, duratio
 
         // Check if worker has a conflicting appointment (confirmed or pending)
         const hasConflict = allActiveAppointments.some(apt => {
-          if (apt.assigned_worker_id !== workerId) return false;
+          if (apt.assigned_worker_id !== mWorkerId) return false;
           if (apt.status === 'cancelled') return false;
           return apt.start_time < slotEndISO && apt.end_time > slotStartISO;
         });

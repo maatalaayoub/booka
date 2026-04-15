@@ -10,6 +10,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuthUser } from '@/hooks/useAuthUser';
 import { useRouter } from 'next/navigation';
 import { useRole } from '@/hooks/useRole';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import Sidebar from '@/components/Sidebar';
 import NotificationPopup from '@/components/NotificationPopup';
 
@@ -23,6 +24,7 @@ export default function Hero() {
   const { t, locale, changeLanguage } = useLanguage();
   const { isSignedIn, user, isLoaded: isAuthLoaded } = useAuthUser();
   const { role: userRole, isBusiness, isLoaded: isRoleLoaded } = useRole();
+  const { profile } = useUserProfile({ refetchOnProfileUpdate: true });
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopSideMenuOpen, setIsDesktopSideMenuOpen] = useState(false);
@@ -284,8 +286,8 @@ export default function Hero() {
                     href={`/${locale}/profile`}
                     className="flex h-9 w-9 items-center justify-center rounded-full overflow-hidden border-2 border-[#364153]/50 transition-all hover:border-[#D4AF37] hover:scale-105"
                   >
-                    {user?.imageUrl ? (
-                      <img src={user.imageUrl} alt={user.firstName || 'Profile'} className="h-full w-full object-cover" />
+                    {(profile?.profileImageUrl || user?.imageUrl) ? (
+                      <img src={profile?.profileImageUrl || user.imageUrl} alt={user.firstName || 'Profile'} className="h-full w-full object-cover" />
                     ) : (
                       <div className="h-full w-full bg-gradient-to-br from-[#D4AF37] to-[#B8963A] flex items-center justify-center">
                         {user?.firstName ? (
@@ -440,9 +442,9 @@ export default function Hero() {
                     className="relative flex items-center justify-center p-0.5 rounded-full border-2 border-white/20 transition-all hover:border-[#D4AF37] hover:shadow-[0_0_15px_rgba(212,175,55,0.3)] focus:outline-none"
                   >
                     <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-800">
-                      {user?.imageUrl ? (
+                      {(profile?.profileImageUrl || user?.imageUrl) ? (
                         <img 
-                          src={user.imageUrl} 
+                          src={profile?.profileImageUrl || user.imageUrl} 
                           alt={user?.firstName || 'Profile'} 
                           className="h-full w-full object-cover"
                         />
