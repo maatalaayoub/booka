@@ -318,44 +318,48 @@ export default function Sidebar({ isOpen, onClose }) {
                 )}
 
                 {/* Settings */}
-                <Link
-                  href={isBusiness ? `/${locale}/business/dashboard/settings` : `/${locale}/settings`}
+                <button
                   onClick={onClose}
-                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70] transition-all hover:bg-gray-50"
+                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70]/50 transition-all cursor-default"
+                  disabled
                 >
-                  <Settings className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
+                  <Settings className="h-5 w-5 text-[#244C70]/50" strokeWidth={1.5} />
                   <span className="font-medium text-base">{t('settings') || 'Settings'}</span>
-                </Link>
+                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold bg-gray-200 text-gray-500 rounded-full">{t('comingSoon') || 'Soon'}</span>
+                </button>
 
                 {/* About */}
-                <Link
-                  href={`/${locale}/about`}
+                <button
                   onClick={onClose}
-                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70] transition-all hover:bg-gray-50"
+                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70]/50 transition-all cursor-default"
+                  disabled
                 >
-                  <Info className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
+                  <Info className="h-5 w-5 text-[#244C70]/50" strokeWidth={1.5} />
                   <span className="font-medium text-base">{t('about') || 'About'}</span>
-                </Link>
+                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold bg-gray-200 text-gray-500 rounded-full">{t('comingSoon') || 'Soon'}</span>
+                </button>
 
                 {/* Contact */}
-                <Link
-                  href={`/${locale}/contact`}
+                <button
                   onClick={onClose}
-                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70] transition-all hover:bg-gray-50"
+                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70]/50 transition-all cursor-default"
+                  disabled
                 >
-                  <Mail className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
+                  <Mail className="h-5 w-5 text-[#244C70]/50" strokeWidth={1.5} />
                   <span className="font-medium text-base">{t('contact') || 'Contact'}</span>
-                </Link>
+                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold bg-gray-200 text-gray-500 rounded-full">{t('comingSoon') || 'Soon'}</span>
+                </button>
 
                 {/* Privacy Policy */}
-                <Link
-                  href={`/${locale}/privacy`}
+                <button
                   onClick={onClose}
-                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70] transition-all hover:bg-gray-50"
+                  className="flex items-center gap-3 w-full px-4 py-3.5 rounded-xl text-[#244C70]/50 transition-all cursor-default"
+                  disabled
                 >
-                  <Shield className="h-5 w-5 text-[#244C70]" strokeWidth={1.5} />
+                  <Shield className="h-5 w-5 text-[#244C70]/50" strokeWidth={1.5} />
                   <span className="font-medium text-base">{t('privacyPolicy') || 'Privacy Policy'}</span>
-                </Link>
+                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold bg-gray-200 text-gray-500 rounded-full">{t('comingSoon') || 'Soon'}</span>
+                </button>
               </div>
 
               {/* Divider */}

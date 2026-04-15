@@ -2,6 +2,8 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { validCoord } from '@/lib/sanitize';
 import { apiError, apiData } from '@/lib/api-response';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/businesses
  * Fetch active businesses grouped by professional_type for the home page.

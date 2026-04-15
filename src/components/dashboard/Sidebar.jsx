@@ -92,6 +92,7 @@ export default function Sidebar() {
       label: t('dashboard.sidebar.clients') || 'Clients', 
       href: `/${locale}/business/dashboard/clients`,
       categories: ['business_owner', 'mobile_service'],
+      comingSoon: true,
     },
     { 
       icon: Tag, 
@@ -158,12 +159,14 @@ export default function Sidebar() {
       label: t('dashboard.sidebar.earnings') || 'Earnings', 
       href: `/${locale}/business/dashboard/earnings`,
       categories: ['business_owner', 'mobile_service'],
+      comingSoon: true,
     },
     { 
       icon: BarChart3, 
       label: t('dashboard.sidebar.analytics') || 'Analytics', 
       href: `/${locale}/business/dashboard/analytics`,
       categories: ['business_owner', 'mobile_service'],
+      comingSoon: true,
     },
     { 
       icon: ShieldCheck, 
@@ -197,7 +200,8 @@ export default function Sidebar() {
     { 
       icon: Settings, 
       label: t('dashboard.sidebar.settings') || 'Settings', 
-      href: `/${locale}/business/dashboard/settings` 
+      href: `/${locale}/business/dashboard/settings`,
+      comingSoon: true,
     },
   ];
 
@@ -216,53 +220,95 @@ export default function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 py-4 space-y-1 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
         {menuItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={forMobile ? () => setMobileOpen(false) : undefined}
-            className={`flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors duration-200 ${
-              isActive(item.href)
-                ? 'bg-[#364153]/10 text-[#364153] font-semibold'
-                : 'text-gray-700 hover:bg-[#364153]/5 hover:text-[#364153]'
-            }`}
-            title={(!forMobile && !isExpanded) ? item.label : undefined}
-          >
-            <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive(item.href) ? 'text-[#364153]' : 'text-gray-600'}`} />
-            <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-              (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
-            }`}>
-              {item.label}
-            </span>
-          </Link>
+          item.comingSoon ? (
+            <div
+              key={item.href}
+              className="flex items-center gap-3 px-2 py-2.5 rounded-lg text-gray-400 cursor-default"
+              title={(!forMobile && !isExpanded) ? item.label : undefined}
+            >
+              <item.icon className="w-5 h-5 flex-shrink-0 text-gray-300" />
+              <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}>
+                {item.label}
+              </span>
+              <span className={`ml-auto px-1.5 py-0.5 text-[9px] font-semibold bg-gray-100 text-gray-400 rounded-full whitespace-nowrap transition-all duration-300 ${
+                (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}>
+                {t('comingSoon') || 'Soon'}
+              </span>
+            </div>
+          ) : (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={forMobile ? () => setMobileOpen(false) : undefined}
+              className={`flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors duration-200 ${
+                isActive(item.href)
+                  ? 'bg-[#364153]/10 text-[#364153] font-semibold'
+                  : 'text-gray-700 hover:bg-[#364153]/5 hover:text-[#364153]'
+              }`}
+              title={(!forMobile && !isExpanded) ? item.label : undefined}
+            >
+              <item.icon className={`w-5 h-5 flex-shrink-0 ${isActive(item.href) ? 'text-[#364153]' : 'text-gray-600'}`} />
+              <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}>
+                {item.label}
+              </span>
+            </Link>
+          )
         ))}
         
         {/* Notifications & Settings */}
         {bottomItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={forMobile ? () => setMobileOpen(false) : undefined}
-            className={`flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors duration-200 ${
-              isActive(item.href)
-                ? 'bg-[#364153]/10 text-[#364153] font-semibold'
-                : 'text-gray-700 hover:bg-[#364153]/5 hover:text-[#364153]'
-            }`}
-            title={(!forMobile && !isExpanded) ? item.label : undefined}
-          >
-            <div className="relative flex-shrink-0">
-              <item.icon className={`w-5 h-5 ${isActive(item.href) ? 'text-[#364153]' : 'text-gray-600'}`} />
-              {item.badge > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {item.badge}
-                </span>
-              )}
+          item.comingSoon ? (
+            <div
+              key={item.href}
+              className="flex items-center gap-3 px-2 py-2.5 rounded-lg text-gray-400 cursor-default"
+              title={(!forMobile && !isExpanded) ? item.label : undefined}
+            >
+              <div className="relative flex-shrink-0">
+                <item.icon className="w-5 h-5 text-gray-300" />
+              </div>
+              <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1'
+              }`}>
+                {item.label}
+              </span>
+              <span className={`ml-auto px-1.5 py-0.5 text-[9px] font-semibold bg-gray-100 text-gray-400 rounded-full whitespace-nowrap transition-all duration-300 ${
+                (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+              }`}>
+                {t('comingSoon') || 'Soon'}
+              </span>
             </div>
-            <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
-              (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1'
-            }`}>
-              {item.label}
-            </span>
-          </Link>
+          ) : (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={forMobile ? () => setMobileOpen(false) : undefined}
+              className={`flex items-center gap-3 px-2 py-2.5 rounded-lg transition-colors duration-200 ${
+                isActive(item.href)
+                  ? 'bg-[#364153]/10 text-[#364153] font-semibold'
+                  : 'text-gray-700 hover:bg-[#364153]/5 hover:text-[#364153]'
+              }`}
+              title={(!forMobile && !isExpanded) ? item.label : undefined}
+            >
+              <div className="relative flex-shrink-0">
+                <item.icon className={`w-5 h-5 ${isActive(item.href) ? 'text-[#364153]' : 'text-gray-600'}`} />
+                {item.badge > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {item.badge}
+                  </span>
+                )}
+              </div>
+              <span className={`font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                (!forMobile && !isExpanded) ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1'
+              }`}>
+                {item.label}
+              </span>
+            </Link>
+          )
         ))}
       </nav>
     </div>

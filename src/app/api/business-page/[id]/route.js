@@ -3,6 +3,8 @@ import { validCoord } from '@/lib/sanitize';
 import { apiError, apiData } from '@/lib/api-response';
 import { findTeamMembers } from '@/repositories/team';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/business-page/[id]
  * Public endpoint – fetch full business details for the public-facing page.
