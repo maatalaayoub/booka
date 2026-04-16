@@ -48,8 +48,8 @@ export function useSupabaseAuth() {
       email: user.email,
       firstName: meta.first_name || meta.firstName || '',
       lastName: meta.last_name || meta.lastName || '',
-      imageUrl: meta.avatar_url || meta.picture || null,
-      hasImage: !!(meta.avatar_url || meta.picture),
+      imageUrl: null,
+      hasImage: false,
     };
   }, [user]);
 
