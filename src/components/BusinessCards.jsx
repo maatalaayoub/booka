@@ -56,7 +56,7 @@ function BusinessCard({ business, t, locale }) {
   }, [gallery.length]);
 
   return (
-    <div onClick={() => router.push(cardHref)} className="bg-white rounded-[5px] border border-gray-300 w-[260px] flex-shrink-0 snap-start overflow-hidden flex flex-col hover:shadow-md transition-shadow cursor-pointer">
+    <div onClick={() => router.push(cardHref)} className="bg-white rounded-2xl border border-gray-300 w-[260px] flex-shrink-0 snap-start overflow-hidden flex flex-col hover:shadow-md transition-shadow cursor-pointer">
       {/* Cover */}
       <div className="relative">
         <div className="h-28 overflow-hidden relative" style={{ backgroundColor: accent.light }}>
@@ -66,8 +66,9 @@ function BusinessCard({ business, t, locale }) {
                 key={url}
                 src={url}
                 alt={`cover ${i + 1}`}
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out"
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out text-transparent"
                 style={{ opacity: i === slideIndex ? 1 : 0 }}
+                onError={(e) => { e.currentTarget.style.opacity = 0; }}
               />
             ))
           ) : (
@@ -81,7 +82,8 @@ function BusinessCard({ business, t, locale }) {
               <img
                 src={business.avatarUrl}
                 alt={business.businessName}
-                className="w-12 h-12 rounded-full border-2 border-white shadow object-cover bg-gray-200"
+                className="w-12 h-12 rounded-full border-2 border-white shadow object-cover bg-gray-200 text-transparent"
+                onError={(e) => { e.currentTarget.style.opacity = 0; }}
               />
             ) : (
               <div className="w-12 h-12 rounded-full border-2 border-white shadow bg-gray-200 flex items-center justify-center">
@@ -172,7 +174,7 @@ function BusinessCard({ business, t, locale }) {
               {/* Booking button */}
               {hasBooking && (
                 <button
-                  className="flex-1 py-2 text-xs font-semibold text-white rounded-[5px] transition-opacity hover:opacity-90"
+                  className="flex-1 py-2 text-xs font-semibold text-white rounded-xl transition-opacity hover:opacity-90"
                   style={{ backgroundColor: accent.bg }}
                 >
                   {t('businessCard.bookNow')}
@@ -185,7 +187,7 @@ function BusinessCard({ business, t, locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={stopProp}
-                  className={`flex-1 py-2 text-xs font-semibold rounded-[5px] transition-opacity hover:opacity-90 flex items-center justify-center gap-1 ${
+                  className={`flex-1 py-2 text-xs font-semibold rounded-xl transition-opacity hover:opacity-90 flex items-center justify-center gap-1 ${
                     hasBooking ? 'border border-gray-400 text-gray-600' : 'text-white'
                   }`}
                   style={!hasBooking ? { backgroundColor: accent.bg } : undefined}
@@ -199,7 +201,7 @@ function BusinessCard({ business, t, locale }) {
                 <a
                   href={`tel:${business.phone}`}
                   onClick={stopProp}
-                  className={`flex items-center justify-center rounded-[5px] transition-colors ${
+                  className={`flex items-center justify-center rounded-xl transition-colors ${
                     contactOnly
                       ? 'flex-1 gap-1 py-2 text-xs font-semibold text-white hover:opacity-90'
                       : 'w-12 border border-gray-400 text-gray-600 hover:bg-gray-50'
@@ -220,7 +222,7 @@ function BusinessCard({ business, t, locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={stopProp}
-                  className={`flex items-center justify-center rounded-[5px] transition-colors ${
+                  className={`flex items-center justify-center rounded-xl transition-colors ${
                     contactOnly
                       ? 'flex-1 gap-1 py-2 text-xs font-semibold text-white hover:opacity-90'
                       : 'w-12 border border-gray-400 text-gray-600 hover:bg-gray-50'
@@ -328,8 +330,8 @@ function CategoryRow({ type, businesses, t, locale }) {
 // ─── SKELETON LOADER ─────────────────────────────────────────
 function CardSkeleton() {
   return (
-    <div className="bg-white rounded-[5px] border border-gray-200 w-[260px] flex-shrink-0 animate-pulse">
-      <div className="h-28 bg-gray-100 rounded-t-[5px]" />
+    <div className="bg-white rounded-2xl border border-gray-200 w-[260px] flex-shrink-0 animate-pulse overflow-hidden">
+      <div className="h-28 bg-gray-100" />
       <div className="px-3 pb-3 pt-8">
         <div className="h-4 bg-gray-100 rounded w-3/4 mb-2" />
         <div className="h-3 bg-gray-100 rounded w-1/2 mb-3" />

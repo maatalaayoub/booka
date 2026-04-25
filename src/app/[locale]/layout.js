@@ -7,7 +7,7 @@ import RoleSetupHandler from '@/components/RoleSetupHandler';
 import BottomNavigation from '@/components/BottomNavigation';
 
 // Pages where bottom navigation is hidden
-const excludedPaths = ['/admin', '/business/dashboard', '/auth'];
+const excludedPaths = ['/admin', '/business/dashboard', '/auth', '/pitch-deck'];
 
 export default function LocaleLayout({ children }) {
   const params = useParams();

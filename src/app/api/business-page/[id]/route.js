@@ -75,7 +75,7 @@ export async function GET(_request, { params }) {
       professionalType: biz.professional_type,
       serviceCategorySlug: biz.service_categories?.slug || null,
       serviceMode: biz.service_mode || 'booking',
-      businessName: settings.businessName || details.business_name || '',
+      businessName: details.business_name || '',
       address: details.address || '',
       city: details.city || '',
       phone: details.phone || null,

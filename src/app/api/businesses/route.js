@@ -62,7 +62,7 @@ export async function GET(request) {
         businessCategory: biz.business_category,
         professionalType: type,
         serviceMode: biz.service_mode || null,
-        businessName: settings.businessName || details?.business_name || '',
+        businessName: details?.business_name || '',
         city: details?.city || '',
         avatarUrl: settings.avatarUrl || null,
         coverGallery: settings.coverGallery || [],

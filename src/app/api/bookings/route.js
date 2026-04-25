@@ -35,7 +35,7 @@ export async function GET(request) {
         notes: apt.notes,
         clientName: apt.client_name,
         businessId: apt.business_info_id,
-        businessName: settings.businessName || details?.business_name || '',
+        businessName: details?.business_name || '',
         businessPhone: details?.phone || null,
         businessAddress: details?.address || null,
         latitude: details?.latitude || null,
