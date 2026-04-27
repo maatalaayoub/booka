@@ -10,13 +10,13 @@ const geistSans = localFont({
 
 
 export const metadata = {
-  title: "Booka.ma - Book Your Barber or Salon in Seconds",
-  description: "The smartest way to book barber appointments. Instant booking, smart queue system, and mobile barber services. Download the app today!",
-  keywords: ["barber", "booking", "appointment", "haircut", "barbershop", "grooming", "queue system", "booka"],
+  title: "Booka.ma - Book Any Appointment in Seconds",
+  description: "The smartest way to book appointments with any service provider. Instant booking, smart queue system, and mobile services. Download the app today!",
+  keywords: ["booking", "appointment", "service provider", "queue system", "mobile service", "online booking", "booka"],
   authors: [{ name: "Booka.ma" }],
   openGraph: {
-    title: "Booka.ma - Book Your Barber or Salon in Seconds",
-    description: "The smartest way to book barber appointments. Instant booking, smart queue system, and mobile barber services.",
+    title: "Booka.ma - Book Any Appointment in Seconds",
+    description: "The smartest way to book appointments with any service provider. Instant booking, smart queue system, and mobile services.",
     type: "website",
   },
 };

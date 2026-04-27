@@ -277,19 +277,15 @@ function CategoryRow({ type, businesses, t, locale }) {
   return (
     <div className="mb-8">
       {/* Category header */}
-      <div className="flex items-center justify-between mb-4 px-1">
-        <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full ${style.bg} flex items-center justify-center`}>
-            <Icon className={`w-5 h-5 ${style.text}`} strokeWidth={1.8} />
-          </div>
-          <div>
-            <h3 className="text-[15px] font-bold text-[#364153] leading-tight">
-              {(() => { const key = `home.category.${type}`; const v = t(key); return v !== key ? v : type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); })()}
-            </h3>
-            <p className="text-[11px] text-gray-400 font-medium">
-              {businesses.length} {businesses.length === 1 ? t('home.professional') || 'professional' : t('home.professionals') || 'professionals'}
-            </p>
-          </div>
+      <div className="flex items-center justify-between mb-3 px-1">
+        <div className="flex items-center gap-2">
+          <Icon className={`w-4 h-4 ${style.text}`} strokeWidth={2} />
+          <h3 className="text-[15px] font-bold text-[#364153]">
+            {(() => { const key = `home.category.${type}`; const v = t(key); return v !== key ? v : type.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); })()}
+          </h3>
+          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
+            {businesses.length}
+          </span>
         </div>
         {/* Scroll arrows - desktop only */}
         <div className="hidden sm:flex items-center gap-1">

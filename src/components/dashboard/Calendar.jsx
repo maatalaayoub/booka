@@ -10,13 +10,13 @@ export default function AppointmentCalendar({ appointments = [] }) {
 
   // Default demo appointments
   const demoAppointments = [
-    { date: new Date(), time: '09:00', client: 'John Smith', service: 'Haircut' },
-    { date: new Date(), time: '10:30', client: 'Mike Johnson', service: 'Beard Trim' },
+    { date: new Date(), time: '09:00', client: 'John Smith', service: 'Appointment' },
+    { date: new Date(), time: '10:30', client: 'Mike Johnson', service: 'Consultation' },
     { date: new Date(), time: '14:00', client: 'David Wilson', service: 'Full Service' },
-    { date: new Date(Date.now() + 86400000), time: '11:00', client: 'Chris Brown', service: 'Haircut' },
-    { date: new Date(Date.now() + 86400000 * 2), time: '15:00', client: 'James Taylor', service: 'Haircut & Beard' },
-    { date: new Date(Date.now() + 86400000 * 3), time: '09:30', client: 'Robert Lee', service: 'Haircut' },
-    { date: new Date(Date.now() + 86400000 * 5), time: '13:00', client: 'William Davis', service: 'Beard Trim' },
+    { date: new Date(Date.now() + 86400000), time: '11:00', client: 'Chris Brown', service: 'Appointment' },
+    { date: new Date(Date.now() + 86400000 * 2), time: '15:00', client: 'James Taylor', service: 'Consultation' },
+    { date: new Date(Date.now() + 86400000 * 3), time: '09:30', client: 'Robert Lee', service: 'Appointment' },
+    { date: new Date(Date.now() + 86400000 * 5), time: '13:00', client: 'William Davis', service: 'Consultation' },
   ];
 
   const allAppointments = appointments.length > 0 ? appointments : demoAppointments;

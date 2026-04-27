@@ -1,0 +1,57 @@
+﻿@@ -62,21 +62,39 @@
+   }
+ 
+-  // ── Access Gate ──────────────────────────────────────
+-  // Allow the access page and its API route through without a cookie
++  // Create Supabase middleware client
++  const { supabase, response } = createMiddlewareClient(req);
++
+   const isAccessPage = pathname === '/access';
+   const isAccessApi = pathname.startsWith('/api/access');
+ 
+-  if (!isAccessPage && !isAccessApi && !pathname.startsWith('/api')) {
+-    const accessCookie = req.cookies.get('site_access');
+-    const isValid = accessCookie ? await verifyAccessTokenEdge(accessCookie.value) : false;
+-    if (!isValid) {
+-      return NextResponse.redirect(new URL('/access', req.url));
++  let gateActive = true;
++  try {
++    const { data: config } = await supabase.from('site_access').select('global_access_enabled').limit(1).single();
++    if (config && config.global_access_enabled === false) gateActive = false;
++  } catch (error) {}
++
++  if (gateActive) {
++    if (!isAccessPage && !isAccessApi && !pathname.startsWith('/api')) {
++      const accessCookie = req.cookies.get('site_access');
++      const isValid = accessCookie ? await verifyAccessTokenEdge(accessCookie.value) : false;
++      if (!isValid) return NextResponse.redirect(new URL('/access', req.url));
+     }
++  } else {
++    if (isAccessPage) return NextResponse.redirect(new URL('/', req.url));
++    if (isAccessApi) return NextResponse.json({ success: true, message: 'Gate disabled' });
+   }
+-  // ──────────────────────────────────────────────────────
+ 
+   if (isAccessPage || isAccessApi) {
+     return NextResponse.next();
+   }
+ 
+   const pathnameLocale = getLocaleFromPath(pathname);
+   const hasLocale = pathnameLocale !== null;
+ 
+   if (!hasLocale && !pathname.startsWith('/api')) {
+     const locale = getPreferredLocale(req);
+     const newUrl = new URL(\/\\\\\, req.url);
+     newUrl.search = req.nextUrl.search;
+-    return NextResponse.redirect(newUrl);
++    const redirectResponse = NextResponse.redirect(newUrl);
++    response.cookies.getAll().forEach(cookie => redirectResponse.cookies.set(cookie.name, cookie.value, cookie));
++    return redirectResponse;
+   }
+ 
+   const locale = pathnameLocale || defaultLocale;
+ 
+-  // Create Supabase middleware client (refreshes session cookie)
+-  const { supabase, response } = createMiddlewareClient(req);
+-
+   // Refresh session

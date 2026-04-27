@@ -1,15 +1,15 @@
 /**
- * OpenAPI 3.0.3 specification for the BarberBook API.
+ * OpenAPI 3.0.3 specification for the Booka API.
  * Serves as the single source of truth for all API contracts.
  */
 
 const spec = {
   openapi: '3.0.3',
   info: {
-    title: 'BarberBook API',
+    title: 'Booka API',
     version: '1.0.0',
     description:
-      'Appointment booking platform for barbers, salons, mobile service providers, and job seekers. ' +
+      'Appointment booking platform for service providers, mobile professionals, and job seekers. ' +
       'All timestamps are in UTC ISO-8601 format. Authentication is handled via Supabase session cookies.',
   },
   servers: [{ url: '/api', description: 'Default' }],

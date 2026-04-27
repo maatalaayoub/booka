@@ -177,8 +177,8 @@ export function ServicesPieChart({ data = [] }) {
 
   // Default demo data
   const chartData = data.length > 0 ? data : [
-    { name: t('dashboard.analytics.haircut') || 'Haircut', value: 45, color: '#f59e0b' },
-    { name: t('dashboard.analytics.beardTrim') || 'Beard Trim', value: 25, color: '#10b981' },
+    { name: t('dashboard.analytics.haircut') || 'Service A', value: 45, color: '#f59e0b' },
+    { name: t('dashboard.analytics.beardTrim') || 'Service B', value: 25, color: '#10b981' },
     { name: t('dashboard.analytics.fullService') || 'Full Service', value: 20, color: '#3b82f6' },
     { name: t('dashboard.analytics.other') || 'Other', value: 10, color: '#8b5cf6' },
   ];
