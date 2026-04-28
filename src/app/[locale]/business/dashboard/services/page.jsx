@@ -164,7 +164,7 @@ function ServiceModal({ service, specialty, onClose, onSave }) {
     setSaving(true);
     setError('');
     try {
-      await onSave({ ...form, id: service?.id, duration_minutes: parseInt(form.duration_minutes) });
+      await onSave({ ...form, id: service?.id, duration_minutes: parseInt(form.duration_minutes), price: parseFloat(form.price) });
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to save service.');
@@ -263,6 +263,7 @@ function ServiceModal({ service, specialty, onClose, onSave }) {
                   step="5"
                   value={form.duration_minutes}
                   onChange={e => set('duration_minutes', e.target.value)}
+                  onWheel={e => e.currentTarget.blur()}
                   className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-[#364153]/20 focus:border-[#364153]"
                 />
               </div>
@@ -279,6 +280,7 @@ function ServiceModal({ service, specialty, onClose, onSave }) {
                   step="0.01"
                   value={form.price}
                   onChange={e => set('price', e.target.value)}
+                  onWheel={e => e.currentTarget.blur()}
                   placeholder="0.00"
                   className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-[5px] text-sm focus:outline-none focus:ring-2 focus:ring-[#364153]/20 focus:border-[#364153]"
                 />
