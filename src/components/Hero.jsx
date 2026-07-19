@@ -67,6 +67,7 @@ export default function Hero() {
     setServiceMode(mode);
     if (typeof window !== 'undefined') {
       sessionStorage.setItem('serviceMode', mode);
+      window.dispatchEvent(new CustomEvent('servicemode-change', { detail: mode }));
     }
   };
 

@@ -380,6 +380,17 @@ export default function BusinessCards() {
   const [businesses, setBusinesses] = useState({});
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [serviceMode, setServiceMode] = useState('atHome');
+
+  // Sync service mode from the Hero toggle (via sessionStorage + custom event)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = sessionStorage.getItem('serviceMode');
+    if (saved) setServiceMode(saved);
+    const handleModeChange = (e) => setServiceMode(e.detail);
+    window.addEventListener('servicemode-change', handleModeChange);
+    return () => window.removeEventListener('servicemode-change', handleModeChange);
+  }, []);
 
   useEffect(() => {
     const fetchBusinesses = async () => {
@@ -401,6 +412,17 @@ export default function BusinessCards() {
   }, []);
 
   const hasBusinesses = Object.values(businesses).some(arr => arr && arr.length > 0);
+
+  // Filter businesses by the selected service mode:
+  //  - 'inShop' → businesses with a physical location (business_owner)
+  //  - 'atHome' → mobile services that come to the customer (mobile_service)
+  const targetCategory = serviceMode === 'inShop' ? 'business_owner' : 'mobile_service';
+  const filteredBusinesses = {};
+  for (const [type, list] of Object.entries(businesses)) {
+    const filtered = (list || []).filter(b => b.businessCategory === targetCategory);
+    if (filtered.length > 0) filteredBusinesses[type] = filtered;
+  }
+  const hasFilteredBusinesses = Object.values(filteredBusinesses).some(arr => arr && arr.length > 0);
 
   return (
     <section className="bg-white pt-4 pb-10">
@@ -437,23 +459,25 @@ export default function BusinessCards() {
         )}
 
         {/* Business cards by category */}
-        {!loading && !fetchError && hasBusinesses && (
+        {!loading && !fetchError && hasFilteredBusinesses && (
           [
             ...CATEGORY_ORDER,
-            ...Object.keys(businesses).filter(type => !CATEGORY_ORDER.includes(type)),
+            ...Object.keys(filteredBusinesses).filter(type => !CATEGORY_ORDER.includes(type)),
           ].map(type => (
-            <CategoryRow
-              key={type}
-              type={type}
-              businesses={businesses[type]}
-              t={t}
-              locale={locale}
-            />
+            filteredBusinesses[type] ? (
+              <CategoryRow
+                key={type}
+                type={type}
+                businesses={filteredBusinesses[type]}
+                t={t}
+                locale={locale}
+              />
+            ) : null
           ))
         )}
 
         {/* Empty state */}
-        {!loading && !fetchError && !hasBusinesses && (
+        {!loading && !fetchError && !hasFilteredBusinesses && (
           <div className="text-center py-12">
             <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-7 h-7 text-gray-400" />
