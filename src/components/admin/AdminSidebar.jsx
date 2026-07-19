@@ -9,6 +9,7 @@ import {
   Users,
   Building2,
   ShieldCheck,
+  CreditCard,
   X,
 } from 'lucide-react';
 
@@ -30,6 +31,7 @@ export default function AdminSidebar() {
     { icon: LayoutDashboard, label: t('admin.sidebar.dashboard'), href: `/${locale}/admin` },
     { icon: Users, label: t('admin.sidebar.users'), href: `/${locale}/admin/users` },
     { icon: Building2, label: t('admin.sidebar.businesses'), href: `/${locale}/admin/businesses` },
+    { icon: CreditCard, label: t('admin.sidebar.subscriptions'), href: `/${locale}/admin/subscriptions` },
     { icon: ShieldCheck, label: t('admin.sidebar.verifications'), href: `/${locale}/admin/verifications` },
   ];
 

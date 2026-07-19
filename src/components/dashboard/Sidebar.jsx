@@ -13,6 +13,7 @@ import {
   UsersRound,
   Tag,
   DollarSign,
+  CreditCard,
   BarChart3,
   Settings,
   Bell,
@@ -173,6 +174,12 @@ export default function Sidebar() {
       icon: ShieldCheck, 
       label: t('dashboard.sidebar.verification') || 'Verification', 
       href: `/${locale}/business/dashboard/verification`,
+      categories: ['business_owner', 'mobile_service'],
+    },
+    { 
+      icon: CreditCard, 
+      label: t('dashboard.sidebar.billing') || 'Subscription & Billing', 
+      href: `/${locale}/business/dashboard/billing`,
       categories: ['business_owner', 'mobile_service'],
     },
     {
