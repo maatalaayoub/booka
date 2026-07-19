@@ -37,24 +37,6 @@ export default function UserProfilePage() {
   // Use shared hook for own profile
   const { profile: ownProfile, refetch: refreshProfile } = useUserProfile({ refetchOnProfileUpdate: true });
 
-  // Auto-open the edit dialog once when the user is missing essential info
-  // (e.g. just signed up via Google OAuth and never set their name)
-  const autoPromptedRef = useRef(false);
-  useEffect(() => {
-    if (isViewingOther) return;
-    if (!ownProfile || autoPromptedRef.current) return;
-    const missingEssentials =
-      !ownProfile.firstName ||
-      !ownProfile.lastName ||
-      !ownProfile.phone ||
-      !ownProfile.address ||
-      !ownProfile.city;
-    if (missingEssentials) {
-      autoPromptedRef.current = true;
-      setIsEditProfileOpen(true);
-    }
-  }, [ownProfile, isViewingOther]);
-
   // Sync own profile data to local state
   useEffect(() => {
     if (isViewingOther || !ownProfile) return;

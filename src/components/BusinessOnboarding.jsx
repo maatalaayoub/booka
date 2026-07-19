@@ -290,7 +290,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
     setLoadingCategories(true);
     fetch('/api/business/specialty')
       .then(r => r.ok ? r.json() : { categories: [] })
-      .then(data => setServiceCategories(data.categories || []))
+      // Temporarily show only the barbers category (hide all others)
+      .then(data => setServiceCategories((data.categories || []).filter(cat => cat.slug === 'beauty_personal_care')))
       .catch(e => { console.error('Failed to load service categories:', e); setServiceCategories([]); })
       .finally(() => setLoadingCategories(false));
   }, []);
@@ -305,7 +306,8 @@ export default function BusinessOnboarding({ userName, onComplete }) {
     setProfessionalType(''); // Reset specialty when category changes
     fetch(`/api/business/specialty?category_id=${serviceCategoryId}`)
       .then(r => r.ok ? r.json() : { specialties: [] })
-      .then(data => setSpecialties(data.specialties || []))
+      // Temporarily show only the barber specialty (hide all others)
+      .then(data => setSpecialties((data.specialties || []).filter(s => s.slug === 'barber')))
       .catch(e => { console.error('Failed to load specialties:', e); setSpecialties([]); })
       .finally(() => setLoadingSpecialties(false));
   }, [serviceCategoryId]);

@@ -9,7 +9,7 @@ export default function HomeContent() {
   return (
     <main className="overflow-hidden bg-white">
       <Hero />
-      <CategoryBrowse />
+      {/* <CategoryBrowse /> */}
       <BusinessCards />
       <Footer />
     </main>

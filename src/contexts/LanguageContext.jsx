@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation';
 const translations = {
   en: {
     // Hero
-    heroMainTitle: 'The services you need… in one place',
+    heroMainTitle: 'Your perfect haircut… booked in seconds',
     heroTitle: 'Book Your Appointment or Turn with Any Service Provider',
     heroHighlight: 'Appointment',
     heroDescription: 'The smartest way to book appointment-based services. Choose between scheduling a fixed appointment or reserving your turn with our Turn-Based Booking system. Connect with professionals near you — enjoy the service you need, your way.',
@@ -1891,7 +1891,7 @@ const translations = {
   
   fr: {
     // Hero
-    heroMainTitle: 'Les services dont vous avez besoin… en un seul endroit',
+    heroMainTitle: 'Votre coupe parfaite… réservée en quelques secondes',
     heroTitle: 'Réservez Votre Rendez-vous ou Tour chez n\'importe quel Prestataire de Service',
     heroHighlight: 'Rendez-vous',
     heroDescription: 'La façon la plus intelligente de réserver vos services sur rendez-vous. Choisissez entre un rendez-vous fixe ou la réservation par ordre d\'arrivée. Connectez-vous avec des professionnels près de chez vous — profitez du service qu\'il vous faut, à votre façon.',
@@ -3780,7 +3780,7 @@ const translations = {
   
   ar: {
     // Hero
-    heroMainTitle: 'الخدمات التي تحتاجها… في مكان واحد',
+    heroMainTitle: 'قصّتك المثالية… في ثوانٍ',
     heroTitle: 'احجز موعدك أو دورك مع أي مقدم خدمة',
     heroHighlight: 'بسهولة',
     heroDescription: 'الطريقة الأذكى لحجز الخدمات القائمة على المواعيد. اختر بين حجز موعد محدد أو الحجز حسب ترتيب التسجيل. تواصل مع محترفين بالقرب منك — استمتع بالخدمة التي تحتاجها بطريقتك.',

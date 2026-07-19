@@ -70,7 +70,8 @@ export default function CategoryBrowse() {
     setMounted(true);
     fetch('/api/business/specialty')
       .then(r => r.ok ? r.json() : { categories: [] })
-      .then(data => setCategories(data.categories || []))
+      // Temporarily show only the barbers category (hide all others)
+      .then(data => setCategories((data.categories || []).filter(cat => cat.slug === 'beauty_personal_care')))
       .catch(() => setCategories([]))
       .finally(() => setLoading(false));
   }, []);
